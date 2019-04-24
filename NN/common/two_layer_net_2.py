@@ -9,6 +9,9 @@ from collections import OrderedDict
 
 
 class TwoLayerNet:
+    #クラス変数
+    err_sum =np.zeros(1) #出力と教師データとの誤差の総和
+
 
     def __init__(self, input_size, hidden_size, output_size, weight_init_std = 0.01):
         
@@ -22,9 +25,19 @@ class TwoLayerNet:
         #レイヤの生成
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
-        self.layers['Relu1'] = Relu()
+        
+        if ActivationFunction == 1:
+            self.layers['Relu1'] = relu()
+        else:
+            self.layers['Sigmoid1'] = sigmoid()
+
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
-        self.layers['Relu2'] = Relu()
+        
+        if ActivationFunction == 1:
+            self.layers['Relu2'] = relu()
+        else:
+            self.layers['Sigmoid2'] = sigmoid()
+
 
         self.lastLayer = IdentityLayer()
 
@@ -65,29 +78,34 @@ class TwoLayerNet:
         return grads
 
 
-    def forward(self, x, t):
-        #forward
-        Loss = self.loss(x, t) #順伝播の損失関数
-
-        return Loss
-
-
     #重みパラメータに対する勾配を誤差逆伝搬法によって求める
     def gradient(self, x, t, Err_Total):
+
+        #forward
+        self.loss(x, t) #順伝播の損失関数
+
         #backward
         dout = 1
-        dout = self.lastLayer.backward(dout, Err_Total)
+        self.err_sum +=  self.lastLayer.backward(dout)
+        print(self.err_sum)
 
-        layers = list(self.lastLayer.values())
-        layers.reverse()
-        for layer in layers:
-            dout = layer.backward(dout)
+        if batch_size == cycles+1:
+            layers = list(self.layers.values())
+            layers.reverse()
+            self.err_sum = self.err_sum / batch_size
 
-        #設定
-        grads = {}
-        grads['W1'] = self.layers['Affien1'].dW
-        grads['b1'] = self.layers['Affine1'].db
-        grads['W2'] = self.layers['Affine2'].dW
-        grads['b2'] = self.layers['Affine2'].db
+            for layer in layers:
+                self.err_sum = layer.backward(self.err_sum)
 
-        return grads
+            #設定
+            grads = {}
+            grads['W1'] = self.layers['Affine1'].dW
+            grads['b1'] = self.layers['Affine1'].db
+            grads['W2'] = self.layers['Affine2'].dW
+            grads['b2'] = self.layers['Affine2'].db
+
+            self.err_sum = np.zeros(1)
+            return grads
+
+        else:
+            return 0

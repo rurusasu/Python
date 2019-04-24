@@ -39,7 +39,7 @@ class AddLayer:
 
 #活性化関数のレイヤ
 #ReLUレイヤ
-class Relu:
+class relu:
     def __init__(self):
         self.mask = None
     
@@ -57,7 +57,7 @@ class Relu:
         return dx
 
 #Sigmoidレイヤ
-class Sigmoid:
+class sigmoid:
     def __init__ (self):
         self.out = None
 
@@ -75,7 +75,7 @@ class Sigmoid:
 
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
-class Affine:
+class affine:
     def __init__(self, W, b):
         self.W = W
         self.b = b
@@ -90,34 +90,43 @@ class Affine:
         return out
 
     def backward(self, dout):
+        self.dout = dout
+        if self.x.ndim == 1:
+            self.x = self.x.reshape(1, self.x.shape[0])
+        if self.dout.ndim == 1:
+            self.dout = self.dout.reshape(1, self.dout.shape[0])
+
         dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.X.T, dout)
-        self.db = np.sum(dout, axis = 0)
+        self.dW = np.dot(self.X.T, self.dout)
+        self.db = np.sum(self.dout, axis = 0)
 
         return dx
 
 
 #出力層
 #恒等関数レイヤ
-class IdentityLayer:
+class liner:
     def __init__(self):
-        self.loss = None #損失
-        self.y = None    #出力
-        self.t = None    #教師データ
+        self.y = None #出力
 
     def forward(self, x, t):
-         self.y = x
-         self.t = t
-         self.loss = mean_squared_error(self.y, self.t)
-         print('output = ', self.y)
+         self.y = LinerFunction(x)
 
-         return self.loss
+         return self.y
 
-    def backward(self, dout = 1, Err_Total):
-        self.y = Err_Total
-        dx = abs(self.y - self.t)
 
-        return dx
+#2乗和誤差レイヤ
+class mean_squared_error:
+    def __init__(self):
+        self.loss = None
+        self.t = None
+
+    def function(self, x, t):
+        self.x = x
+        self.t = t
+        self.y = MeanSquaredError(x, t)
+
+        return self.y
 
 
 #Softmax & 交差エントロピー誤差を含めた計算を行うレイヤ
