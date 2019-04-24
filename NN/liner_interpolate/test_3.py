@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from common.layers_3 import *
+from common.layers_2 import *
 from collections import OrderedDict
 
 

@@ -3,7 +3,7 @@ sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-from common.two_layer_net_3 import TwoLayerNet
+from common.two_layer_net_2 import TwoLayerNet
 
 #データを取りたい関数
 def func(x):
