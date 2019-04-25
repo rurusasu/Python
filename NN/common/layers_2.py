@@ -62,7 +62,7 @@ class sigmoid:
         self.out = None
 
     def forward(self, x):
-        out = sigmoid(x)
+        out = 1 / (1 + np.exp(-x))
         self.out = out
 
         return out

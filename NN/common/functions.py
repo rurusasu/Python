@@ -8,7 +8,7 @@ def StepFunction(x):
 
 #シグモイド関数
 def Sigmoid(x):
-    return 1 / (1 + np.exp(-x)) -0.5
+    return 1 / (1 + np.exp(-x))
 
 #ReLU関数(ランプ関数)
 def Relu(x):
