@@ -46,12 +46,14 @@ class Sequential:
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
 
         for i in range(epochs):
-            for layers in self.sequential:
+            for batch in range(batch_size):
                 batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からランダムに値を抽出 replace(重複)
                 x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
                 t_batch = t[batch_mask]
 
-                x_batch = layers.forward(x_batch)
+                for layers in self.sequential:
+                    x_batch = layers.forward(x_batch)
+                
                 Sequential.values.append(self.LastLayer.function(x_batch, t_batch))
 
                 x = np.delete(x, batch_mask, 0) #全データから使用したbatchデータを削除
@@ -102,30 +104,33 @@ class InputLayer:
 
 class Dense:
     def __init__(self, units, activation):
+        self.dense = {}                                  #関数の辞書
+        self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
         #ある層の情報
-        self.dense = OrderedDict()
-        self.dense['Units'] = units                      #ユニットの数
         self.dense['Activation'] = globals()[activation] #活性化関数名
-        self.dense['Weight'] = None                      #重み
-        self.dense['Bias']   = None                      #閾値
+        self.params['Units'] = units                     #ユニットの数
+        self.params['Weight'] = None                     #重み
+        self.params['Bias'] = None                       #閾値
 
     def InitParams(self, input_size):
         K = 2
         #初期値の計算
-        self.dense['Weight'] = K*(np.ones((input_size, self.dense['Units']))*0.5 - np.random.rand(input_size, self.dense['Units'])) #重み
-        self.dense['Bias']   = np.zeros(self.dense['Units'])                                                               #閾値
+        self.params['Weight'] = K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        self.params['Bias']   = np.zeros(self.params['Units'])                                                                         #閾値
 
     def unit(self, input_size):
         #初期値を設定
         self.InitParams(input_size)
         #活性化関数を設定
         #self._class = globals()[self.dense['Activation']]
-        self.dense['Affine'] = globals()['affine'](self.dense['Weight'], self.dense['Bias']) #アフィン変換を行うレイヤをセット
+        self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
 
-        return self.dense['Units']
+        return self.params['Units']
 
     def forward(self, input_data):
-            self.dense['Affine'].forward(input_data)
+        for i in range(len(self.dense)):
+            x = self.dense['Affine'].forward(input_data)
+            x = self.dense['Activation'].forward(x)
 
 
 data = np.loadtxt(
