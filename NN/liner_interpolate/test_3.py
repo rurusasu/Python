@@ -104,13 +104,14 @@ class InputLayer:
 
 class Dense:
     def __init__(self, units, activation):
-        self.dense = {}                                  #関数の辞書
+        self.dense = OrderedDict()                       #関数の辞書
         self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
         #ある層の情報
-        self.dense['Activation'] = globals()[activation] #活性化関数名
+        #self.dense['Activation'] = globals()[activation] #活性化関数名
         self.params['Units'] = units                     #ユニットの数
         self.params['Weight'] = None                     #重み
         self.params['Bias'] = None                       #閾値
+        self.activation = activation
 
     def InitParams(self, input_size):
         K = 2
@@ -124,6 +125,7 @@ class Dense:
         #活性化関数を設定
         #self._class = globals()[self.dense['Activation']]
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
+        self.dense['Activation'] = globals()[self.activation]
 
         return self.params['Units']
 
@@ -131,6 +133,10 @@ class Dense:
         for i in range(len(self.dense)):
             x = self.dense['Affine'].forward(input_data)
             x = self.dense['Activation'].forward(x)
+
+
+
+
 
 
 data = np.loadtxt(

@@ -62,7 +62,7 @@ class Sigmoid:
         self.out = None
 
     def forward(self, x):
-        out = sigmoid(x)
+        out = 1 / (1 + np.exp(-x))
         self.out = out
 
         return out
@@ -114,7 +114,7 @@ class Mean_squared_error:
     def forward(self, x, t):
         self.t = t
         self.y = x
-        self.loss = mean_squared_error(self.y, self.t)
+        self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss
 
