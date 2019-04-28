@@ -36,7 +36,7 @@ class Sequential:
         for layers in self.sequential:
             x = layers.unit(x)
 
-        self.LastLayer = globals()[loss]
+        self.LastLayer = globals()[loss]()
 
 
     def fit(self, train_data, test_data, batch_size, epochs):
@@ -56,9 +56,9 @@ class Sequential:
                 
                 Sequential.values.append(self.LastLayer.function(x_batch, t_batch))
 
-                x = np.delete(x, batch_mask, 0) #全データから使用したbatchデータを削除
+                x = np.delete(x, batch_mask, 0) #全データから使用したbatchデータを削除。削除された分データは詰められる
                 t = np.delete(t, batch_mask)
-
+                TrainRow_size = TrainRow_size - batch_size
 
             if train_data.shape[0] % batch_size == 0:
                 layer.reverse()
@@ -96,7 +96,7 @@ class InputLayer:
             self.UnitsCol = input_shape[1]
 
     def unit(self, y):
-        return self.UnitsCol
+        return self.UnitsCol #入力データの列数を返す
 
     def forward(self, input_data):
         return input_data
@@ -125,16 +125,16 @@ class Dense:
         #活性化関数を設定
         #self._class = globals()[self.dense['Activation']]
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
-        self.dense['Activation'] = globals()[self.activation]
-
+        self.dense['Activation'] = globals()[self.activation]()
+        #self.dense['Activation'] = globals()['liner']()
         return self.params['Units']
 
     def forward(self, input_data):
-        for i in range(len(self.dense)):
-            x = self.dense['Affine'].forward(input_data)
-            x = self.dense['Activation'].forward(x)
+        x = input_data
+        for layer in self.dense.values():
+            x = layer.forward(x)
 
-
+        return x
 
 
 

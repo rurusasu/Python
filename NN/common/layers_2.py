@@ -107,10 +107,11 @@ class affine:
 #恒等関数レイヤ
 class liner:
     def __init__(self):
-        pass
+        self.x = None
 
     def forward(self, x):
-         return x
+         self.x = x
+         return self.x
 
 
 #2乗和誤差レイヤ
