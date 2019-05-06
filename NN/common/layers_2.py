@@ -79,27 +79,29 @@ class affine:
     def __init__(self, W, b):
         self.W = W
         self.b = b
+
         self.x = None
+        self.original_x_shape = None
+        #重み・バイアスパラメータの微分
         self.dW = None
         self.db = None
 
     def forward(self, x):
+        #テンソル対応
+        self.original_x_shape = x.shape #元の形を記憶させる
+        x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
-        out = np.dot(x, self.W) + self.b
+        
+        out = np.dot(self.x, self.W) + self.b
 
         return out
 
     def backward(self, dout):
-        self.dout = dout
-        if self.x.ndim == 1:
-            self.x = self.x.reshape(1, self.x.shape[0])
-        if self.dout.ndim == 1:
-            self.dout = self.dout.reshape(1, self.dout.shape[0])
-
         dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.X.T, self.dout)
-        self.db = np.sum(self.dout, axis = 0)
+        self.dW = np.dot(self.x.T, dout)
+        self.db = np.sum(dout, axis = 0)
 
+        dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
 
 
@@ -107,10 +109,15 @@ class affine:
 #恒等関数レイヤ
 class liner:
     def __init__(self):
-        pass
+        self.x = None
 
     def forward(self, x):
-         return x
+        self.x = x
+        return self.x
+
+    def backward(self, dout):
+        dx = dout
+        return dx
 
 
 #2乗和誤差レイヤ
@@ -119,12 +126,16 @@ class mean_squared_error:
         self.loss = None
         self.t = None
 
-    def function(self, x, t):
-        self.x = x
+    def forward(self, x, t):
         self.t = t
-        self.y = MeanSquaredError(x, t)
+        self.loss = MeanSquaredError(x, t)
 
-        return self.y
+        return self.loss
+
+    def backward(self, dout = 1):
+        dx = dout * (self.loss - self.t)
+
+        return dx
 
 
 #Softmax & 交差エントロピー誤差を含めた計算を行うレイヤ

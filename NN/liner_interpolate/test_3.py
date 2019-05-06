@@ -8,18 +8,20 @@ from collections import OrderedDict
 
 class Sequential:
     #sequential = []
-    values = []
-    history = {}
+    loss = []
+    history = []
     count = 0
-    Dictionaly = {}
+    Layers = {}
 
     def __init__(self):
         #pass
+        #self.sequential = OrderedDict()
+        #self.sequential = {'input':None}
         self.sequential = []
-
 
     def add(self, layer_name):
         self.sequential.append(layer_name)
+        #self.sequential.update(layer_name)
         #Sequential.sequential.append(layer_name) #リストにレイヤの名前を代入
         #LayerKey = ('Layer' + '%s' %(Sequential.count+1))
         #Sequential.count += 1
@@ -32,11 +34,15 @@ class Sequential:
             #values = dict(LayerKey, Sequential.sequential[i])
             #Sequential.Dictionaly.update(values)
             #self.Layers = self.Predict()
+        #for layer in self.sequential:
+            #Sequential.Layers.update(layer)
+
         x = 0
         for layers in self.sequential:
             x = layers.unit(x)
+            #LayerParams = x.values()
 
-        self.LastLayer = globals()[loss]
+        self.LastLayer = globals()[loss]()
 
 
     def fit(self, train_data, test_data, batch_size, epochs):
@@ -51,19 +57,31 @@ class Sequential:
                 x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
                 t_batch = t[batch_mask]
 
+                #推論を行う
                 for layers in self.sequential:
                     x_batch = layers.forward(x_batch)
                 
-                Sequential.values.append(self.LastLayer.function(x_batch, t_batch))
+                #誤差を保存する
+                Sequential.loss.append(self.LastLayer.forward(x_batch, t_batch))
 
-                x = np.delete(x, batch_mask, 0) #全データから使用したbatchデータを削除
+                #全データから使用したbatchデータを削除。削除された分データは詰められる
+                x = np.delete(x, batch_mask, 0)
                 t = np.delete(t, batch_mask)
+                TrainRow_size = TrainRow_size - batch_size
 
+            #1バッチが終了すると重みと閾値を更新する
+            AveLoss = sum(Sequential.loss) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
+            Sequential.history.append(AveLoss)
+            dout = AveLoss
+            #layers = list(self.LastLayer.values())
+            #逆伝播を行うためにレイヤを反転
+            ReLayers = self.sequential
+            ReLayers.reverse()
+            #layers.reverse()
+            for layer in ReLayers:
+                dout = layer.backward(dout)
 
-            if train_data.shape[0] % batch_size == 0:
-                layer.reverse()
-
-        Sequential.history['loss'] = Sequential.values
+        #Sequential.history['loss'] = Sequential.values
 
     #def evaluate(self, x_test, y_test):
 
@@ -88,32 +106,40 @@ class Sequential:
 
 class InputLayer:
     def __init__(self, input_shape):
+        #self.input = OrderedDict()
         #self.input = {}
-        if len(input_shape) == 1: #もし、入力数が配列で指定されたとき
-            self.UnitsCol = 1     #配列をn行1列として考える
-
+        self.input_data = None
+        if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
+            #self.input['input'] = 1 #配列をn行1列として考える
+            self.input = 1
         elif len(input_shape) == 2:
-            self.UnitsCol = input_shape[1]
+            #self.input['input'] = input_shape[1]
+            self.input = input_shape[1]
 
     def unit(self, y):
-        return self.UnitsCol
+        #return self.input.values() #入力データの列数を返す
+        return self.input
 
     def forward(self, input_data):
-        return input_data
+        self.input_data = input_data
+        return self.input_data
 
 
 class Dense:
     def __init__(self, units, activation):
-        self.dense = {}                                  #関数の辞書
+        self.dense = OrderedDict()                       #関数の辞書
+        self.RevDense = None                             #関数の辞書の反転(逆伝播で使用)
         self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
         #ある層の情報
-        self.Activation = globals()[activation] #活性化関数名
+        #self.dense['Activation'] = globals()[activation] #活性化関数名
         self.params['Units'] = units                     #ユニットの数
         self.params['Weight'] = None                     #重み
         self.params['Bias'] = None                       #閾値
+        self.activation = activation
 
     def InitParams(self, input_size):
         K = 2
+        #input_size = input_unit_size.values()
         #初期値の計算
         self.params['Weight'] = K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
         self.params['Bias']   = np.zeros(self.params['Units'])                                                                         #閾値
@@ -124,14 +150,33 @@ class Dense:
         #活性化関数を設定
         #self._class = globals()[self.dense['Activation']]
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
+        self.dense['Activation'] = globals()[self.activation]()
+        #self.dense['Activation'] = globals()['liner']()
+        #self.RevDense = self.dense
+        #reversed(self.RevDense)
 
         return self.params['Units']
+        #return self.dense
 
     def forward(self, input_data):
-        for i in range(len(self.dense)):
-            x = self.dense['Affine'].forward(input_data)
-            x = globals()[self.Activation](x)
-            x = x.forward(x)
+        x = input_data
+        for layer in self.dense.values():
+            x = layer.forward(x)
+
+        return x
+
+    def backward(self, dout):
+        x = dout
+        self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
+        self.RevDense.reverse()
+        for RevLayer in self.RevDense:
+            x = RevLayer.backward(x)
+
+        return x
+
+
+
+
 
 
 data = np.loadtxt(

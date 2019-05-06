@@ -3,7 +3,7 @@
 import sys, os
 sys.path.append(os.pardir)
 import numpy as np
-from nn_2.layers_2 import *
+from nn_test.layers import *
 from common.gradient import numerical_gradient
 from collections import OrderedDict
 
