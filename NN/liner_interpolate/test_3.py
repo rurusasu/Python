@@ -107,7 +107,7 @@ class Dense:
         self.dense = {}                                  #関数の辞書
         self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
         #ある層の情報
-        self.dense['Activation'] = globals()[activation] #活性化関数名
+        self.Activation = globals()[activation] #活性化関数名
         self.params['Units'] = units                     #ユニットの数
         self.params['Weight'] = None                     #重み
         self.params['Bias'] = None                       #閾値
@@ -130,7 +130,8 @@ class Dense:
     def forward(self, input_data):
         for i in range(len(self.dense)):
             x = self.dense['Affine'].forward(input_data)
-            x = self.dense['Activation'].forward(x)
+            x = globals()[self.Activation](x)
+            x = x.forward(x)
 
 
 data = np.loadtxt(
