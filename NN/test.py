@@ -36,3 +36,40 @@ class test:
 x = test(2)
 y = x.add(3)
 print(x, y)
+
+
+A = np.array([[0.59185423],[0.11811593],[1.1497815]])
+B1 = np.array([[0.21611296],[0.07906977],[0.01568106]])
+C1 = 0.5*np.sum((A - B1)**2, axis = 0)
+C2 = 0.5*np.sum((A - B1)**2, axis = 1)
+C3 = 0.5*(A - B1)**2
+
+print('C1 = ', C1, C1.dtype, C1.shape)
+print('C2 = ', C2, C2.dtype, C2.shape)
+print('C3 = ', C3, C3.dtype, C3.shape)
+
+B2 = np.array([0.21611296, 0.07906977, 0.01568106])
+
+D1 = 0.5*np.sum((A - B2)**2, axis = 0)
+D2 = 0.5*np.sum((A - B2)**2, axis = 1)
+D3 = 0.5*(A - B2)**2
+
+print('D1 = ', D1, D1.shape)
+print('D2 = ', D2, D2.shape)
+print('D3 = ', D3, D3.shape)
+
+B3 = B2.reshape(3, -1)
+
+E1 = 0.5*np.sum((A - B3)**2, axis = 0)
+E2 = 0.5*np.sum((A - B3)**2, axis = 1) #成功
+E3 = 0.5*(A - B3)**2                   #成功
+
+print('E1 = ', E1, E1.shape)
+print('E2 = ', E2, E2.shape)
+print('E3 = ', E3, E3.shape)
+
+
+print('A = ', A.shape)
+print('B1 = ', B1.shape)
+print('B2 = ', B2.shape)
+print('B3 = ', B3.shape)

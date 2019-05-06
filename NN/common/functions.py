@@ -32,7 +32,8 @@ def Softmax(x):
 #損失関数
 #2乗和誤差
 def MeanSquaredError(y, t):
-    return 0.5 * np.sum((y-t)**2)
+    #return 0.5 * np.sum((y-t)**2, axis=1)
+    return 0.5 * np.sum((y-t)**2, axis = 1)
 
 #交差エントロピー誤差
 def cross_entropy_error(y, t):

@@ -125,10 +125,15 @@ class mean_squared_error:
     def __init__(self):
         self.loss = None
         self.t = None
+        self.original_x_shape = None
 
     def forward(self, x, t):
-        self.t = t
-        self.loss = MeanSquaredError(x, t)
+        #self.x = x
+        self.original_x_shape = x.shape #元の形を記憶させる
+        self.t = t.reshape(x.shape[0], -1)
+        #self.t.reshape(x.shape[0], 1)
+        self.loss = MeanSquaredError(x, self.t)
+        self.loss = self.loss.reshape(*self.original_x_shape)
 
         return self.loss
 
