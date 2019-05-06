@@ -81,7 +81,12 @@ class Sequential:
             #layers.reverse()
             for layer in ReLayers:
                 dout = layer.backward(dout)
-
+            #重みの更新
+            for i in range(len(self.sequential) -1):
+                self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
+                    self.sequential[i].dense['Affine'].dW, self.sequential[i].dense['Affine'].dB
+            #self.sequential[1].
+            #grads['W']
         #Sequential.history['loss'] = Sequential.values
 
     #def evaluate(self, x_test, y_test):
@@ -125,6 +130,9 @@ class InputLayer:
         self.input_data = input_data
         return self.input_data
 
+    def backward(self, dout):
+        pass
+
 
 class Dense:
     def __init__(self, units, activation):
@@ -142,12 +150,16 @@ class Dense:
         K = 2
         #input_size = input_unit_size.values()
         #初期値の計算
-        self.params['Weight'] = K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        self.params['Bias']   = np.zeros(self.params['Units'])                                                                         #閾値
+        #self.params['Weight'] = K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        #self.params['Bias']   = np.zeros(self.params['Units'])                                                                         #閾値
+        weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        bias   =  np.zeros(self.params['Units'])                                                                         #閾値
+        
+        return weight, bias
 
     def unit(self, input_size):
         #初期値を設定
-        self.InitParams(input_size)
+        self.params['Weight'], self.params['Bias'] = self.InitParams(input_size)
         #活性化関数を設定
         #self._class = globals()[self.dense['Activation']]
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
@@ -205,7 +217,8 @@ y_train = data_[:, 2]   #正解データをセット
 
 module = Sequential()
 module.add(InputLayer(input_shape = (20,2)))
-module.add(Dense(1, activation = 'liner'))
+module.add(Dense(50, activation = 'liner'))
+module.add(Dense(1,  activation = 'liner'))
 module.compile('mean_squared_error')
 
 #学習

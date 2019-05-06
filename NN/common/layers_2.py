@@ -84,7 +84,7 @@ class affine:
         self.original_x_shape = None
         #重み・バイアスパラメータの微分
         self.dW = None
-        self.db = None
+        self.dB = None
 
     def forward(self, x):
         #テンソル対応
@@ -99,7 +99,7 @@ class affine:
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
         self.dW = np.dot(self.x.T, dout)
-        self.db = np.sum(dout, axis = 0)
+        self.dB = np.sum(dout, axis = 0)
 
         dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
