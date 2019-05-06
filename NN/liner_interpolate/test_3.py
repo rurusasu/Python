@@ -57,6 +57,7 @@ class Sequential:
                 x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
                 t_batch = t[batch_mask]
 
+                
                 #推論を行う
                 for layers in self.sequential:
                     x_batch = layers.forward(x_batch)
@@ -70,7 +71,7 @@ class Sequential:
                 TrainRow_size = TrainRow_size - batch_size
 
             #1バッチが終了すると重みと閾値を更新する
-            AveLoss = sum(Sequential.loss) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
+            AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             Sequential.history.append(AveLoss)
             dout = AveLoss
             #layers = list(self.LastLayer.values())
