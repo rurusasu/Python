@@ -197,7 +197,7 @@ class Dense:
 
 
 
-
+#訓練データの読み込み
 data = np.loadtxt(
     "save_data.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
@@ -205,21 +205,35 @@ data = np.loadtxt(
     ndmin=2          #配列の最低次元
     )
 
+#テストデータの読み込み
+test = np.loadtxt(
+    "test_data.csv", #読み込むファイル名(例"save_data.csv")
+    dtype=float,     #データのtype
+    delimiter=",",   #区切り文字の指定
+    ndmin=2          #配列の最低次元
+    )
 
 
 
 #読み込んだデータを学習用にコピーする
 data_1 = data_copy(data)
+test_1 = data_copy(test)
 
 #標準化
 data_ = data_std(data_1)
+test_ = data_std(test_1)
 
 #正規化
 data_ = data_nom(data_)
+test_ = data_nom(test_)
 
-
-x_train = data_[:, 0:2] #学習データをセット
+#訓練データのセット
+x_train = data_[:, 0:2] #入力データをセット
 y_train = data_[:, 2]   #正解データをセット
+
+#テストデータのセット
+x_test  = test_[:, 0:2] #入力データをセット
+y_test  = test_[:, 2]   #正解データをセット
 
 module = Sequential()
 module.add(InputLayer(input_shape = (20,2)))
