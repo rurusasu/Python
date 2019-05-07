@@ -5,9 +5,13 @@ import matplotlib.pyplot as plt
 #行列の範囲の設定
 row_renge = 3 #列数
 x_renge_max = 100  #x軸の最大値
+x_test_max  = 100.5
 x_renge_min = -100 #x軸の最小値
+x_test_min  = -100.5
 y_renge_max = 100  #y軸の最大値
+y_test_max  = 100.5
 y_renge_min = -100 #y軸の最小値
+y_test_min  = -100.5
 delimiter = 1 #値の間隔
 
 
@@ -54,13 +58,16 @@ def plot3d(X, Y):
     plt.show()
 
 
-def func_data(x_renge_max, xrenge_min, y_renge_max, y_renge_min, delimiter, row_renge):
+def func_data(x_renge_max, x_renge_min, y_renge_max, y_renge_min, delimiter, row_renge):
     #初期設定
     data = np.arange(1, row_renge+1, delimiter)
     x = np.arange(x_renge_min, x_renge_max+1, delimiter) #xの配列を作成
     y = np.arange(y_renge_min, y_renge_max+1, delimiter) #yの配列を作成
+    x_test = np.arange(x_test_min, x_test_max+1, delimiter)
+    y_test = np.arange(x_test_min, x_test_max+1, delimiter)
     counter = 0
 
+    #訓練データの作成
     for i in x:
         for j in y:
             z = func(i, j)
@@ -72,11 +79,27 @@ def func_data(x_renge_max, xrenge_min, y_renge_max, y_renge_min, delimiter, row_
                 data = np.vstack((data, num))
             counter = counter + 1
     
+    counter = 0
+
+    #テストデータの作成
+    for i in x_test:
+        for j in y_test:
+            z = func(i, j)
+            num = np.array([i, j, z])
+
+            if (counter == 0):
+                data = num
+            else:
+                data = np.vstack((data, num))
+            counter = counter + 1
+
     #dataをグラフとして描写
     plot3d(x, y)
 
-    #データをファイルに書き込み
+    #訓練データをファイルに書き込み
     write("save_data.csv", data)
+    #テストデータをファイルに書き込み
+    write("test_data.csv", data)
 
 
 

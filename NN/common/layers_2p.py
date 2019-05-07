@@ -98,8 +98,8 @@ class affine:
 
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.x.T, dout)
-        self.dB = np.sum(dout, axis = 0)
+        self.W = np.dot(self.x.T, dout)
+        self.B = np.sum(dout, axis = 0)
 
         dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx

@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from common.layers_2 import *
+from common.layers_2p import *
 from collections import OrderedDict
 
 
@@ -70,23 +70,27 @@ class Sequential:
                 t = np.delete(t, batch_mask)
                 TrainRow_size = TrainRow_size - batch_size
 
-            #1バッチが終了すると重みと閾値を更新する
+            #1エポックが終了すると重みと閾値を更新する
             AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             Sequential.history.append(AveLoss)
             dout = AveLoss
 
-            loss_W = 
+            Sequential.loss = []  #lossを再初期化
+
             #layers = list(self.LastLayer.values())
             #逆伝播を行うためにレイヤを反転
-            ReLayers = self.sequential
-            ReLayers.reverse()
+            self.sequential.reverse()
+            #ReLayers.reverse()
             #layers.reverse()
-            for layer in ReLayers:
+            #逆伝搬および重みの更新
+            for layer in self.sequential:
                 dout = layer.backward(dout)
+            
+            self.sequential.reverse()
             #重みの更新
-            for i in range(len(self.sequential) -1):
-                self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
-                    self.sequential[i].dense['Affine'].dW, self.sequential[i].dense['Affine'].dB
+            #for i in range(len(self.sequential) -1):
+                #self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
+                    #self.sequential[i].dense['Affine'].dW, self.sequential[i].dense['Affine'].dB
             #self.sequential[1].
             #grads['W']
         #Sequential.history['loss'] = Sequential.values
@@ -225,5 +229,5 @@ module.compile('mean_squared_error')
 
 #学習
 epochs = 20
-batch_size = 20
+batch_size = 2
 history = module.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)

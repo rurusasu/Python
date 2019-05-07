@@ -82,7 +82,8 @@ class test:
 
     def add(self, layer_name):
         key = 'layer' + str(test.count)
-        dic = dict(zip(key, layer_name))
+        #dic = dict(zip(key, layer_name))
+        dic = dict(key, layer_name)
         self.sequential.update(dic)
 
         test.count += 1
@@ -96,6 +97,16 @@ class test2:
         self.params['Bias']   = None
         self.activation = activation
 
+#class test3: OrderedDict()   #add関数が存在しないためエラー
 
-module = test()
+class test4:
+    def __init__(self):
+        pass
+
+    #def add(self, layer_name): OrderedDict()
+    def add(self, layer_name): pass
+
+module = test4()
 module.add(test2(10, 'liner'))
+
+print (module.__dict__)
