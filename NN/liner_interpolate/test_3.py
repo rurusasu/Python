@@ -9,7 +9,9 @@ from collections import OrderedDict
 class Sequential:
     #sequential = []
     loss = []
-    history = []
+    #history = []
+    #history = OrderedDict()
+    history = {}
     count = 0
     Layers = {}
 
@@ -18,6 +20,9 @@ class Sequential:
         #self.sequential = OrderedDict()
         #self.sequential = {'input':None}
         self.sequential = []
+        Sequential.history['loss']    = []
+        Sequential.history['acc']     = []
+        Sequential.history['val_acc'] = []
 
     def add(self, layer_name):
         self.sequential.append(layer_name)
@@ -45,9 +50,9 @@ class Sequential:
         self.LastLayer = globals()[loss]()
 
 
-    def fit(self, train_data, test_data, batch_size, epochs):
-        x = train_data
-        t = test_data
+    def fit(self, x_train, t_train, batch_size, epochs, validation_data):
+        x = x_train
+        t = t_train
         TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
 
@@ -59,11 +64,12 @@ class Sequential:
 
                 
                 #推論を行う
-                for layers in self.sequential:
-                    x_batch = layers.forward(x_batch)
+                #for layers in self.sequential:
+                    #x_batch = layers.forward(x_batch)
+                output = self.Predict(x_batch)
                 
                 #誤差を保存する
-                Sequential.loss.append(self.LastLayer.forward(x_batch, t_batch))
+                Sequential.loss.append(self.LastLayer.forward(output, t_batch))
 
                 #全データから使用したbatchデータを削除。削除された分データは詰められる
                 x = np.delete(x, batch_mask, 0)
@@ -72,7 +78,8 @@ class Sequential:
 
             #1エポックが終了すると重みと閾値を更新する
             AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
-            Sequential.history.append(AveLoss)
+            #Sequential.history.append(AveLoss)
+            Sequential.history['loss'].append(AveLoss)
             dout = AveLoss
 
             Sequential.loss = []  #lossを再初期化
@@ -87,6 +94,14 @@ class Sequential:
                 dout = layer.backward(dout)
             
             self.sequential.reverse()
+
+            #正解率を計算
+            train_acc = self.accuracy(x_batch, t_batch)
+            test_acc  = self.accuracy(validation_data[0], validation_data[1])
+            Sequential.history['acc'].append(train_acc)
+            Sequential.history['val_acc'].append(test_acc)
+
+        return Sequential.history
             #重みの更新
             #for i in range(len(self.sequential) -1):
                 #self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
@@ -101,19 +116,28 @@ class Sequential:
     ########################################
     ########      内部関数       ###########
     ########################################
-    def Predict(self):
-        y = None
-        for layer in Sequential.sequential.values():
-            y = layer.unit(y)
-            Sequential.values.append(y)
+    def Predict(self, x_batch):
+        #y = None
+        #for layers in Sequential.sequential:
+            #y = layer.unit(y)
+            #Sequential.values.append(y)
+        for layers in self.sequential:
+            x_batch = layers.forward(x_batch)
 
-        Layers = dict(zip(Sequential.sequential, Sequential.values))
-        return Layers
+        #Layers = dict(zip(Sequential.sequential, Sequential.values))
+        #return Layers
+        return x_batch
 
-    def Loss(self, loss):
-        self.y = Predict()
+    #def Loss(self, loss):
+        #self.y = Predict()
 
+    def accuracy(self, x, t):
+        y = self.Predict(x)
+        y = np.argmax(y, axis = 1)
+        if t.ndim != 1 : t = np.argmax(t, axis = 1)
 
+        accuracy = np.sum(y == t) / float(x.shape[0])
+        return accuracy
 
 
 class InputLayer:
@@ -229,11 +253,12 @@ test_ = data_nom(test_)
 
 #訓練データのセット
 x_train = data_[:, 0:2] #入力データをセット
-y_train = data_[:, 2]   #正解データをセット
+t_train = data_[:, 2]   #正解データをセット
 
 #テストデータのセット
 x_test  = test_[:, 0:2] #入力データをセット
-y_test  = test_[:, 2]   #正解データをセット
+t_test  = test_[:, 2]   #正解データをセット
+
 
 module = Sequential()
 module.add(InputLayer(input_shape = (20,2)))
@@ -244,4 +269,17 @@ module.compile('mean_squared_error')
 #学習
 epochs = 20
 batch_size = 2
-history = module.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
+
+#lossグラフ
+loss     = history.
+val_acc = history.history['val_loss']
+
+nb_epoch = len(loss)
+plt.plot(range(nb_epoch), loss,     marker = '.', label = 'acc')
+plt.plot(range(nb_epoch), val_loss, marker = '.', label = 'val_acc')
+plt.legend(loc = 'best', fontsize = 10)
+plt.grid()
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.show()
