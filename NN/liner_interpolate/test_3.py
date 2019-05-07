@@ -74,6 +74,8 @@ class Sequential:
             AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             Sequential.history.append(AveLoss)
             dout = AveLoss
+
+            loss_W = 
             #layers = list(self.LastLayer.values())
             #逆伝播を行うためにレイヤを反転
             ReLayers = self.sequential
