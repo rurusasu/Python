@@ -73,3 +73,29 @@ print('A = ', A.shape)
 print('B1 = ', B1.shape)
 print('B2 = ', B2.shape)
 print('B3 = ', B3.shape)
+
+
+class test:
+    count = 0
+    def __init__(self):
+        self.sequential = OrderedDict()
+
+    def add(self, layer_name):
+        key = 'layer' + str(test.count)
+        dic = dict(zip(key, layer_name))
+        self.sequential.update(dic)
+
+        test.count += 1
+
+class test2:
+    def __init__(self, units, activation):
+        self.dense = OrderedDict()
+        self.params = {}
+
+        self.params['Weight'] = None
+        self.params['Bias']   = None
+        self.activation = activation
+
+
+module = test()
+module.add(test2(10, 'liner'))
