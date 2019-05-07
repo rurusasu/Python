@@ -110,3 +110,39 @@ module = test4()
 module.add(test2(10, 'liner'))
 
 print (module.__dict__)
+
+def test5():
+    #output  = []
+    output  = {}
+    history = {}
+    history['loss'] = None
+    history['acc']  = None
+    #output.append(history)
+    output['history'] = history
+    
+    return output
+
+#a = test5()
+#print(a.history) #historyがkeyとして登録されているので、表示したい場合はa['history']にする必要がある。
+
+class output: pass
+
+class test6C:
+    def __init__(self):
+        self.Output = output()
+        self.Output.history = {}
+
+        self.Output.history['loss'] = []
+        self.Output.history['acc']  = []
+
+    def test6(self):
+        self.Output.history['loss'].append([0, 0])
+        self.Output.history['acc'].append([1, 1])
+
+        return self.Output
+
+a = test6C()
+b = a.test6()
+c = b.history['loss']
+print(b)
+print(c)

@@ -5,24 +5,29 @@ import matplotlib.pyplot as plt
 from common.layers_2p import *
 from collections import OrderedDict
 
+class output: pass
 
 class Sequential:
     #sequential = []
     loss = []
     #history = []
     #history = OrderedDict()
-    history = {}
+    #history = {}
     count = 0
     Layers = {}
+    outputdata = {}
 
     def __init__(self):
         #pass
         #self.sequential = OrderedDict()
         #self.sequential = {'input':None}
         self.sequential = []
-        Sequential.history['loss']    = []
-        Sequential.history['acc']     = []
-        Sequential.history['val_acc'] = []
+        self.Output = output()
+        self.Output.history = {}
+
+        self.Output.history['loss']    = []
+        self.Output.history['acc']     = []
+        self.Output.history['val_acc'] = []
 
     def add(self, layer_name):
         self.sequential.append(layer_name)
@@ -53,6 +58,7 @@ class Sequential:
     def fit(self, x_train, t_train, batch_size, epochs, validation_data):
         x = x_train
         t = t_train
+        loss = []
         TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
 
@@ -69,7 +75,8 @@ class Sequential:
                 output = self.Predict(x_batch)
                 
                 #誤差を保存する
-                Sequential.loss.append(self.LastLayer.forward(output, t_batch))
+                #Sequential.loss.append(self.LastLayer.forward(output, t_batch))
+                loss.append(self.LastLayer.forward(output, t_batch))
 
                 #全データから使用したbatchデータを削除。削除された分データは詰められる
                 x = np.delete(x, batch_mask, 0)
@@ -77,12 +84,14 @@ class Sequential:
                 TrainRow_size = TrainRow_size - batch_size
 
             #1エポックが終了すると重みと閾値を更新する
-            AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
+            #AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
+            AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             #Sequential.history.append(AveLoss)
-            Sequential.history['loss'].append(AveLoss)
+            self.Output.history['loss'].append(AveLoss)
             dout = AveLoss
 
-            Sequential.loss = []  #lossを再初期化
+            #Sequential.loss = []  #lossを再初期化
+            loss = []
 
             #layers = list(self.LastLayer.values())
             #逆伝播を行うためにレイヤを反転
@@ -98,10 +107,10 @@ class Sequential:
             #正解率を計算
             train_acc = self.accuracy(x_batch, t_batch)
             test_acc  = self.accuracy(validation_data[0], validation_data[1])
-            Sequential.history['acc'].append(train_acc)
-            Sequential.history['val_acc'].append(test_acc)
+            self.Output.history['acc'].append(train_acc)
+            self.Output.history['val_acc'].append(test_acc)
 
-        return Sequential.history
+        return self.Output
             #重みの更新
             #for i in range(len(self.sequential) -1):
                 #self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
@@ -267,13 +276,13 @@ module.add(Dense(1,  activation = 'liner'))
 module.compile('mean_squared_error')
 
 #学習
-epochs = 20
+epochs = 2
 batch_size = 2
 history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
 
 #lossグラフ
-loss     = history.
-val_acc = history.history['val_loss']
+loss    = history.history['loss']
+val_acc = history.history['val_acc']
 
 nb_epoch = len(loss)
 plt.plot(range(nb_epoch), loss,     marker = '.', label = 'acc')
