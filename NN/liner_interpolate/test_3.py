@@ -8,19 +8,8 @@ from collections import OrderedDict
 class output: pass
 
 class Sequential:
-    #sequential = []
-    loss = []
-    #history = []
-    #history = OrderedDict()
-    #history = {}
-    count = 0
-    Layers = {}
-    outputdata = {}
 
     def __init__(self):
-        #pass
-        #self.sequential = OrderedDict()
-        #self.sequential = {'input':None}
         self.sequential = []
         self.Output = output()
         self.Output.history = {}
@@ -30,27 +19,13 @@ class Sequential:
         self.Output.history['val_acc'] = []
 
     def add(self, layer_name):
+        #リストにレイヤの名前を代入
         self.sequential.append(layer_name)
-        #self.sequential.update(layer_name)
-        #Sequential.sequential.append(layer_name) #リストにレイヤの名前を代入
-        #LayerKey = ('Layer' + '%s' %(Sequential.count+1))
-        #Sequential.count += 1
-        #LayerDict = dict(LayerKey, layer_name)
-        #Sequential.sequential.update(Sequential.sequential, LayerDict)
 
     def compile(self, loss):
-        #for i in range(len(Sequential.sequential)):
-            #LayerKey = ('Layer' + '%s' %(i+1))
-            #values = dict(LayerKey, Sequential.sequential[i])
-            #Sequential.Dictionaly.update(values)
-            #self.Layers = self.Predict()
-        #for layer in self.sequential:
-            #Sequential.Layers.update(layer)
-
         x = 0
         for layers in self.sequential:
             x = layers.unit(x)
-            #LayerParams = x.values()
 
         self.LastLayer = globals()[loss]()
 
@@ -70,12 +45,9 @@ class Sequential:
 
                 
                 #推論を行う
-                #for layers in self.sequential:
-                    #x_batch = layers.forward(x_batch)
                 output = self.Predict(x_batch)
                 
                 #誤差を保存する
-                #Sequential.loss.append(self.LastLayer.forward(output, t_batch))
                 loss.append(self.LastLayer.forward(output, t_batch))
 
                 #全データから使用したbatchデータを削除。削除された分データは詰められる
@@ -84,20 +56,15 @@ class Sequential:
                 TrainRow_size = TrainRow_size - batch_size
 
             #1エポックが終了すると重みと閾値を更新する
-            #AveLoss = np.sum(Sequential.loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
-            #Sequential.history.append(AveLoss)
             self.Output.history['loss'].append(AveLoss)
             dout = AveLoss
 
-            #Sequential.loss = []  #lossを再初期化
-            loss = []
+            loss = [] #lossを再初期化
 
-            #layers = list(self.LastLayer.values())
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
-            #ReLayers.reverse()
-            #layers.reverse()
+
             #逆伝搬および重みの更新
             for layer in self.sequential:
                 dout = layer.backward(dout)
@@ -111,34 +78,16 @@ class Sequential:
             self.Output.history['val_acc'].append(test_acc)
 
         return self.Output
-            #重みの更新
-            #for i in range(len(self.sequential) -1):
-                #self.sequential[i].params['Weight'], self.sequential[i].params['Bias'] = \
-                    #self.sequential[i].dense['Affine'].dW, self.sequential[i].dense['Affine'].dB
-            #self.sequential[1].
-            #grads['W']
-        #Sequential.history['loss'] = Sequential.values
-
-    #def evaluate(self, x_test, y_test):
 
 
     ########################################
     ########      内部関数       ###########
     ########################################
     def Predict(self, x_batch):
-        #y = None
-        #for layers in Sequential.sequential:
-            #y = layer.unit(y)
-            #Sequential.values.append(y)
         for layers in self.sequential:
             x_batch = layers.forward(x_batch)
 
-        #Layers = dict(zip(Sequential.sequential, Sequential.values))
-        #return Layers
         return x_batch
-
-    #def Loss(self, loss):
-        #self.y = Predict()
 
     def accuracy(self, x, t):
         y = self.Predict(x)
@@ -151,18 +100,13 @@ class Sequential:
 
 class InputLayer:
     def __init__(self, input_shape):
-        #self.input = OrderedDict()
-        #self.input = {}
         self.input_data = None
         if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
-            #self.input['input'] = 1 #配列をn行1列として考える
             self.input = 1
         elif len(input_shape) == 2:
-            #self.input['input'] = input_shape[1]
             self.input = input_shape[1]
 
     def unit(self, y):
-        #return self.input.values() #入力データの列数を返す
         return self.input
 
     def forward(self, input_data):
@@ -177,20 +121,16 @@ class Dense:
     def __init__(self, units, activation):
         self.dense = OrderedDict()                       #関数の辞書
         self.RevDense = None                             #関数の辞書の反転(逆伝播で使用)
+        self.activation = activation                     #活性化関数名
+
         self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
-        #ある層の情報
-        #self.dense['Activation'] = globals()[activation] #活性化関数名
         self.params['Units'] = units                     #ユニットの数
         self.params['Weight'] = None                     #重み
         self.params['Bias'] = None                       #閾値
-        self.activation = activation
 
     def InitParams(self, input_size):
         K = 2
-        #input_size = input_unit_size.values()
         #初期値の計算
-        #self.params['Weight'] = K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        #self.params['Bias']   = np.zeros(self.params['Units'])                                                                         #閾値
         weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
         bias   =  np.zeros(self.params['Units'])                                                                         #閾値
         
@@ -200,15 +140,11 @@ class Dense:
         #初期値を設定
         self.params['Weight'], self.params['Bias'] = self.InitParams(input_size)
         #活性化関数を設定
-        #self._class = globals()[self.dense['Activation']]
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
-        self.dense['Activation'] = globals()[self.activation]()
-        #self.dense['Activation'] = globals()['liner']()
-        #self.RevDense = self.dense
-        #reversed(self.RevDense)
+        self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
 
         return self.params['Units']
-        #return self.dense
+
 
     def forward(self, input_data):
         x = input_data
@@ -216,6 +152,7 @@ class Dense:
             x = layer.forward(x)
 
         return x
+
 
     def backward(self, dout):
         x = dout
