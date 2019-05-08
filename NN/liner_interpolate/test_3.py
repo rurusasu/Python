@@ -57,7 +57,8 @@ class Sequential:
 
             #1エポックが終了すると重みと閾値を更新する
             AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
-            self.Output.history['loss'].append(AveLoss)
+            AveLoss = np.sum(AveLoss, axis = 0) / AveLoss.size
+            self.Output.history['loss'].append(AveLoss)    #lossリストに値を格納
             dout = AveLoss
 
             loss = [] #lossを再初期化
