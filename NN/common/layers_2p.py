@@ -143,6 +143,35 @@ class mean_squared_error:
         return dx
 
 
+#####損失関数#####
+class LinerWithLoss:
+    def __init__(self):
+        self.loss = None #損失
+        self.y    = None #linerの出力
+        self.t    = None #教師データ
+
+    def forward(self, x, t):
+        self.t = t
+        self.y = x
+        if t.shape != x.shape:
+            self.t = self.t.reshape(self.t.size, 1)
+            self.y = self.y.reshape(self.y.size, 1)
+        self.loss = MeanSquaredError(self.y, self.t)
+
+        return self.loss
+
+    def backward(self, dout = 1):
+        batch_size = self.t.shape[0]
+        if self.t.size == self.y.size:
+            dx = (self.y - self.t) / batch_size
+        else:
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1
+            dx = dx / batch_size
+
+        return dx
+
+
 #Softmax & 交差エントロピー誤差を含めた計算を行うレイヤ
 class SoftmaxWithLoss:
     def __init__(self):
@@ -158,8 +187,13 @@ class SoftmaxWithLoss:
         return self.loss
     
     def backward(self, dout = 1):
-        batch_size = self.shape[0]
-        dx = (self.y - self.t) / batch_size
+        batch_size = self.t.shape[0]
+        if self.t.size == self.y.size:
+            dx = (self.y - self.t) / batch_size
+        else:
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1
+            dx = dx / batch_size
 
         return dx
 
