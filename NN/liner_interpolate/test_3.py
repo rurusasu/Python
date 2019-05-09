@@ -56,11 +56,20 @@ class Sequential:
             TrainRow_size = TrainRow_size - batch_size
 
             #1エポックが終了すると重みと閾値を更新する
+<<<<<<< HEAD
+            AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
+            AveLoss = np.sum(AveLoss, axis = 0) / AveLoss.size
+            self.Output.history['loss'].append(AveLoss)    #lossリストに値を格納
+            dout = AveLoss
+
+            loss = [] #lossを再初期化
+=======
             #AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
             #self.Output.history['loss'].append(AveLoss)
             self.Output.history['loss'].append(loss)
             #dout = AveLoss
             #loss = [] #lossを再初期化
+>>>>>>> 2874cc5e857b7145a93b67491616fc22180a4cab
 
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
@@ -215,8 +224,8 @@ module.add(Dense(1,  activation = 'relu'))
 module.compile('LinerWithLoss')
 
 #学習
-epochs = 2
-batch_size = 2
+epochs = 1000
+batch_size = 20
 history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
 
 #lossグラフ
