@@ -216,7 +216,7 @@ module.add(Dense(1,  activation = 'relu'))
 module.compile('LinerWithLoss')
 
 #学習
-epochs = 2
+epochs = 5
 batch_size = 20
 history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
 
