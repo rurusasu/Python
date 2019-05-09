@@ -2,6 +2,7 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
+from MyFunction import load_data
 from common.layers_2p import *
 from collections import OrderedDict
 
@@ -215,7 +216,7 @@ module.add(Dense(1,  activation = 'relu'))
 module.compile('LinerWithLoss')
 
 #学習
-epochs = 1000
+epochs = 2
 batch_size = 20
 history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
 
@@ -224,7 +225,7 @@ loss    = history.history['loss']
 val_acc = history.history['val_acc']
 
 nb_epoch = len(loss)
-plt.plot(range(nb_epoch), loss,     marker = '.', label = 'acc')
+plt.plot(range(nb_epoch), loss,     marker = '.', label = 'loss')
 plt.plot(range(nb_epoch), val_acc, marker = '.', label = 'val_acc')
 plt.legend(loc = 'best', fontsize = 10)
 plt.grid()
