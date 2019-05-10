@@ -122,14 +122,14 @@ class InputLayer:
 
 class Dense:
     def __init__(self, units, activation):
-        self.dense = OrderedDict()                       #関数の辞書
-        self.RevDense = None                             #関数の辞書の反転(逆伝播で使用)
-        self.activation = activation                     #活性化関数名
+        self.dense = OrderedDict()         #関数の辞書
+        self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
+        self.activation = activation       #活性化関数名
 
-        self.params = {}                                 #ユニット内での計算に必要なパラメータの辞書
-        self.params['Units'] = units                     #ユニットの数
-        self.params['Weight'] = None                     #重み
-        self.params['Bias'] = None                       #閾値
+        self.params = {}                   #ユニット内での計算に必要なパラメータの辞書
+        self.params['Units']  = units      #ユニットの数
+        self.params['Weight'] = None       #重み
+        self.params['Bias']   = None       #閾値
 
     def InitParams(self, input_size):
         K = 2
@@ -165,8 +165,6 @@ class Dense:
             x = RevLayer.backward(x)
 
         return x
-
-
 
 
 
@@ -212,8 +210,8 @@ t_test  = test_[:, 2]   #正解データをセット
 module = Sequential()
 module.add(InputLayer(input_shape = (20,2)))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(1,  activation = 'relu'))
-module.compile('LinerWithLoss')
+module.add(Dense(1,  activation = 'liner'))
+module.compile(loss = 'LinerWithLoss')
 
 #学習
 epochs = 5

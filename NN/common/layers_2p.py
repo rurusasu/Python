@@ -109,36 +109,43 @@ class affine:
 #恒等関数レイヤ
 class liner:
     def __init__(self):
-        self.x = None
+        self.x = None 
 
     def forward(self, x):
         self.x = x
         return self.x
 
     def backward(self, dout):
-        dx = dout
+        dx = 1 * dout
+
         return dx
 
 
 #2乗和誤差レイヤ
 class mean_squared_error:
     def __init__(self):
-        self.loss = None
-        self.t = None
-        self.original_x_shape = None
+        self.loss = None #損失
+        self.y    = None #linerの出力
+        self.t    = None #教師データ
 
     def forward(self, x, t):
-        #self.x = x
-        self.original_x_shape = x.shape #元の形を記憶させる
-        self.t = t.reshape(x.shape[0], -1)
-        #self.t.reshape(x.shape[0], 1)
-        self.loss = MeanSquaredError(x, self.t)
-        self.loss = self.loss.reshape(*self.original_x_shape)
+        self.y = x
+        self.t = t
+        if t.shape != x.shape:
+            self.y = self.t.reshape(self.y.size, 1)
+            self.t = self.y.reshape(self.t.size, 1)
+        self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss
 
     def backward(self, dout = 1):
-        dx = dout * (self.loss - self.t)
+        batch_size = self.t.shape[0]
+        if self.y.size == self.t.size:
+            dx = (self.y - self.t) / batch_size
+        else:
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1
+            dx = dx / batch_size
 
         return dx
 
@@ -151,18 +158,18 @@ class LinerWithLoss:
         self.t    = None #教師データ
 
     def forward(self, x, t):
-        self.t = t
         self.y = x
+        self.t = t
         if t.shape != x.shape:
-            self.t = self.t.reshape(self.t.size, 1)
-            self.y = self.y.reshape(self.y.size, 1)
+            self.y = self.t.reshape(self.y.size, 1)
+            self.t = self.y.reshape(self.t.size, 1)
         self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss
 
     def backward(self, dout = 1):
         batch_size = self.t.shape[0]
-        if self.t.size == self.y.size:
+        if self.y.size == self.t.size:
             dx = (self.y - self.t) / batch_size
         else:
             dx = self.y.copy()

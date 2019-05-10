@@ -37,15 +37,10 @@ def Softmax(x):
 #2乗和誤差
 def MeanSquaredError(y, t):
     if y.ndim == 1:
-        t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)
-
-    #教師データがone-hot-vectorの場合、正解ラベルのインデックスに変換
-    if t.size == y.size:
-        t = t.argmax(axis = 1)
+        t = t.reshape(1, t.size)
 
     batch_size = y.shape[0]
-    #return 0.5 * np.sum((y-t)**2, axis = 1)
     return 0.5 * np.sum((y-t)**2) / batch_size
 
 
