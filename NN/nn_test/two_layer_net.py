@@ -28,6 +28,7 @@ class TwoLayerNet:
         else:
             self.layers['Sigmoid1'] = Sigmoid()
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
+        #self.layers['Liner'] = Liner()
         if ActivationFunction == 1:
             self.layers['Relu2'] = Relu()
         else:

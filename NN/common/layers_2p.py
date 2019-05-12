@@ -68,7 +68,7 @@ class sigmoid:
         return out
 
     def backward(self, dout):
-        dx = dout * (1.0 - self.out) * self.out
+        delta = dout * (1.0 - self.out) * self.out
 
         return dx
 
@@ -142,10 +142,6 @@ class mean_squared_error:
         batch_size = self.t.shape[0]
         if self.y.size == self.t.size:
             dx = (self.y - self.t) / batch_size
-        else:
-            dx = self.y.copy()
-            dx[np.arange(batch_size), self.t] -= 1
-            dx = dx / batch_size
 
         return dx
 
@@ -161,8 +157,8 @@ class LinerWithLoss:
         self.y = x
         self.t = t
         if t.shape != x.shape:
-            self.y = self.t.reshape(self.y.size, 1)
-            self.t = self.y.reshape(self.t.size, 1)
+            self.y = self.y.reshape(self.y.size, 1)
+            self.t = self.t.reshape(self.t.size, 1)
         self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss

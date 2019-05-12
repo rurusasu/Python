@@ -56,9 +56,10 @@ class Relu:
 
         return dx
 
+
 #Sigmoidレイヤ
 class Sigmoid:
-    def __init__ (self):
+    def __init__(self):
         self.out = None
 
     def forward(self, x):
@@ -69,6 +70,20 @@ class Sigmoid:
 
     def backward(self, dout):
         dx = dout * (1.0 - self.out) * self.out
+
+        return dx
+
+
+#恒等関数レイヤ    
+class Liner:
+    def __init__(self):
+        pass
+
+    def forward(self, x):
+        return x
+
+    def backward(self, dout):
+        dx = 1.0 * dout
 
         return dx
 

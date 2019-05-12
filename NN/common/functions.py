@@ -36,19 +36,25 @@ def Softmax(x):
 #損失関数
 #2乗和誤差
 def MeanSquaredError(y, t):
+    return 0.5 * np.sum((y-t)**2)
+
+
+def MeanSquaredError2(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
 
     batch_size = y.shape[0]
-    return 0.5 * np.sum((y-t)**2) / batch_size
+    out = 0.5 * np.sum((y-t)**2) / batch_size
+
+    return out
 
 
 #交差エントロピー誤差
 def cross_entropy_error(y, t):
     if y.ndim == 1:
-        t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)
+        t = t.reshape(1, t.size)
 
     #教師データがone-hot-vectorの場合、正解ラベルのインデックスに変換
     if t.size == y.size:
