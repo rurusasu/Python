@@ -124,6 +124,20 @@ class InputLayer:
         pass
 
 
+
+class InitParams:
+    def __init__(self):
+        pass
+
+    #重みの初期値
+    #Xavierの一様分布
+    def glorot_uniform(self, Units_foward, Unit):
+        weight = np.random.randn(Units_foward, Units) / np.sqrt(Units_foward)
+
+        return weight
+
+
+
 class Dense:
     def __init__(self, units, activation):
         self.dense = OrderedDict()         #関数の辞書
@@ -137,17 +151,18 @@ class Dense:
 
         self.counter          = None
 
-    def InitParams(self, input_size):
-        K = 2
+    def initparams(self, input_size):
+        #K = 2
         #初期値の計算
-        weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        weight = InitParams.glorot_uniform(input_size, self.params['Units'])
         bias   =  np.zeros(self.params['Units'])                                                                         #閾値
-        
+                
         return weight, bias
 
     def unit(self, input_size, counter):
         #初期値を設定
-        self.params['Weight'], self.params['Bias'] = self.InitParams(input_size)
+        self.params['Weight'], self.params['Bias'] = self.initparams(input_size)
         #活性化関数を設定
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
         self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
@@ -218,14 +233,15 @@ t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = (20,2)))
+module.add(InputLayer(input_shape = (2,)))
+module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(1,  activation = 'liner'))
-module.compile(loss = 'LinerWithLoss')
+module.compile(loss = 'mean_squared_error')
 
 #学習
-epochs = 5
-batch_size = 20
+epochs = 20
+batch_size = 128
 history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
 
 #lossグラフ

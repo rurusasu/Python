@@ -87,7 +87,7 @@ class liner:
     def backward(self, dout):
         delta = 1 * dout
 
-        return dx
+        return delta
 
 
 #Affineレイヤ

@@ -149,13 +149,19 @@ print(b)
 print(c)
 
 
-(x_train, t_train),(x_test, t_test) = load_data("C:/Data/H31_Miki/lab/NN/MNIST")
+#(x_train, t_train),(x_test, t_test) = load_data("C:/Data/H31_Miki/lab/NN/MNIST")
 
-fig = plt.figure(figsize = (9, 9))
-fig.subplots_adjust(left = 0, right = 1, bottom = 0, top = 0.5, hspace = 0.05, wspace = 0.05)
+#fig = plt.figure(figsize = (9, 9))
+#fig.subplots_adjust(left = 0, right = 1, bottom = 0, top = 0.5, hspace = 0.05, wspace = 0.05)
 
-for i in range(81):
-    ax = fig.add_subplot(9, 9, i+1, xticks = [], yticks = [])
-    ax.imshow(x_train[i].reshape((28, 28)), cmap = 'gray')
+#for i in range(81):
+    #ax = fig.add_subplot(9, 9, i+1, xticks = [], yticks = [])
+    #ax.imshow(x_train[i].reshape((28, 28)), cmap = 'gray')
 
-plt.show()
+#plt.show()
+
+
+#Xavierの一様分布
+node_num = 100 #前層のノードの数
+w = np.random.randn(node_num, node_num) / np.sqrt(node_num)
+print(w)
