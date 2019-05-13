@@ -21,6 +21,7 @@ class MulLayer:
 
         return dx, dy
 
+
 #加算レイヤ
 class AddLayer:
     def __init__(self):
@@ -43,7 +44,7 @@ class relu:
     def __init__(self):
         self.mask = None
     
-    def forward(self, x):
+    def forward(self, x, counter):
         self.mask = (x <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
         out = x.copy()
         out[self.mask] = 0
@@ -55,6 +56,7 @@ class relu:
         dx = dout
 
         return dx
+
 
 #Sigmoidレイヤ
 class sigmoid:
@@ -73,6 +75,21 @@ class sigmoid:
         return dx
 
 
+#恒等関数レイヤ
+class liner:
+    def __init__(self):
+        self.x = None 
+
+    def forward(self, x, counter):
+        self.x = x
+        return self.x
+
+    def backward(self, dout):
+        delta = 1 * dout
+
+        return dx
+
+
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
@@ -86,13 +103,19 @@ class affine:
         self.dW = None
         self.dB = None
 
-    def forward(self, x):
+    def forward(self, x, counter):
         #テンソル対応
         self.original_x_shape = x.shape #元の形を記憶させる
         x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
         
         out = np.dot(self.x, self.W) + self.B
+
+        #printの設定
+        print('第%d層 - AffineLayer - Weight%d, %d' %(counter, counter-1, counter))
+        print(self.W)
+        print('第%d層 - AffineLayer - Bias%d' %(counter, counter))
+        print(self.B)
 
         return out
 
@@ -106,21 +129,6 @@ class affine:
 
 
 #出力層
-#恒等関数レイヤ
-class liner:
-    def __init__(self):
-        self.x = None 
-
-    def forward(self, x):
-        self.x = x
-        return self.x
-
-    def backward(self, dout):
-        dx = 1 * dout
-
-        return dx
-
-
 #2乗和誤差レイヤ
 class mean_squared_error:
     def __init__(self):

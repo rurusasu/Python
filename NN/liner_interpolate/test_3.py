@@ -2,13 +2,14 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from MyFunction import load_data
+from common.functions import *
 from common.layers_2p import *
 from collections import OrderedDict
 
 class output: pass
 
 class Sequential:
+    counter = 1
 
     def __init__(self):
         self.sequential = []
@@ -26,7 +27,8 @@ class Sequential:
     def compile(self, loss):
         x = 0
         for layers in self.sequential:
-            x = layers.unit(x)
+            x = layers.unit(x, Sequential.counter)
+            Sequential.counter = Sequential.counter + 1
 
         self.LastLayer = globals()[loss]()
 
@@ -109,7 +111,9 @@ class InputLayer:
         elif len(input_shape) == 2:
             self.input = input_shape[1]
 
-    def unit(self, y):
+    def unit(self, y, counter):
+        print('第%d層 - InputLayer' %counter)
+
         return self.input
 
     def forward(self, input_data):
@@ -131,6 +135,8 @@ class Dense:
         self.params['Weight'] = None       #重み
         self.params['Bias']   = None       #閾値
 
+        self.counter          = None
+
     def InitParams(self, input_size):
         K = 2
         #初期値の計算
@@ -139,12 +145,16 @@ class Dense:
         
         return weight, bias
 
-    def unit(self, input_size):
+    def unit(self, input_size, counter):
         #初期値を設定
         self.params['Weight'], self.params['Bias'] = self.InitParams(input_size)
         #活性化関数を設定
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
         self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
+
+        self.counter = counter
+        print('第%d層 - AffineLayer' %self.counter)
+        print('第%d層 - Activation %s' %(self.counter, self.activation))
 
         return self.params['Units']
 
@@ -152,7 +162,7 @@ class Dense:
     def forward(self, input_data):
         x = input_data
         for layer in self.dense.values():
-            x = layer.forward(x)
+            x = layer.forward(x, self.counter)
 
         return x
 
