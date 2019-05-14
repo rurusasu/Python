@@ -25,11 +25,6 @@ class Sequential:
         self.sequential.append(layer_name)
 
     def compile(self, loss):
-        x = 0
-        for layers in self.sequential:
-            x = layers.unit(x, Sequential.counter)
-            Sequential.counter = Sequential.counter + 1
-
         self.LastLayer = globals()[loss]()
 
 
@@ -39,6 +34,14 @@ class Sequential:
         #loss = []
         TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
+
+
+        #レイヤの行列を計算する
+        x = TrainCol_size
+        for layers in self.sequential:
+            x = layers.unit(x, Sequential.counter)
+            Sequential.counter = Sequential.counter + 1
+
 
         for i in range(epochs):
             batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
@@ -103,93 +106,9 @@ class Sequential:
         return accuracy
 
 
-class InputLayer:
-    def __init__(self, input_shape):
-        self.input_data = None
-        if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
-            self.input = 1
-        elif len(input_shape) == 2:
-            self.input = input_shape[1]
-
-    def unit(self, y, counter):
-        print('第%d層 - InputLayer' %counter)
-
-        return self.input
-
-    def forward(self, input_data):
-        self.input_data = input_data
-        return self.input_data
-
-    def backward(self, dout):
-        pass
 
 
 
-class InitParams:
-    def __init__(self):
-        pass
-
-    #重みの初期値
-    #Xavierの一様分布
-    def glorot_uniform(self, Units_foward, Unit):
-        weight = np.random.randn(Units_foward, Units) / np.sqrt(Units_foward)
-
-        return weight
-
-
-
-class Dense:
-    def __init__(self, units, activation):
-        self.dense = OrderedDict()         #関数の辞書
-        self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
-        self.activation = activation       #活性化関数名
-
-        self.params = {}                   #ユニット内での計算に必要なパラメータの辞書
-        self.params['Units']  = units      #ユニットの数
-        self.params['Weight'] = None       #重み
-        self.params['Bias']   = None       #閾値
-
-        self.counter          = None
-
-    def initparams(self, input_size):
-        #K = 2
-        #初期値の計算
-        #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        weight = InitParams.glorot_uniform(input_size, self.params['Units'])
-        bias   =  np.zeros(self.params['Units'])                                                                         #閾値
-                
-        return weight, bias
-
-    def unit(self, input_size, counter):
-        #初期値を設定
-        self.params['Weight'], self.params['Bias'] = self.initparams(input_size)
-        #活性化関数を設定
-        self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
-        self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
-
-        self.counter = counter
-        print('第%d層 - AffineLayer' %self.counter)
-        print('第%d層 - Activation %s' %(self.counter, self.activation))
-
-        return self.params['Units']
-
-
-    def forward(self, input_data):
-        x = input_data
-        for layer in self.dense.values():
-            x = layer.forward(x, self.counter)
-
-        return x
-
-
-    def backward(self, dout):
-        x = dout
-        self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
-        self.RevDense.reverse()
-        for RevLayer in self.RevDense:
-            x = RevLayer.backward(x)
-
-        return x
 
 
 
