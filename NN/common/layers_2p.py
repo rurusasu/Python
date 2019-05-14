@@ -216,25 +216,25 @@ class SoftmaxWithLoss:
 #入力レイヤ
 class InputLayer:
     def __init__(self, input_shape):
-        self.Input_Row_size = input_shape
-        self.Input_Col_size = None
+        #self.Input_Row_Size = input_shape
+        self.Input_Col_Size = None
         self.input          = None
-
-        if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
+        #
+        #if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
             #self.input = 1
-            pass
-        elif len(input_shape) == 2:
-            self.input = input_shape[1]
+            #pass
+        #elif len(input_shape) == 2:
+            #self.input = input_shape[1]
 
 
     def unit(self, Data_Col_Size, counter):
         print('第%d層 - InputLayer' %counter)
         self.Input_Col_Size = Data_Col_Size
     
-        return self.Input_Col_size
+        return self.Input_Col_Size
 
     def forward(self, input_data):
-        out = np.reshape(y, [self.Input_Row_Size, -1])
+        out = np.reshape(input_data, [-1, self.Input_Col_Size])
 
         return out
 
@@ -262,7 +262,7 @@ class InputLayer2:
 
 #全結合レイヤ
 class Dense:
-    def __init__(self,  Units, activation):
+    def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
         self.dense = OrderedDict()         #関数の辞書
         self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
         self.activation = activation       #活性化関数名
@@ -272,20 +272,27 @@ class Dense:
         self.params['Weight'] = None   #重み
         self.params['Bias']   = None   #閾値
 
-        self.counter          = None
+        #####   初期値の設定   #####
+        self.initialisation   = InitParams()
+        self.init_weight      = weight_initializer
+        self.init_bias        = bias_initializer
 
-    def initparams(self, Units_Col_size, input_size):
+        self.counter          = None
+        
+
+    def initparams(self, BefLayer_Size, Unit_size):
         #K = 2
         #初期値の計算
         #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        weight = InitParams.glorot_uniform(Units_Col_size, self.params['Units'])
-        bias   =  np.zeros(self.params['Units'])                                                                         #閾値
+        weight = InitParams.glorot_uniform(input_size=BefLayer_Size, hidden_size=Unit_size)
+        bias   = np.zeros(self.params['Units'])                                                                         #閾値
                 
         return weight, bias
 
-    def unit(self, Units_Col_Size, counter):
+    def unit(self, BefLayer_Size, counter):
         #初期値を設定
-        self.params['Weight'], self.params['Bias'] = self.initparams(self.params['Units'], Units_Col_Size)
+        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
+        self.params['Bias']   = np.zeros(self.params['Units'])  
         #活性化関数を設定
         self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
         self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
@@ -322,7 +329,7 @@ class InitParams:
 
     #重みの初期値
     #Xavierの一様分布
-    def glorot_uniform(self, Units_foward, Unit):
-        weight = np.random.randn(Units_foward, Units) / np.sqrt(Units_foward)
+    def glorot_uniform(self, input_size, hidden_size):
+        weight = np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
 
         return weight

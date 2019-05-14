@@ -35,11 +35,10 @@ class Sequential:
         TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
 
-
         #レイヤの行列を計算する
-        x = TrainCol_size
+        y = TrainCol_size
         for layers in self.sequential:
-            x = layers.unit(x, Sequential.counter)
+            y = layers.unit(y, Sequential.counter)
             Sequential.counter = Sequential.counter + 1
 
 
