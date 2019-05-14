@@ -141,8 +141,8 @@ class mean_squared_error:
         self.y = x
         self.t = t
         if t.shape != x.shape:
-            self.y = self.t.reshape(self.y.size, 1)
-            self.t = self.y.reshape(self.t.size, 1)
+            self.y = self.y.reshape(self.y.size, 1)
+            self.t = self.t.reshape(self.t.size, 1)
         self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss
@@ -237,6 +237,9 @@ class InputLayer:
         out = np.reshape(input_data, [-1, self.Input_Col_Size])
 
         return out
+
+    def backward(self, dout):
+        pass
 
 
 class InputLayer2:
