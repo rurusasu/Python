@@ -64,7 +64,6 @@ history = model.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, verb
 
 #検証
 score = model.evaluate(x_test, t_test, verbose=1)
-print()
 print('Test loss : ', score[0])
 print('Test accuracy :', score[1])
 

@@ -165,3 +165,11 @@ print(c)
 node_num = 100 #前層のノードの数
 w = np.random.randn(node_num, node_num) / np.sqrt(node_num)
 print(w)
+
+
+
+weight = np.random.randn(100, 100) / np.sqrt(100)
+print(weight)
+
+weight2 = np.sqrt(2) * weight
+print(weight2)

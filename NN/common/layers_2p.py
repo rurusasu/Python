@@ -45,14 +45,14 @@ class relu:
     def __init__(self):
         self.mask = None
     
-    def forward(self, x, counter):
+    def forward(self, x):
         self.mask = (x <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
         out = x.copy()
         out[self.mask] = 0
 
         return out
 
-    def backward(self, dout):
+    def backward(self, dout, counter):
         dout[self.mask] = 0
         dx = dout
 
@@ -81,11 +81,11 @@ class liner:
     def __init__(self):
         self.x = None 
 
-    def forward(self, x, counter):
+    def forward(self, x):
         self.x = x
         return self.x
 
-    def backward(self, dout):
+    def backward(self, dout, counter):
         delta = 1 * dout
 
         return delta
@@ -104,7 +104,7 @@ class affine:
         self.dW = None
         self.dB = None
 
-    def forward(self, x, counter):
+    def forward(self, x):
         #テンソル対応
         self.original_x_shape = x.shape #元の形を記憶させる
         x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
@@ -112,18 +112,18 @@ class affine:
         
         out = np.dot(self.x, self.W) + self.B
 
+        return out
+
+    def backward(self, dout, counter):
         #printの設定
         print('第%d層 - AffineLayer - Weight%d, %d' %(counter, counter-1, counter))
         print(self.W)
         print('第%d層 - AffineLayer - Bias%d' %(counter, counter))
         print(self.B)
 
-        return out
-
-    def backward(self, dout):
         dx = np.dot(dout, self.W.T)
-        self.W = np.dot(self.x.T, dout)
-        self.B = np.sum(dout, axis = 0)
+        self.W = self.W - np.dot(self.x.T, dout)
+        self.B = self.B - np.sum(dout, axis = 0)
 
         dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
@@ -288,7 +288,7 @@ class Dense:
         #初期値の計算
         #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
         weight = InitParams.glorot_uniform(input_size=BefLayer_Size, hidden_size=Unit_size)
-        bias   = np.zeros(self.params['Units'])                                                                         #閾値
+        bias   = np.zeros(self.params['Units'])                                                                           #閾値
                 
         return weight, bias
 
@@ -310,7 +310,7 @@ class Dense:
     def forward(self, input_data):
         x = input_data
         for layer in self.dense.values():
-            x = layer.forward(x, self.counter)
+            x = layer.forward(x)
 
         return x
 
@@ -320,7 +320,7 @@ class Dense:
         self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
         self.RevDense.reverse()
         for RevLayer in self.RevDense:
-            x = RevLayer.backward(x)
+            x = RevLayer.backward(x, self.counter)
 
         return x
 
@@ -336,3 +336,10 @@ class InitParams:
         weight = np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
 
         return weight
+
+    #Heの初期値
+    def he_nomal(self, input_size, hidden_size):
+        weight = np.sqrt(2) * np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
+
+        return weight
+ 

@@ -9,7 +9,8 @@ from collections import OrderedDict
 class output: pass
 
 class Sequential:
-    counter = 1
+    counter  = 1
+    counter2 = 1
 
     def __init__(self):
         self.sequential = []
@@ -29,11 +30,20 @@ class Sequential:
 
 
     def fit(self, x_train, t_train, batch_size, epochs, validation_data):
+        #TrainingData
         x = x_train
         t = t_train
+
+        #ValidationData
+        x_val_data = validation_data[0]
+        t_val_data = validation_data[1]
+
         #loss = []
         TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
         TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
+
+        ValidationRow_size = x_val_data.shape[0]
+        ValidationCol_size = x_val_data.shape[1]
 
         #レイヤの行列を計算する
         y = TrainCol_size
@@ -47,12 +57,15 @@ class Sequential:
             x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
             t_batch = t[batch_mask]
 
+            x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
+            t_val   = t_val_data[batch_mask]
                 
             #推論を行う
+            print('#######    学習%d回目    ########' %Sequential.counter2)
             output = self.Predict(x_batch)
+            Sequential.counter2 = Sequential.counter2 + 1
                 
             #誤差を保存する
-            #loss.append(self.LastLayer.forward(output, t_batch))
             loss = self.LastLayer.forward(output, t_batch)
 
             #全データから使用したbatchデータを削除。削除された分データは詰められる
@@ -61,11 +74,7 @@ class Sequential:
             TrainRow_size = TrainRow_size - batch_size
 
             #1エポックが終了すると重みと閾値を更新する
-            #AveLoss = np.sum(loss, axis = 1) / batch_size  #誤差の平均値(誤差の合計 ÷ バッチサイズ)を計算
-            #self.Output.history['loss'].append(AveLoss)
             self.Output.history['loss'].append(loss)
-            #dout = AveLoss
-            #loss = [] #lossを再初期化
 
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
@@ -80,10 +89,11 @@ class Sequential:
 
             #正解率を計算
             train_acc = self.accuracy(x_batch, t_batch)
-            test_acc  = self.accuracy(validation_data[0], validation_data[1])
+            test_acc  = self.accuracy(x_val, t_val)
             self.Output.history['acc'].append(train_acc)
             self.Output.history['val_acc'].append(test_acc)
 
+        print('loss = %f' %self.Output.history['loss'][epochs-1])
         return self.Output
 
 
@@ -98,8 +108,12 @@ class Sequential:
 
     def accuracy(self, x, t):
         y = self.Predict(x)
-        y = np.argmax(y, axis = 1)
-        if t.ndim != 1 : t = np.argmax(t, axis = 1)
+        #y = np.argmax(y, axis = 1)
+        #if t.ndim != 1 : t = np.argmax(t, axis = 1)
+
+        if y.shape != t.shape:
+            y = y.reshape(-1, 1)
+            t = t.reshape(-1, 1)
 
         accuracy = np.sum(y == t) / float(x.shape[0])
         return accuracy
@@ -160,7 +174,7 @@ module.compile(loss = 'mean_squared_error')
 #学習
 epochs = 20
 batch_size = 128
-history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, t_test))
+history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test))
 
 #lossグラフ
 loss    = history.history['loss']
