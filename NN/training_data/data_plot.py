@@ -3,15 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #行列の範囲の設定
-row_renge = 3 #列数
 x_renge_max = 100  #x軸の最大値
-x_test_max  = 100.5
 x_renge_min = -100 #x軸の最小値
-x_test_min  = -100.5
 y_renge_max = 100  #y軸の最大値
-y_test_max  = 100.5
 y_renge_min = -100 #y軸の最小値
+
+x_test_max  = 100.5
+x_test_min  = -100.5
+y_test_max  = 100.5
 y_test_min  = -100.5
+
+#Row_size    = 2 #行数
+Column_renge = 3 #列数
 delimiter = 1 #値の間隔
 
 
@@ -58,9 +61,11 @@ def plot3d(X, Y):
     plt.show()
 
 
-def func_data(x_renge_max, x_renge_min, y_renge_max, y_renge_min, delimiter, row_renge):
+def func_data(x_renge_max, x_renge_min, y_renge_max, y_renge_min, delimiter, Column_renge):
     #初期設定
-    data = np.arange(1, row_renge+1, delimiter)
+    data1 = np.arange(1, Column_renge+1, delimiter)
+    data2 = np.arange(1, Column_renge+1, delimiter)
+
     x = np.arange(x_renge_min, x_renge_max+1, delimiter) #xの配列を作成
     y = np.arange(y_renge_min, y_renge_max+1, delimiter) #yの配列を作成
     x_test = np.arange(x_test_min, x_test_max+1, delimiter)
@@ -74,9 +79,10 @@ def func_data(x_renge_max, x_renge_min, y_renge_max, y_renge_min, delimiter, row
             num = np.array([i, j, z])
             #print(num)
             if (counter == 0):
-                data = num
+                data1 = num
             else:
-                data = np.vstack((data, num))
+                data1 = np.vstack((data1, num))
+                #dat1a = np.hstack((data1, num))
             counter = counter + 1
     
     counter = 0
@@ -88,18 +94,19 @@ def func_data(x_renge_max, x_renge_min, y_renge_max, y_renge_min, delimiter, row
             num = np.array([i, j, z])
 
             if (counter == 0):
-                data = num
+                data2 = num
             else:
-                data = np.vstack((data, num))
+                data2 = np.vstack((data2, num))
+                #data2 = np.hstack((data2, num))
             counter = counter + 1
 
     #dataをグラフとして描写
     plot3d(x, y)
 
     #訓練データをファイルに書き込み
-    write("save_data.csv", data)
+    write("save_data.csv", data1)
     #テストデータをファイルに書き込み
-    write("test_data.csv", data)
+    write("test_data.csv", data2)
 
 
 

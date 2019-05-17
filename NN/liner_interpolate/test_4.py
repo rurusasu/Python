@@ -1,12 +1,5 @@
 import numpy as np
 
-x = np.random.normal(10, 5, (128, 2))
-t = np.random.normal(10, 5, (128, 1))
-W1 = np.ones((2, 50))
-W2 = np.ones((50, 1))
-B1 = np.zeros(50)
-B2 = np.zeros(1)
-
 #出力層
 #2乗和誤差レイヤ
 class mean_squared_error:
@@ -107,13 +100,263 @@ class affine:
         dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
 
-a1 = affine(W1, B1)
-r1 = relu()
-a2 = affine(W2, B2)
-r2 = relu()
-l = liner()
-loss = mean_squared_error()
 
+class InputLayer:
+    def __init__(self, input_shape):
+        #self.Input_Row_Size = input_shape
+        self.Input_Col_Size = None
+        self.input          = None
+        #
+        #if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
+            #self.input = 1
+            #pass
+        #elif len(input_shape) == 2:
+            #self.input = input_shape[1]
+
+
+    def unit(self, Data_Col_Size, counter):
+        print('第%d層 - InputLayer' %counter)
+        self.Input_Col_Size = Data_Col_Size
+    
+        return self.Input_Col_Size
+
+    def forward(self, input_data):
+        y = np.reshape(input_data, [-1, self.Input_Col_Size])
+
+        return out
+
+    def backward(self, dout):
+        pass
+
+
+    #データコピー
+def data_copy(data):
+    dim = data.ndim                      #受け取ったdataの次元を確認
+
+    if dim == 1 :                        #dataが1次元(配列)のとき
+        return data
+    else :                               #dataが2次元(行列)のとき
+        data_copy = np.empty_like(data)  #dataと同じ大きさの空の行列を作成
+        col = data.shape[1]              #dataの列数を取得
+
+        for i in range(col):
+            data_copy[:, i] = data[:, i] #対応する列に値をコピー
+        
+        return data_copy
+
+#標準化
+def data_std(data):
+    dim = data.ndim #受け取ったdataの次元を確認
+
+    if dim == 1 :   #dataが1次元(配列)のとき
+        return (data - data.mean()) / data.std()
+    else :                               #dataが2次元(行列)のとき
+        data_std = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
+        col = data.shape[1]              #dataの列数を取得
+
+        for i in range(col):
+            data_std[:, i] =(data[:, i] - data[:, i].mean()) / data[:, i].std() #対応する列を標準化
+        
+        return data_std
+
+
+#正規化
+def data_nom(data):
+    dim = data.ndim #受け取ったdataの次元を確認
+
+    if dim == 1 :   #dataが1次元(配列)のとき
+        return data_1[:, 0] / max(abs(data_1[:, 0]))
+    else :                               #dataが2次元(行列)のとき
+        data_nom = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
+        col = data.shape[1]              #dataの列数を取得
+
+        for i in range(col):
+            data_nom[:, i] =data[:, i] / max(abs(data[:, i])) #対応する列を正規化
+        
+        return data_nom
+
+
+#訓練データの読み込み
+data = np.loadtxt(
+    "save_data.csv", #読み込むファイル名(例"save_data.csv")
+    dtype=float,     #データのtype
+    delimiter=",",   #区切り文字の指定
+    ndmin=2          #配列の最低次元
+    )
+
+#テストデータの読み込み
+test = np.loadtxt(
+    "test_data.csv", #読み込むファイル名(例"save_data.csv")
+    dtype=float,     #データのtype
+    delimiter=",",   #区切り文字の指定
+    ndmin=2          #配列の最低次元
+    )
+
+
+
+#読み込んだデータを学習用にコピーする
+data_1 = data_copy(data)
+test_1 = data_copy(test)
+
+#標準化
+data_ = data_std(data_1)
+test_ = data_std(test_1)
+
+#正規化
+data_ = data_nom(data_)
+test_ = data_nom(test_)
+
+#訓練データのセット
+x_train = data_[:, 0:2] #入力データをセット
+t_train = data_[:, 2]   #正解データをセット
+
+#テストデータのセット
+x_test  = test_[:, 0:2] #入力データをセット
+t_test  = test_[:, 2]   #正解データをセット
+
+
+ACTIVATION = 1 #0:Sigmoid function, 1:ReLU function
+ReLU_GAIN  = 0.7
+
+if ACTIVATION == 1:
+    #for ReLU
+    eta      = 0.0001 #重みの学習係数(learning rate for weights),ReLUの場合、値を大きくすると誤差が減少しない。
+    beta     = 0.0001 #閾値の学習係数(learning rate for bias)(活性化関数を入力軸上で微小移動)
+    eta_myu  = 0.01   #慣性項（inertia）とは前回の重みの更新量を反映させる程度を表す
+    beta_myu = 0.01   #慣性項（inertia）とは前回の重みの更新量を反映させる程度を表す
+
+else:
+    #for Sigmoid
+    eta      = 0.1 #重みの学習係数(learning rate for weights),ReLUの場合、値を大きくすると誤差が減少しない。
+    beta     = 0.1 #閾値の学習係数(learning rate for bias)(活性化関数を入力軸上で微小移動)
+    eta_myu  = 0.1 #慣性項（inertia）とは前回の重みの更新量を反映させる程度を表す
+    beta_myu = 0.1 #慣性項（inertia）とは前回の重みの更新量を反映させる程度を表す
+
+
+
+
+Batch_size = x_train.shape[0]
+Iteration_limit = 20 # epoche回数
+Minibatch_size = 128
+
+#各レイヤごとの層数
+N1 = 2
+N2 = 50
+N3 = 50
+N4 = 50
+N5 = 1
+
+
+
+#重みの初期化
+w1 = np.random.randn(N1, N2) / np.sqrt(N1) 
+w2 = np.random.randn(N2, N3) / np.sqrt(N2)
+w3 = np.random.randn(N3, N4) / np.sqrt(N3)
+w4 = np.random.randn(N4, N5) / np.sqrt(N4)
+
+#閾値の初期化
+b2 = np.zeros(N2) 
+b3 = np.zeros(N3)
+b4 = np.zeros(N4)
+b5 = np.zeros(N5)
+
+#最初の重みの保存
+w1_1 = w1
+w2_1 = w2
+w3_1 = w3
+w4_1 = w4
+
+#最初の閾値の保存
+b2_1 = b2
+b3_1 = b3
+b4_1 = b4
+b5_1 = b5
+
+#状態ベクトルの初期化
+s1 = np.zeros((Minibatch_size, N1))
+s2 = np.zeros((Minibatch_size, N2))
+s3 = np.zeros((Minibatch_size, N3))
+s4 = np.zeros((Minibatch_size, N4))
+s5 = np.zeros((Minibatch_size, N5))
+
+#出力ベクトルの初期化
+x1 = np.zeros((Minibatch_size, N1))
+x2 = np.zeros((Minibatch_size, N2))
+x3 = np.zeros((Minibatch_size, N3))
+x4 = np.zeros((Minibatch_size, N4))
+x5 = np.zeros((Minibatch_size, N5))
+
+
+'''
+学習の進捗状況（訓練データ内の１サンプルあたりの誤差）を保存するバッファ
+誤差は目標出力とNNからの出力との差
+'''
+Ev_buff = np.zeros((Iteration_limit, 1))
+
+for i in range(Iteration_limit):
+    #行数からMinibatch_sizeだけランダムに値を抽出 replace(重複)
+    Batch_mask = np.random.choice(Batch_size, Minibatch_size, replace = False)
+    data_ = x_train                #訓練データをセット
+    data_ = data_[Batch_mask, 0:2] #全訓練データからBatch_maskだけ抽出
+
+    #抽出された訓練データの行数と列数を取得
+    Row    = data_.shape[0]
+    Column = data_.shape[1]
+    #標準化と正規化されたデータ保存用
+    x5_buff     = np.zeros((Row, N5)) #NNからの出力（第5層のユニットからの出力）の保存先を確保
+    x5_err_buff = np.zeros((Row, N5)) #NNからの出力（第5層のユニットからの出力）と訓練データとの誤差の保存先を確保
+    #標準化と正規化される前のオリジナルデータ保存用
+    x5_buff2 = np.zeros((Row, N5))
+    x5_err_buff2 = np.zeros((Row, N5))
+    for sample_counter in range(Minibatch_size):
+        #第一層
+        s1 = data_
+        x1 = s1 #入力層ではそのまま出力される
+        #第二層
+        s2 = np.zeros((Minibatch_size, N2)) #状態量を求めるために初期化する。
+        s2 = s2 + np.dot(x1, w1) #第二層の状態ベクトルの成分を求める。
+        s2 = s2 + b2 #状態量に閾値を加える。-> 活性化関数への入力となる。
+        if ACTIVATION == 0:
+            x2 = (1 / (1 + np.exp(-s2))) - 0.5
+        else:
+            mask = (x2 <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
+            x2[mask] = ReLU_GAIN * s2[mask]
+        #第三層
+        s3 = np.zeros((Minibatch_size, N3)) #状態量を求めるために初期化する。
+        s3 = s3 + np.dot(x2, w2) #第二層の状態ベクトルの成分を求める。
+        s3 = s3 + b3 #状態量に閾値を加える。-> 活性化関数への入力となる。
+        if ACTIVATION == 0:
+            x3 = (1 / (1 + np.exp(-s3))) - 0.5
+        else:
+            mask = (x3 <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
+            x3[mask] = ReLU_GAIN * s3[mask]
+        #第四層
+        s4 = np.zeros((Minibatch_size, N4)) #状態量を求めるために初期化する。
+        s4 = s4 + np.dot(x3, w3) #第二層の状態ベクトルの成分を求める。
+        s4 = s4 + b4 #状態量に閾値を加える。-> 活性化関数への入力となる。
+        if ACTIVATION == 0:
+            x4 = (1 / (1 + np.exp(-s4))) - 0.5
+        else:
+            mask = (x4 <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
+            x4[mask] = ReLU_GAIN * s4[mask]
+        #第五層
+        s5 = np.zeros((Minibatch_size, N5)) #状態量を求めるために初期化する。
+        s5 = s5 + np.dot(x4, w4) #第二層の状態ベクトルの成分を求める。
+        s5 = s5 + b5 #状態量に閾値を加える。-> 活性化関数への入力となる。
+        x5 = s5
+
+        x5_d = data_
+        x5_buff()
+
+
+#a1 = affine(W1, B1)
+#r1 = relu()
+#a2 = affine(W2, B2)
+#r2 = relu()
+#l = liner()
+#loss = mean_squared_error()
+
+'''
 for i in range(20):
     x = a1.forward(x)
     x = r1.forward(x)
@@ -128,5 +371,5 @@ for i in range(20):
     x = r1.backward(x)
     x = a1.backward(x)
 
-
 print(x)
+'''
