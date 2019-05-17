@@ -54,9 +54,9 @@ class relu:
 
     def backward(self, dout, counter):
         dout[self.mask] = 0
-        dx = dout
+        delta = dout
 
-        return dx
+        return delta
 
 
 #Sigmoidレイヤ
@@ -70,10 +70,11 @@ class sigmoid:
 
         return out
 
-    def backward(self, dout):
+    def backward(self, dout, counter):
+        print('第%d層 Sigmoid' %counter)
         delta = dout * (1.0 - self.out) * self.out
 
-        return dx
+        return delta
 
 
 #恒等関数レイヤ
@@ -122,8 +123,10 @@ class affine:
         print(self.B)
 
         dx = np.dot(dout, self.W.T)
-        self.W = self.W - np.dot(self.x.T, dout)
-        self.B = self.B - np.sum(dout, axis = 0)
+        #self.W = self.W - np.dot(self.x.T, dout)
+        #self.B = self.B - np.sum(dout, axis = 0)
+        self.W = np.dot(self.x.T, dout)
+        self.B = np.sum(dout, axis = 0)
 
         dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
@@ -148,11 +151,13 @@ class mean_squared_error:
         return self.loss
 
     def backward(self, dout = 1):
-        batch_size = self.t.shape[0]
-        if self.y.size == self.t.size:
-            dx = (self.y - self.t) / batch_size
+        #if dout != 1:
+        if dout == 1:
+            batch_size = self.t.shape[0]
+            if self.y.size == self.t.size:
+                dout = (self.y - self.t) / batch_size
 
-        return dx
+        return dout
 
 
 #####損失関数#####
@@ -297,7 +302,8 @@ class Dense:
         self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
         self.params['Bias']   = np.zeros(self.params['Units'])  
         #活性化関数を設定
-        self.dense['Affine'] = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
+        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
+        #self.dense['BatchNome'] = globals()['BatchNormalization'](gamma = 1, beta = 1)
         self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
 
         self.counter = counter
@@ -316,13 +322,12 @@ class Dense:
 
 
     def backward(self, dout):
-        x = dout
         self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
         self.RevDense.reverse()
         for RevLayer in self.RevDense:
-            x = RevLayer.backward(x, self.counter)
+            dout = RevLayer.backward(dout, self.counter)
 
-        return x
+        return dout
 
 
 #重みの初期値計算
@@ -342,4 +347,89 @@ class InitParams:
         weight = np.sqrt(2) * np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
 
         return weight
+
+
+class BatchNormalization:
+    """
+    http://arxiv.org/abs/1502.03167
+    """
+    def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
+        self.gamma = gamma
+        self.beta = beta
+        self.momentum = momentum
+        self.input_shape = None # Conv層の場合は4次元、全結合層の場合は2次元  
+
+        # テスト時に使用する平均と分散
+        self.running_mean = running_mean
+        self.running_var = running_var  
+        
+        # backward時に使用する中間データ
+        self.batch_size = None
+        self.xc = None
+        self.std = None
+        self.dgamma = None
+        self.dbeta = None
+
+    def forward(self, x, train_flg=True):
+        self.input_shape = x.shape
+        if x.ndim != 2:
+            N, C, H, W = x.shape
+            x = x.reshape(N, -1)
+
+        out = self.__forward(x, train_flg)
+        
+        return out.reshape(*self.input_shape)
+            
+    def __forward(self, x, train_flg):
+        if self.running_mean is None:
+            N, D = x.shape
+            self.running_mean = np.zeros(D)
+            self.running_var = np.zeros(D)
+                        
+        if train_flg:
+            mu = x.mean(axis=0)
+            xc = x - mu
+            var = np.mean(xc**2, axis=0)
+            std = np.sqrt(var + 10e-7)
+            xn = xc / std
+            
+            self.batch_size = x.shape[0]
+            self.xc = xc
+            self.xn = xn
+            self.std = std
+            self.running_mean = self.momentum * self.running_mean + (1-self.momentum) * mu
+            self.running_var = self.momentum * self.running_var + (1-self.momentum) * var            
+        else:
+            xc = x - self.running_mean
+            xn = xc / ((np.sqrt(self.running_var + 10e-7)))
+            
+        out = self.gamma * xn + self.beta 
+        return out
+
+    def backward(self, dout, counter):
+        print("第%d層 BatchNome" %counter)
+        if dout.ndim != 2:
+            N, C, H, W = dout.shape
+            dout = dout.reshape(N, -1)
+
+        dx = self.__backward(dout)
+
+        dx = dx.reshape(*self.input_shape)
+        return dx
+
+    def __backward(self, dout):
+        dbeta = dout.sum(axis=0)
+        dgamma = np.sum(self.xn * dout, axis=0)
+        dxn = self.gamma * dout
+        dxc = dxn / self.std
+        dstd = -np.sum((dxn * self.xc) / (self.std * self.std), axis=0)
+        dvar = 0.5 * dstd / self.std
+        dxc += (2.0 / self.batch_size) * self.xc * dvar
+        dmu = np.sum(dxc, axis=0)
+        dx = dxc - dmu / self.batch_size
+        
+        self.dgamma = dgamma
+        self.dbeta = dbeta
+        
+        return dx
  
