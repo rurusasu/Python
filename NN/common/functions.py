@@ -90,11 +90,16 @@ def data_std(data):
         return (data - data.mean()) / data.std()
     else :                               #dataが2次元(行列)のとき
         data_std = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
+        row = data.shape[0]              #dataの行数を取得
         col = data.shape[1]              #dataの列数を取得
 
-        for i in range(col):
-            data_std[:, i] =(data[:, i] - data[:, i].mean()) / data[:, i].std() #対応する列を標準化
+        #for i in range(row):
+            #for j in range(col):
+                #data_std[i, j] =(data[i, j] - data[i, j].mean()) / data[i, j].std() #対応する列を標準化
         
+        for i in range(col):
+            data_std[:, i] = (data[:, i] - data[:, i].mean()) / data[:, i].std()
+
         return data_std
 
 
@@ -106,9 +111,14 @@ def data_nom(data):
         return data_1[:, 0] / max(abs(data_1[:, 0]))
     else :                               #dataが2次元(行列)のとき
         data_nom = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
+        row = data.shape[0]              #dataの行数を取得
         col = data.shape[1]              #dataの列数を取得
 
-        for i in range(col):
-            data_nom[:, i] =data[:, i] / max(abs(data[:, i])) #対応する列を正規化
+        #for i in range(row):
+            #for j in range(col):
+                #data_nom[i, j] = data[i, j] / max(abs(data[i, j])) #対応する列を正規化
         
+        for i in range(col):
+            data_nom[:, i] = data[:, i] / max(abs(data[:, i]))
+
         return data_nom

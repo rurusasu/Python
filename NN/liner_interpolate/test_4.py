@@ -195,12 +195,12 @@ test = np.loadtxt(
 
 
 #読み込んだデータを学習用にコピーする
-data_1 = data_copy(data)
-test_1 = data_copy(test)
+data = data_copy(data)
+test = data_copy(test)
 
 #標準化
-data_ = data_std(data_1)
-test_ = data_std(test_1)
+data_1 = data_std(data_1)
+test_1 = data_std(test_1)
 
 #正規化
 data_ = data_nom(data_)
@@ -296,8 +296,8 @@ Ev_buff = np.zeros((Iteration_limit, 1))
 for i in range(Iteration_limit):
     #行数からMinibatch_sizeだけランダムに値を抽出 replace(重複)
     Batch_mask = np.random.choice(Batch_size, Minibatch_size, replace = False)
-    data_ = x_train                #訓練データをセット
-    data_ = data_[Batch_mask, 0:2] #全訓練データからBatch_maskだけ抽出
+    train_data = x_train[Batch_mask, 0:2]  #訓練データをセット
+    test_data =  t_train[Batch_mask]       #全訓練データからBatch_maskだけ抽出
 
     #抽出された訓練データの行数と列数を取得
     Row    = data_.shape[0]
@@ -310,7 +310,7 @@ for i in range(Iteration_limit):
     x5_err_buff2 = np.zeros((Row, N5))
     for sample_counter in range(Minibatch_size):
         #第一層
-        s1 = data_
+        s1 = train_data
         x1 = s1 #入力層ではそのまま出力される
         #第二層
         s2 = np.zeros((Minibatch_size, N2)) #状態量を求めるために初期化する。
@@ -345,8 +345,41 @@ for i in range(Iteration_limit):
         s5 = s5 + b5 #状態量に閾値を加える。-> 活性化関数への入力となる。
         x5 = s5
 
-        x5_d = data_
-        x5_buff()
+        x5_d = train_data
+        #標準化と正規化処理されたデータによる出力と誤差
+        x5_buff = x5 #NNからの出力を保存しているだけ。なくてもNNの学習はできる。
+        x5_err_buff = 0.5*(x5 - x5_d) ** 2
+        #オリジナルデータとの出力誤差
+        #for i in range(Row):
+            #x5_buff2[i, j] = data[i, j] * max(abs(data[i, j])) * data[i, j].std() + data[i, j].mean()  #対応する列を正規化
+        [w1, w2, w3, w4, b2, b3, b4, b5, w1_1, w2_1, w3_1, w4_1, b2_1, b3_1, b4_1, b5_1] = 
+
+
+def weight(w1, w2, w3, w4, th2, th3, th4, th5, eta, beta, x1, x2, x3, x4, x5, x5_d, s2, s3, s4, s5, w1_1, w2_1, w3_1, w4_1, eta_myu, N1, N2, N3, N4, N5, th2_1, th3_1, th4_1, th5_1, ACTIVATION, ReLU_GAIN):
+    #前回の重みを保存しておく(入力層と第２層（第１隠れ層）間の重み)
+    w1_tmp = w1_1
+    w2_tmp = w2_1 #第２層（第１隠れ層）と第３層（第２隠れ層）間の重み
+    w3_tmp = w3_1 #第３層（第２隠れ層）と第４層（第３隠れ層）間の重み
+    w4_tmp = w4_1 #第４層（第３隠れ層）と第５層（出力層）間の重み
+    #前回の閾値を保存しておく
+    th2_tmp = th2_1
+    th3_tmp = th3_1
+    th4_tmp = th4_1
+    th5_tmp = th5_1
+    #慣性項の計算のために現在の重みを前回の重みとして保存する。
+    w1_1 = w1
+    w2_1 = w2
+    w3_1 = w3
+    w4_1 = w4
+    #慣性項の計算のために、現在の閾値を前回の閾値として保存する
+    th2_1 = th2
+    th3_1 = th3
+    th4_1 = th4
+    th5_1 = th5
+    delta5 = np.zeros((Minibatch_size, N5))
+    delta4 = np.zeros((Minibatch_size, N4))
+    delta3 = np.zeros((Minibatch_size, N3))
+    delta2 = np.zeros((Minibatch_size, N2))
 
 
 #a1 = affine(W1, B1)
