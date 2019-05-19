@@ -53,6 +53,7 @@ class Sequential:
             Sequential.counter = Sequential.counter + 1
 
         for i in range(epochs):
+            
             #x = x_train
             #t = t_train
             #TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
@@ -63,30 +64,6 @@ class Sequential:
 
             x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             t_val   = t_val_data[batch_mask]
-
-            '''
-            for j in range(cycle):
-                batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-                x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
-                t_batch = t[batch_mask]
-
-                x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
-                t_val   = t_val_data[batch_mask]
-                
-                #推論を行う
-                print('#######    学習%d回目    ########' %Sequential.counter2)
-                output = self.Predict(x_batch)
-                Sequential.counter2 = Sequential.counter2 + 1
-                
-                #誤差を保存する
-                loss = self.LastLayer.forward(output, t_batch)
-                self.Output.history['loss'].append(loss)
-
-                #全データから使用したbatchデータを削除。削除された分データは詰められる
-                x = np.delete(x, batch_mask, 0)
-                t = np.delete(t, batch_mask)
-                TrainRow_size = TrainRow_size - batch_size
-            '''
                                        
             #####     推論を行う     #####
             print('#######    学習%d回目    ########' %Sequential.counter2)
@@ -119,7 +96,7 @@ class Sequential:
             x = np.delete(x, batch_mask, 0)
             t = np.delete(t, batch_mask)
             TrainRow_size = TrainRow_size - batch_size
-
+            
 
             #loss_number = 0
             #loss = np.sum(self.Output.history['loss'][loss_number:]) / cycle
@@ -135,6 +112,61 @@ class Sequential:
                 #dout = layer.backward(dout)
             
             #self.sequential.reverse()
+
+            '''
+            for j in range(cycle):
+                batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
+                x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
+                t_batch = t[batch_mask]
+
+                x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
+                t_val   = t_val_data[batch_mask]
+                
+                #推論を行う
+                print('#######    学習%d回目    ########' %Sequential.counter2)
+                output = self.Predict(x_batch)
+                Sequential.counter2 = Sequential.counter2 + 1
+                
+                #誤差を保存する
+                loss = self.LastLayer.forward(output, t_batch)
+                self.Output.history['loss'].append(loss)
+
+            loss_number = 0
+            loss = np.sum(self.Output.history['loss'][loss_number:]) / cycle
+            #逆伝播を行うためにレイヤを反転
+            self.sequential.reverse()
+
+            #逆伝搬および重みの更新
+            dout = loss
+            #dout = 1
+            dout = self.LastLayer.backward(dout)
+            dout = np.full((batch_size, 1), dout)
+            for layer in self.sequential:
+                dout = layer.backward(dout)
+            
+            self.sequential.reverse()
+            '''
+            '''
+            #逆伝播を行うためにレイヤを反転
+            self.sequential.reverse()
+
+            #逆伝搬および重みの更新
+            dout = 1
+            dout = self.LastLayer.backward(dout)
+            for layer in self.sequential:
+                dout = layer.backward(dout)
+            
+            self.sequential.reverse()
+            '''
+
+            #全データから使用したbatchデータを削除。削除された分データは詰められる
+            x = np.delete(x, batch_mask, 0)
+            t = np.delete(t, batch_mask)
+            TrainRow_size = TrainRow_size - batch_size
+                
+
+
+
 
             #正解率を計算
             #val_loss  = self.ValLoss(x_val, t_val)

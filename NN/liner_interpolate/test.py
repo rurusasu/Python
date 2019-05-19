@@ -173,3 +173,11 @@ print(weight)
 
 weight2 = np.sqrt(2) * weight
 print(weight2)
+
+x = np.arange(-10, 10, 1)
+mask = (x < 0)
+print('x=')
+x[mask] = x[mask] * 10 
+#y = x * 5
+
+print(x)
