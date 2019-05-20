@@ -1,5 +1,9 @@
+#coding: utf-8
+from __future__ import unicode_literals, print_function
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
+
+
 
 #データコピー
 def data_copy(data):
@@ -152,6 +156,26 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
     return w1, w2, w3, w4, b2, b3, b4, b5, w1_1, w2_1, w3_1, w4_1, b2_1, b3_1, b4_1, b5_1
 
 
+class Plot:
+    def __init__(self, x, y):
+        #グラフの初期化
+        self.fig, self.ax = plt.subplots(1, 1)
+        self.x = []
+        self.y = []
+
+        self.x.append(x)
+        self.y.append(y)
+
+        self.lines,  = self.ax.plot(self.x, self.y)
+
+    def grah_plot(self, x, y):
+        self.x.append(x)
+        self.y.append(y)
+        self.lines.set_data(self.x, self.y)
+        self.ax.set_xlim(0, len(self.x))
+        self.ax.set_ylim(min(self.y), max(self.y))
+        plt.pause(.01)
+
 
 #訓練データの読み込み
 data = np.loadtxt(
@@ -277,6 +301,7 @@ Minibatch_size = 100
 誤差は目標出力とNNからの出力との差
 '''
 Ev_buff = np.zeros((Iteration_limit, 1))
+plot = Plot(0, Ev_buff[0])
 
 for iteration in range(Iteration_limit):
     #行数からMinibatch_sizeだけランダムに値を抽出 replace(重複)
@@ -366,11 +391,6 @@ for iteration in range(Iteration_limit):
             err_sum = err_sum + x5_err_buff[i][j] #Minibatch_sizeで指定されたデータ分の誤差の総和
     Ev_buff[iteration] = err_sum / sample_counter #訓練データ内の１サンプルあたりの平均誤差を保存
     #if rem[iteration, 0] == 0
+    plot.grah_plot(iteration+1, Ev_buff[iteration])
 
-    nb_epoch = iteration
-    plt.pyplot(range(nb_epoch), Ev_buff, marker = '.', label = 'loss')
-    plt.legend(loc = 'best', fontsize = 10)
-    plt.grid()
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.show()
+
