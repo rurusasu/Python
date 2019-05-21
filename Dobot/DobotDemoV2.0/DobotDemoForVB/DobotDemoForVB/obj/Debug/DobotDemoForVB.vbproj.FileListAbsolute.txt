@@ -1,0 +1,10 @@
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\bin\Debug\DobotDemoForVB.exe.config
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\bin\Debug\DobotDemoForVB.exe
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\bin\Debug\DobotDemoForVB.pdb
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\bin\Debug\DobotDemoForVB.xml
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.Form1.resources
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.Resources.resources
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.vbproj.GenerateResource.Cache
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.exe
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.xml
+C:\Users\liutong\Desktop\DobotDemoV2.0\DobotDemoForVB\DobotDemoForVB\obj\Debug\DobotDemoForVB.pdb
