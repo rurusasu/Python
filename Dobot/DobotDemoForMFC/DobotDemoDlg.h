@@ -41,6 +41,7 @@ private:
     void SuctionCupCtrl(bool suck, bool waitEnd = false);
     void WaitForSeconds(float seconds, bool waitEnd = false);
     void Home(void);
+	void fwrite_pose(FILE* fp);
 private:
     bool m_bConnectStatus;
     CButton m_ConnectButton;

@@ -1075,6 +1075,35 @@ void CDobotDemoDlg::OnBnClickedButton14()//CP Executeボタンが押されたと
 
 }
 
+void CDobotDemoDlg::fwrite_pose(FILE* fp)
+{
+	Pose pose;
+	static char crlf[3];
+	crlf[0] = 0x0d;
+	crlf[1] = 0x0a;
+	crlf[2] = 0x00;
+	static char kanma[3];
+	kanma[0] = ',';
+	kanma[1] = 0x00;
+
+	GetPose(&pose);
+	fprintf(fp, "%-.3f", pose.x);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.y);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.z);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.r);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.jointAngle[0]);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.jointAngle[1]);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.jointAngle[2]);
+	fputs(kanma, fp);
+	fprintf(fp, "%-.3f", pose.jointAngle[3]);
+	fputs(crlf, fp);
+}
 
 void CDobotDemoDlg::OnBnClickedButton15()
 {
@@ -1082,31 +1111,28 @@ void CDobotDemoDlg::OnBnClickedButton15()
 	Pose pose;
 	int i;
 	int j;
-	GetPose(&pose);
+	int NUM = 10;
+	FILE* fp;
+	CString	name_fp;
 
-
-	for (i = 0; i < 30; i++)
+	m_edit10.GetWindowText(name_fp);
+	fp = fopen(name_fp, "wb");
+	if (fp == NULL)
 	{
-		if (GetPose(&pose) != DobotCommunicate_NoError)
-		{
-			;
-		}
-		else
-		{
-			x = pose.x;
-			y = pose.y + 1;
-			z = pose.z;
-			r = pose.r;
-			GotoPoint(PTPMOVLXYZMode, x, y, z, r, true);
-			GetPose(&pose);
+		MessageBox("ファイルをオープンできません。", NULL, MB_OK | MB_ICONEXCLAMATION);
+		return;
+	}
+	fwrite_pose(fp);
 
-		}
+	
+	for (i = 0; i < NUM; i++)
+	{
 		if (i % 2 == 0) {
-			for (j = 0; j < 30; j++)
+			for (j = 0; j < NUM; j++)
 			{
 				if (GetPose(&pose) != DobotCommunicate_NoError)
 				{
-					;
+					break;
 				}
 				else
 				{
@@ -1115,18 +1141,19 @@ void CDobotDemoDlg::OnBnClickedButton15()
 					z = pose.z;
 					r = pose.r;
 					GotoPoint(PTPMOVLXYZMode, x, y, z, r, true);
-					GetPose(&pose);
+					//GetPose(&pose);
+					fwrite_pose(fp);
 
 				}
 			}
 		}
 		else
 		{
-			for (j = 0; j < 30; j++)
+			for (j = 0; j < NUM; j++)
 			{
 				if (GetPose(&pose) != DobotCommunicate_NoError)
 				{
-					;
+					break;
 				}
 				else
 				{
@@ -1135,25 +1162,33 @@ void CDobotDemoDlg::OnBnClickedButton15()
 					z = pose.z;
 					r = pose.r;
 					GotoPoint(PTPMOVLXYZMode, x, y, z, r, true);
-					GetPose(&pose);
+					//GetPose(&pose);
+					fwrite_pose(fp);
 
 				}
 			}
 		}
+		if (GetPose(&pose) != DobotCommunicate_NoError)
+		{
+			break;
+		}
+		else
+		{
+			x = pose.x;
+			y = pose.y + 1;
+			z = pose.z;
+			r = pose.r;
+			GotoPoint(PTPMOVLXYZMode, x, y, z, r, true);
+			//GetPose(&pose);
+			fwrite_pose(fp);
 
+		}
 	}
-	// TODO: Add your control notification handler code here
+	fclose(fp);
 }
 
 
 void CDobotDemoDlg::OnBnClickedButton16()
 {
-	//CFileDialog myDLG(TRUE, "cls", "*.cls", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "変換前のNCﾌｧｲﾙ(*.nc)");
-	//CFileDialog myDLG(TRUE);
-	//myDLG.m_ofn.lpstrInitialDir = _T("c:\\data\\H31_Miki");
-	//if (myDLG.DoModal() == IDOK)
-	//{
-	//	CStdioFile fout(myDLG.GetPathName(), CFile::modeRead | CFile::typeText);
-		m_edit10.SetWindowText("c:\\data\\H31_Miki\\training.txt");
-	//}
+	m_edit10.SetWindowText("c:\\data\\H31_Miki\\training.txt");
 }
