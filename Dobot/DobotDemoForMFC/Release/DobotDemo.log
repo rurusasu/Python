@@ -1,0 +1,2 @@
+﻿  stdafx.cpp
+E:\DobotDemoForMFC\stdafx.h(22): fatal error C1083: include ファイルを開けません。'afxwin.h':No such file or directory
