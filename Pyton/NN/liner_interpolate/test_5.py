@@ -84,7 +84,7 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
     else:
         mask = (s5 <= 0)
         delta5 = x5 - x5_d
-        delta5 = ReLU_GAIN * (x5 - x5_d)
+        delta5[mask] = ReLU_GAIN * delta5[mask]
     w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
     b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
     #b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)
@@ -100,8 +100,6 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
             #else:
                 #delta5[i] = ReLU_GAIN * (x5[i] - x5_d[i])
         #for j in range(N4):
-        #w4 = w4 - eta * np.dot(delta5, x4) + eta_myu * (w4 - w4_tmp)   #慣性項ありの重み更新
-        #w4 = w4 - eta * np.dot(x4.T, delta5) + eta_myu * (w4 - w4_tmp)   #慣性項ありの重み更新
             #w4[j][i] = w4[j][i] - eta * delta5[i] * x4[j] + eta_myu * (w4[j][i] - w4_tmp[j][i]) #慣性項ありの重み更新
         #b5[i] = b5[i] - beta * delta5[i] * x4[j] + beta_myu * (b5[i] - b5_tmp[i])               #慣性項ありの閾値の更新
     
@@ -292,6 +290,10 @@ N4 = 50
 N5 = 1
 
 
+Batch_size = x_train.shape[0]
+Iteration_limit = 20 # epoche回数
+Minibatch_size = 1000
+
 
 #重みの初期化
 #w1 = np.random.randn(N1, N2) / np.sqrt(N1) 
@@ -342,9 +344,7 @@ x3 = np.zeros((N3, 1))
 x4 = np.zeros((N4, 1))
 x5 = np.zeros((N5, 1))
 
-Batch_size = x_train.shape[0]
-Iteration_limit = 1000000 # epoche回数
-Minibatch_size = 1000
+
 '''
 学習の進捗状況（訓練データ内の１サンプルあたりの誤差）を保存するバッファ
 誤差は目標出力とNNからの出力との差
@@ -476,4 +476,6 @@ for iteration in range(Iteration_limit):
     Ev_buff[iteration] = err_sum / sample_counter #訓練データ内の１サンプルあたりの平均誤差を保存
     #if rem[iteration, 0] == 0
     plot.grah_plot(iteration+1, Ev_buff[iteration])
+
+plot.grah_plot(iteration+1, Ev_buff[iteration])
 

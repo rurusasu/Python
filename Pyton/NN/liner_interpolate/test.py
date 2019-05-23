@@ -175,9 +175,46 @@ weight2 = np.sqrt(2) * weight
 print(weight2)
 
 x = np.arange(-10, 10, 1)
-mask = (x < 0)
-print('x=')
+print(x)
+mask = (x <= 0)
 x[mask] = x[mask] * 10 
 #y = x * 5
 
 print(x)
+
+#i行の配列 * j列の配列
+x = np.arange(-10, 10, 1)
+y = np.arange(-10, 10, 1)
+z = np.zeros((20, 20))
+
+for i in range(20):
+    for j in range(20):
+        z[j][i] = x[i] * y[j]
+
+print('z = ')
+print(z)             #[[100.  90.  80.  70.  60.  50.  40.  30.  20.  10.   0. -10. -20. -30. -40. -50. -60. -70. -80. -90.]
+                     # [ 90.  81.  72.  63.  54.  45.  36.  27.  18.   9.   0.  -9. -18. -27. -36. -45. -54. -63. -72. -81.]
+                     #                                            …
+                     # [-90. -81. -72. -63. -54. -45. -36. -27. -18.  -9.   0.   9.  18.  27.  36.  45.  54.  63.  72.  81.]]
+print('z.shape = ')
+print(z.shape)
+
+z = x * y
+print('z2 = ')
+print(z)             #[100  81  64  49  36  25  16   9   4   1   0   1   4   9  16  25  36  49  64  81]
+print('z2.shape = ')
+print(z.shape)
+
+z = np.dot(x, y) #1次元配列の場合、ベクトル同士の内積になる。
+print('z3 = ')
+print(z)             #670
+print('z3.shape = ')
+print(z.shape)
+
+x.reshape(-1, 1)
+y.reshape(1, -1)
+z = np.dot(x, y)
+print('z4 = ')
+print(z)             #670
+print('z4.shape = ')
+print(z.shape)

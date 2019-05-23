@@ -294,8 +294,8 @@ x4 = np.zeros((N4, 1))
 x5 = np.zeros((N5, 1))
 
 Batch_size = x_train.shape[0]
-Iteration_limit = 1000000 # epoche回数
-Minibatch_size = 10000
+Iteration_limit = 20 # epoche回数
+Minibatch_size = 1000
 '''
 学習の進捗状況（訓練データ内の１サンプルあたりの誤差）を保存するバッファ
 誤差は目標出力とNNからの出力との差
@@ -393,4 +393,4 @@ for iteration in range(Iteration_limit):
     #if rem[iteration, 0] == 0
     plot.grah_plot(iteration+1, Ev_buff[iteration])
 
-
+plot.grah_plot(iteration+1, Ev_buff[iteration])
