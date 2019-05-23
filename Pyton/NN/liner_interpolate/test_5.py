@@ -86,7 +86,8 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         delta5 = x5 - x5_d
         delta5 = ReLU_GAIN * (x5 - x5_d)
     w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
-    b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)  
+    b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
+    #b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)
     #w4.T = w4.T - eta * np.dot(delta5, x4.T) +eta_myu * (w4.T - w4_tmp.T)
     #for i in range(N5):
         #if ACTIVATION == 0:
@@ -115,7 +116,8 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         delta4 = sigma
         delta4[mask] = ReLU_GAIN * sigma[mask]
     w3 = w3 - eta * delta4 * x3 * eta_myu * (w3 - w3_tmp)
-    b4 = b4 - beta * delta4 * x3 + beta_myu * (b4 - b4_tmp) 
+    b4 = b4 - beta * delta4 + beta_myu * (b4 - b4_tmp) 
+    #b4 = b4 - beta * delta4 * x3 + beta_myu * (b4 - b4_tmp) 
 
     #for i in range(N4):
         #sigma = 0 #これが誤差となる。
@@ -145,7 +147,8 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         delta3 = sigma
         delta3[mask] = ReLU_GAIN * sigma[mask]
     w2 = w2 - eta * delta3 * x2 + eta_myu * (w2 - w2_tmp)
-    b3 = b3 - beta * delta3 * x2 + beta_myu * (b3 - b3_tmp) 
+    b3 = b3 - beta * delta3 + beta_myu * (b3 - b3_tmp)
+    #b3 = b3 - beta * delta3 * x2 + beta_myu * (b3 - b3_tmp) 
     #w2 = w2 - eta * delta3 * x2 + eta_myu * (w2 - w2_tmp)
     #b3 = b3 - beta * delta3 * x2 + beta_myu * (b3 - b3_tmp) 
 
@@ -177,9 +180,10 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         delta2 = sigma
         delta2[mask] = ReLU_GAIN * sigma[mask]
     w1 = w1 - eta * np.dot(x1.reshape(-1, 1), delta2.T) + eta_myu * (w1 - w1_tmp)
+    b2 = b2 - eta * delta2 + eta_myu * (b2 - b2_tmp)
     #w1 = w1 - eta * delta2 * x1 + eta_myu * (w1 - w1_tmp)
     #b2 = b2 - beta * np.dot(x1.reshape(-1, 1), delta2.T) + beta_myu * (b2 - b2_tmp) 
-    b2 = b2 - eta * delta2 * x1 + eta_myu * (b2 - b2_tmp)
+    #b2 = b2 - eta * delta2 * x1 + eta_myu * (b2 - b2_tmp)
 
     #for i in range(N2):
         #sigma = 0 #これが誤差となる。
@@ -340,7 +344,7 @@ x5 = np.zeros((N5, 1))
 
 Batch_size = x_train.shape[0]
 Iteration_limit = 1000000 # epoche回数
-Minibatch_size = 10
+Minibatch_size = 1000
 '''
 学習の進捗状況（訓練データ内の１サンプルあたりの誤差）を保存するバッファ
 誤差は目標出力とNNからの出力との差
