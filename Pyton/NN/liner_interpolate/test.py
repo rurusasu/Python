@@ -218,3 +218,21 @@ print('z4 = ')
 print(z)             #670
 print('z4.shape = ')
 print(z.shape)
+
+#重みの更新
+x = np.arange(-10, 10, 1)
+y = np.arange(-10, 10, 1)
+th = np.zeros((20, 1))
+th2 = np.zeros((20, 1))
+
+for i in range(1):
+    for j in range(20):
+        th[i] = x[i] * y[j]
+
+print(th)
+
+for i in range(20):
+    for j in range(20):
+        th2[i] = x[i] * y[j]
+
+print(th2)

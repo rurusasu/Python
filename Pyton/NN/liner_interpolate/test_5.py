@@ -85,8 +85,10 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         mask = (s5 <= 0)
         delta5 = x5 - x5_d
         delta5[mask] = ReLU_GAIN * delta5[mask]
-    w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
-    b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
+    dx = np.dot(delta5, w4.T)
+    dw = np.dot(x4.T, delta5)
+    #w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
+    #b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
     #b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)
     #w4.T = w4.T - eta * np.dot(delta5, x4.T) +eta_myu * (w4.T - w4_tmp.T)
     #for i in range(N5):
@@ -301,7 +303,8 @@ Minibatch_size = 1000
 #w3 = np.random.randn(N3, N4) / np.sqrt(N3)
 #w4 = np.random.randn(N4, N5) / np.sqrt(N4)
 K = 2
-w1 = K*(np.ones((N1, N2))*0.5 - np.random.rand(N1, N2))
+#w1 = K*(np.ones((N1, N2))*0.5 - np.random.rand(N1, N2))
+w1 = K*(np.ones((1, N2))*0.5 - np.random.rand(1, N2))
 w2 = K*(np.ones((N2, N3))*0.5 - np.random.rand(N2, N3))
 w3 = K*(np.ones((N3, N4))*0.5 - np.random.rand(N3, N4))
 w4 = K*(np.ones((N4, N5))*0.5 - np.random.rand(N4, N5))
@@ -377,8 +380,9 @@ for iteration in range(Iteration_limit):
         s1 = data_[sample_counter]
         x1 = s1
         #第二層
-        s2 = s2 + np.dot(w1.T, x1).reshape(-1, 1)
-        s2 = s2 + b2
+        #s2 = s2 + np.dot(w1.T, x1).reshape(-1, 1)
+        s2 = s2 + np.dot(x1, w1) + b2
+        #s2 = s2 + b2
         #s2 = s2 + np.dot(x1, w1) + b2
         #for i in range(N2):
             #s2[i] = 0
@@ -397,8 +401,9 @@ for iteration in range(Iteration_limit):
             x2 = s2.copy()
             x2[mask] = ReLU_GAIN * s2[mask]
         #第三層
-        s3 = s3 + np.dot(w2.T, x2).reshape(-1, 1)
-        s3 = s3 + b3
+        s3 = s3 + np.dot(x2, w2) + b3
+        #s3 = s3 + np.dot(w2.T, x2).reshape(-1, 1)
+        #s3 = s3 + b3
         #s3 = s3 + np.dot(w2.T, x2) + b3
         #for i in range(N3):
             #s3[i] = 0
@@ -417,8 +422,9 @@ for iteration in range(Iteration_limit):
             x3 = s3.copy()
             x3[mask] = ReLU_GAIN * s3[mask]
         #第四層
-        s4 = s4 + np.dot(w3.T, x3).reshape(-1, 1)
-        s4 = s4 + b4
+        s4 = s4 + np.dot(x3, w3) + b4
+        #s4 = s4 + np.dot(w3.T, x3).reshape(-1, 1)
+        #s4 = s4 + b4
         #s4 = s4 + np.dot(w3.T, x3) + b4
         #for i in range(N4):
             #s4[i] = 0
@@ -439,8 +445,10 @@ for iteration in range(Iteration_limit):
                 x4 = s4.copy()
                 x4[mask] = ReLU_GAIN * s4[mask] #(50,1)
         #第五層
-        s5 = s5 + np.dot(w4.T, x4).reshape(-1, 1)
-        s5 = s5 + b5
+        s5 = s5 + np.dot(x4, w4) + b5
+        x5 = s5
+        #s5 = s5 + np.dot(w4.T, x4).reshape(-1, 1)
+        #s5 = s5 + b5
         #s5 = s5 + np.dot(w4.T, x4) + b5
         #x5 = s5
         #for i in range(N5):
