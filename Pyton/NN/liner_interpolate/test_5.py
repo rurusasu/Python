@@ -378,7 +378,7 @@ for iteration in range(Iteration_limit):
         #x1[0] = s1[0] #入力層ではそのまま出力される
         #x1[1] = s1[1]
         s1 = data_[sample_counter]
-        x1 = s1
+        x1 = s1.reshape((-1, 1))
         #第二層
         #s2 = s2 + np.dot(w1.T, x1).reshape(-1, 1)
         s2 = s2 + np.dot(x1, w1) + b2
