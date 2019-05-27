@@ -73,10 +73,15 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
     b3_1 = b3
     b4_1 = b4
     b5_1 = b5
-    delta5 = np.zeros((N5, 1))
-    delta4 = np.zeros((N4, 1))
-    delta3 = np.zeros((N3, 1))
-    delta2 = np.zeros((N2, 1))
+    #delta5 = np.zeros((N5, 1))
+    #delta4 = np.zeros((N4, 1))
+    #delta3 = np.zeros((N3, 1))
+    #delta2 = np.zeros((N2, 1))
+    delta5 = np.zeros((1, N5))
+    delta4 = np.zeros((1, N4))
+    delta3 = np.zeros((1, N3))
+    delta2 = np.zeros((1, N2))
+
 
     #ステップ1：出力層に向かう結合係数(w4)を修正する。
     if ACTIVATION ==0:
@@ -85,12 +90,12 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         mask = (s5 <= 0)
         delta5 = x5 - x5_d
         delta5[mask] = ReLU_GAIN * delta5[mask]
-    dx = np.dot(delta5, w4.T)
-    dw = np.dot(x4.T, delta5)
+    #dx = np.dot(delta5, w4.T)
+    #dw = np.dot(x4.T, delta5)
     #w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
     #b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
     #b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)
-    #w4.T = w4.T - eta * np.dot(delta5, x4.T) +eta_myu * (w4.T - w4_tmp.T)
+    w4 = w4 - eta * np.dot(delta5, x4.T) +eta_myu * (w4 - w4_tmp)
     #for i in range(N5):
         #if ACTIVATION == 0:
             #シグモイド関数の場合
@@ -108,7 +113,8 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
     #その他の結合係数は入力層に向かって順次修正を行う。誤差の計算に注意！
     #ステップ２：結合係数(w3)を修正する。
     sigma = 0
-    sigma =  sigma + np.dot(w4, delta5)
+    #sigma =  sigma + np.dot(w4, delta5)
+    sigma = sigma + np.dot(delta5, w4.T)
     if ACTIVATION == 0:
         delta4 = (1 / (1 + np.exp(-s4))) * (1 - 1 / (1 + np.exp(-s4))) * sigma
     else:
@@ -303,8 +309,13 @@ Minibatch_size = 1000
 #w3 = np.random.randn(N3, N4) / np.sqrt(N3)
 #w4 = np.random.randn(N4, N5) / np.sqrt(N4)
 K = 2
-#w1 = K*(np.ones((N1, N2))*0.5 - np.random.rand(N1, N2))
-w1 = K*(np.ones((1, N2))*0.5 - np.random.rand(1, N2))
+
+#w1 = K*(np.ones((1, N2))*0.5 - np.random.rand(1, N2))
+#w2 = K*(np.ones((N2, N3))*0.5 - np.random.rand(N2, N3))
+#w3 = K*(np.ones((N3, N4))*0.5 - np.random.rand(N3, N4))
+#w4 = K*(np.ones((N4, N5))*0.5 - np.random.rand(N4, N5))
+
+w1 = K*(np.ones((N1, N2))*0.5 - np.random.rand(N1, N2))
 w2 = K*(np.ones((N2, N3))*0.5 - np.random.rand(N2, N3))
 w3 = K*(np.ones((N3, N4))*0.5 - np.random.rand(N3, N4))
 w4 = K*(np.ones((N4, N5))*0.5 - np.random.rand(N4, N5))
@@ -314,11 +325,14 @@ w4 = K*(np.ones((N4, N5))*0.5 - np.random.rand(N4, N5))
 #b3 = np.zeros(N3)
 #b4 = np.zeros(N4)
 #b5 = np.zeros(N5)
-b2 = K*(np.ones((N2, 1))*0.5 - np.random.rand(N2, 1))
-b3 = K*(np.ones((N3, 1))*0.5 - np.random.rand(N3, 1))
-b4 = K*(np.ones((N4, 1))*0.5 - np.random.rand(N4, 1))
-b5 = K*(np.ones((N5, 1))*0.5 - np.random.rand(N5, 1))
-
+#b2 = K*(np.ones((N2, 1))*0.5 - np.random.rand(N2, 1))
+#b3 = K*(np.ones((N3, 1))*0.5 - np.random.rand(N3, 1))
+#b4 = K*(np.ones((N4, 1))*0.5 - np.random.rand(N4, 1))
+#b5 = K*(np.ones((N5, 1))*0.5 - np.random.rand(N5, 1))
+b2 = K*(np.ones(N2)*0.5 - np.random.rand(N2))
+b3 = K*(np.ones(N3)*0.5 - np.random.rand(N3))
+b4 = K*(np.ones(N4)*0.5 - np.random.rand(N4))
+b5 = K*(np.ones(N5)*0.5 - np.random.rand(N5))
 
 
 #最初の重みの保存
@@ -334,18 +348,30 @@ b4_1 = b4
 b5_1 = b5
 
 #状態ベクトルの初期化
-s1 = np.zeros((N1, 1))
-s2 = np.zeros((N2, 1))
-s3 = np.zeros((N3, 1))
-s4 = np.zeros((N4, 1))
-s5 = np.zeros((N5, 1))
+#s1 = np.zeros((N1, 1))
+#s2 = np.zeros((N2, 1))
+#s3 = np.zeros((N3, 1))
+#s4 = np.zeros((N4, 1))
+#s5 = np.zeros((N5, 1))
+
+s1 = np.zeros((1, N1))
+s2 = np.zeros((1, N2))
+s3 = np.zeros((1, N3))
+s4 = np.zeros((1, N4))
+s5 = np.zeros((1, N5))
 
 #出力ベクトルの初期化
-x1 = np.zeros((N1, 1))
-x2 = np.zeros((N2, 1))
-x3 = np.zeros((N3, 1))
-x4 = np.zeros((N4, 1))
-x5 = np.zeros((N5, 1))
+#x1 = np.zeros((N1, 1))
+#x2 = np.zeros((N2, 1))
+#x3 = np.zeros((N3, 1))
+#x4 = np.zeros((N4, 1))
+#x5 = np.zeros((N5, 1))
+
+x1 = np.zeros((1, N1))
+x2 = np.zeros((1, N2))
+x3 = np.zeros((1, N3))
+x4 = np.zeros((1, N4))
+x5 = np.zeros((1, N5))
 
 
 '''
@@ -378,7 +404,7 @@ for iteration in range(Iteration_limit):
         #x1[0] = s1[0] #入力層ではそのまま出力される
         #x1[1] = s1[1]
         s1 = data_[sample_counter]
-        x1 = s1.reshape((-1, 1))
+        x1 = s1.reshape((1, -1))
         #第二層
         #s2 = s2 + np.dot(w1.T, x1).reshape(-1, 1)
         s2 = s2 + np.dot(x1, w1) + b2
