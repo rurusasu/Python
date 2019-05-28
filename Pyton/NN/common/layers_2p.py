@@ -270,13 +270,13 @@ class InputLayer2:
 
 #全結合レイヤ
 class Dense:
-    def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
+    def __init__(self,  hidden_dim, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
         self.dense = OrderedDict()         #関数の辞書
         self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
         self.activation = activation       #活性化関数名
 
         self.params = {}               #ユニット内での計算に必要なパラメータの辞書
-        self.params['Units']  = Units  #ユニットの数
+        self.params['Hidden_dim']  = Units  #ユニットの数
         self.params['Weight'] = None   #重み
         self.params['Bias']   = None   #閾値
 
@@ -292,15 +292,15 @@ class Dense:
         #K = 2
         #初期値の計算
         #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        weight = InitParams.glorot_uniform(input_size=BefLayer_Size, hidden_size=Unit_size)
+        weight = InitParams.glorot_uniform(input_dim=BefLayer_Size, h_dim=Unit_size)
         bias   = np.zeros(self.params['Units'])                                                                           #閾値
                 
         return weight, bias
 
     def unit(self, BefLayer_Size, counter):
         #初期値を設定
-        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
-        self.params['Bias']   = np.zeros(self.params['Units'])  
+        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Hidden_dim'])
+        self.params['Bias']   = np.zeros(self.params['Hidden_dim'])  
         #活性化関数を設定
         self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
         #self.dense['BatchNome'] = globals()['BatchNormalization'](gamma = 1, beta = 1)
@@ -337,14 +337,15 @@ class InitParams:
 
     #重みの初期値
     #Xavierの一様分布
-    def glorot_uniform(self, input_size, hidden_size):
-        weight = np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
+    def glorot_uniform(self, input_dim, h_dim):
+        np.random(0)
+        weight = np.random.randn(input_dim, h_dim) / np.sqrt(input_dim)
 
         return weight
 
     #Heの初期値
-    def he_nomal(self, input_size, hidden_size):
-        weight = np.sqrt(2) * np.random.randn(input_size, hidden_size) / np.sqrt(input_size)
+    def he_nomal(self, input_dim, h_dim):
+        weight = np.sqrt(2) * np.random.randn(input_dim, h_dim) / np.sqrt(input_dim)
 
         return weight
 

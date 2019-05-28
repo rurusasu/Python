@@ -148,8 +148,8 @@ model = build_model(3, print_loss=True)
 # 決定境界をプロットする 
 plot_decision_boundary(lambda x: predict(model, x)) 
 plt.title("Decision Boundary for hidden layer size 3") 
- 
-# %% 14 
+
+
 plt.figure(figsize=(16, 32)) 
 hidden_layer_dimensions = [1, 2, 3, 4, 5, 20, 50] 
 for i, nn_hdim in enumerate(hidden_layer_dimensions): 
