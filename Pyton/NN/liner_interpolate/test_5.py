@@ -84,18 +84,24 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
 
 
     #ステップ1：出力層に向かう結合係数(w4)を修正する。
-    if ACTIVATION ==0:
-        delta5 = (1 / (1 + np.exp(-s5))) * (1 - 1 / (1 + np.exp(-s5))) * (x5- x5_d)
-    else:
-        mask = (s5 <= 0)
-        delta5 = x5 - x5_d
-        delta5[mask] = ReLU_GAIN * delta5[mask]
+    #if ACTIVATION ==0:
+        #delta5 = (1 / (1 + np.exp(-s5))) * (1 - 1 / (1 + np.exp(-s5))) * (x5- x5_d)
+    #else:
+        #mask = (s5 <= 0)
+        #delta5 = x5 - x5_d
+        #delta5[mask] = ReLU_GAIN * delta5[mask]
+    delta5 = x5 - x5_d
+    w4 = eta * np.dot(x4.T, delta5)
+    b5 = np.sum(delta5, axis = 0)
     #dx = np.dot(delta5, w4.T)
     #dw = np.dot(x4.T, delta5)
     #w4 = w4 - eta * delta5 * x4 + eta_myu * (w4 - w4_tmp)
     #b5 = b5 - beta * delta5 + beta_myu * (b5 - b5_tmp)
     #b5 = b5 - beta * delta5 * x4 + beta_myu * (b5 - b5_tmp)
-    w4 = w4 - eta * np.dot(delta5, x4.T) +eta_myu * (w4 - w4_tmp)
+
+    #w4 = w4 - eta * np.dot(x4.T, delta5) + eta_myu * (w4 - w4_tmp)
+    
+
     #for i in range(N5):
         #if ACTIVATION == 0:
             #シグモイド関数の場合
@@ -121,8 +127,11 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         mask = (s4 <= 0)
         delta4 = sigma
         delta4[mask] = ReLU_GAIN * sigma[mask]
-    w3 = w3 - eta * delta4 * x3 * eta_myu * (w3 - w3_tmp)
-    b4 = b4 - beta * delta4 + beta_myu * (b4 - b4_tmp) 
+    #w3 = w3 - eta * np.dot(x3.T, delta4) + eta_myu * (w3 - w3_tmp)
+    w3 = eta * np.dot(x3.T, delta4)
+    b4 = np.sum(delta4, axis = 0)
+
+    #b4 = b4 - beta * delta4 + beta_myu * (b4 - b4_tmp) 
     #b4 = b4 - beta * delta4 * x3 + beta_myu * (b4 - b4_tmp) 
 
     #for i in range(N4):
@@ -144,7 +153,7 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
 
     #ステップ3：結合係数(w2)を修正する。
     sigma = 0
-    sigma = sigma +np.dot(w3, delta4)
+    sigma = sigma + np.dot(delta4, w3.T)
     #sigma =  sigma + delta4 * w3
     if ACTIVATION == 0:
         delta3 = (1 / (1 + np.exp(-s3))) * (1 - 1 / (1 + np.exp(-s3))) * sigma
@@ -152,8 +161,11 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         mask = (s3 <= 0)
         delta3 = sigma
         delta3[mask] = ReLU_GAIN * sigma[mask]
-    w2 = w2 - eta * delta3 * x2 + eta_myu * (w2 - w2_tmp)
-    b3 = b3 - beta * delta3 + beta_myu * (b3 - b3_tmp)
+    #w2 = w2 - eta * np.dot(x2.T, delta3) + eta_myu * (w2 - w2_tmp)
+    w2 = eta * np.dot(x2.T, delta3)
+    b3 = np.sum(delta3, axis = 0)
+
+    #b3 = b3 - beta * delta3 + beta_myu * (b3 - b3_tmp)
     #b3 = b3 - beta * delta3 * x2 + beta_myu * (b3 - b3_tmp) 
     #w2 = w2 - eta * delta3 * x2 + eta_myu * (w2 - w2_tmp)
     #b3 = b3 - beta * delta3 * x2 + beta_myu * (b3 - b3_tmp) 
@@ -177,7 +189,7 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
 
     #ステップ4：結合係数(w1)を修正する。
     sigma = 0
-    sigma = sigma + np.dot(w2, delta3)
+    sigma = sigma + np.dot(delta3, w2.T)
     #sigma =  sigma + delta3 * w2
     if ACTIVATION == 0:
         delta2 = (1 / (1 + np.exp(-s2))) * (1 - 1 / (1 + np.exp(-s2))) * sigma
@@ -185,8 +197,11 @@ def weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, 
         mask = (s2 <= 0)
         delta2 = sigma
         delta2[mask] = ReLU_GAIN * sigma[mask]
-    w1 = w1 - eta * np.dot(x1.reshape(-1, 1), delta2.T) + eta_myu * (w1 - w1_tmp)
-    b2 = b2 - eta * delta2 + eta_myu * (b2 - b2_tmp)
+    #w1 = w1 - eta * np.dot(x1.T, delta2) + eta_myu * (w1 - w1_tmp)
+    w1 = eta * np.dot(x1.T, delta2)
+    b2 = np.sum(delta2, axis = 0)
+
+    #b2 = b2 - eta * delta2 + eta_myu * (b2 - b2_tmp)
     #w1 = w1 - eta * delta2 * x1 + eta_myu * (w1 - w1_tmp)
     #b2 = b2 - beta * np.dot(x1.reshape(-1, 1), delta2.T) + beta_myu * (b2 - b2_tmp) 
     #b2 = b2 - eta * delta2 * x1 + eta_myu * (b2 - b2_tmp)
@@ -299,8 +314,8 @@ N5 = 1
 
 
 Batch_size = x_train.shape[0]
-Iteration_limit = 20 # epoche回数
-Minibatch_size = 1000
+Iteration_limit = 2 # epoche回数
+Minibatch_size = 10
 
 
 #重みの初期化
@@ -403,13 +418,11 @@ for iteration in range(Iteration_limit):
         #s1[1] = data_[sample_counter][1]
         #x1[0] = s1[0] #入力層ではそのまま出力される
         #x1[1] = s1[1]
-        s1 = data_[sample_counter]
-        x1 = s1.reshape((1, -1))
+        s1 = data_[sample_counter] #shape(2,)
+        x1 = s1.reshape((1, -1))   #shape(1, 2)
+        #x1 = s1
         #第二層
-        #s2 = s2 + np.dot(w1.T, x1).reshape(-1, 1)
-        s2 = s2 + np.dot(x1, w1) + b2
-        #s2 = s2 + b2
-        #s2 = s2 + np.dot(x1, w1) + b2
+        s2 = s2 + np.dot(x1, w1) + b2 #shape(1, 50)
         #for i in range(N2):
             #s2[i] = 0
             #for j in range(N1):
@@ -427,10 +440,7 @@ for iteration in range(Iteration_limit):
             x2 = s2.copy()
             x2[mask] = ReLU_GAIN * s2[mask]
         #第三層
-        s3 = s3 + np.dot(x2, w2) + b3
-        #s3 = s3 + np.dot(w2.T, x2).reshape(-1, 1)
-        #s3 = s3 + b3
-        #s3 = s3 + np.dot(w2.T, x2) + b3
+        s3 = s3 + np.dot(x2, w2) + b3 #shape(1, 50)
         #for i in range(N3):
             #s3[i] = 0
             #for j in range(N2):
@@ -448,10 +458,7 @@ for iteration in range(Iteration_limit):
             x3 = s3.copy()
             x3[mask] = ReLU_GAIN * s3[mask]
         #第四層
-        s4 = s4 + np.dot(x3, w3) + b4
-        #s4 = s4 + np.dot(w3.T, x3).reshape(-1, 1)
-        #s4 = s4 + b4
-        #s4 = s4 + np.dot(w3.T, x3) + b4
+        s4 = s4 + np.dot(x3, w3) + b4 #shape(1, 50)
         #for i in range(N4):
             #s4[i] = 0
             #for j in range(N3):
@@ -473,10 +480,6 @@ for iteration in range(Iteration_limit):
         #第五層
         s5 = s5 + np.dot(x4, w4) + b5
         x5 = s5
-        #s5 = s5 + np.dot(w4.T, x4).reshape(-1, 1)
-        #s5 = s5 + b5
-        #s5 = s5 + np.dot(w4.T, x4) + b5
-        #x5 = s5
         #for i in range(N5):
             #s5[i] = 0
             #for j in range(N4):
@@ -489,7 +492,7 @@ for iteration in range(Iteration_limit):
         x5_d = t_data_[sample_counter]
 
         x5_buff[sample_counter] = x5
-        x5_err_buff[sample_counter] = abs(x5_d - x5)
+        x5_err_buff[sample_counter] = 0.5 * (x5_d - x5)**2
         x5_buff2[sample_counter] = x5 * max(abs(data[:, 2])) * data[:, 2].std() + data[:, 2].mean()
         x5_err_buff2[sample_counter] = abs(data[sample_counter, 2] - x5_buff2[sample_counter])
         #for i in range(N5):
@@ -504,10 +507,12 @@ for iteration in range(Iteration_limit):
         w1, w2, w3, w4, b2, b3, b4, b5, w1_1, w2_1, w3_1, w4_1, b2_1, b3_1, b4_1, b5_1 = weight(w1, w2, w3, w4, b2, b3, b4, b5, eta, beta, x1, x2, x3, x4, x5, x5_d, s2, s3, s4, s5, w1_1, w2_1, w3_1, w4_1, eta_myu, N1, N2, N3, N4, N5, b2_1, b3_1, b4_1, b5_1, ACTIVATION, ReLU_GAIN)
 
         err_sum = 0
-    for i in range(sample_counter):
-        for j in range(N5):
-            err_sum = err_sum + x5_err_buff[i][j] #Minibatch_sizeで指定されたデータ分の誤差の総和
-    Ev_buff[iteration] = err_sum / sample_counter #訓練データ内の１サンプルあたりの平均誤差を保存
+    
+    err_sum = err_sum + np.sum(x5_err_buff)
+    #for i in range(sample_counter):
+        #for j in range(N5):
+            #err_sum = err_sum + x5_err_buff[i][j] #Minibatch_sizeで指定されたデータ分の誤差の総和
+    Ev_buff[iteration] = err_sum / (sample_counter + 1) #訓練データ内の１サンプルあたりの平均誤差を保存
     #if rem[iteration, 0] == 0
     plot.grah_plot(iteration+1, Ev_buff[iteration])
 

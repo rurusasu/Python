@@ -295,7 +295,7 @@ x5 = np.zeros((N5, 1))
 
 Batch_size = x_train.shape[0]
 Iteration_limit = 20 # epoche回数
-Minibatch_size = 1000
+Minibatch_size = 100
 '''
 学習の進捗状況（訓練データ内の１サンプルあたりの誤差）を保存するバッファ
 誤差は目標出力とNNからの出力との差
