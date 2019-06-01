@@ -30,7 +30,7 @@ class Sequential:
         self.LastLayer = globals()[loss]()
 
 
-    def fit(self, x_train, t_train, batch_size, epochs, validation_data):
+    def fit(self, x_train, t_train, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
         #TrainingData
         x = x_train
         t = t_train
@@ -49,7 +49,7 @@ class Sequential:
         #レイヤの行列を計算する
         y = TrainCol_size
         for layers in self.sequential:
-            y = layers.unit(y, Sequential.counter)
+            y = layers.unit(y, Sequential.counter, epsilon, reg_lambda)
             Sequential.counter = Sequential.counter + 1
 
         for i in range(epochs):
@@ -71,6 +71,7 @@ class Sequential:
             Sequential.counter2 = Sequential.counter2 + 1
                 
             #####     誤差を保存する     #####
+            loss = 0
             loss = self.LastLayer.forward(output, t_batch)
             self.Output.history['loss'].append(loss)
 
@@ -81,83 +82,13 @@ class Sequential:
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            dout = 1
-            dout = self.LastLayer.backward(dout)
-            for layer in self.sequential:
-                dout = layer.backward(dout)
-            
-            self.sequential.reverse()
-
-            #######################
-            #######################
-            #######################
-
-            #全データから使用したbatchデータを削除。削除された分データは詰められる
-            x = np.delete(x, batch_mask, 0)
-            t = np.delete(t, batch_mask)
-            TrainRow_size = TrainRow_size - batch_size
-            
-
-            #loss_number = 0
-            #loss = np.sum(self.Output.history['loss'][loss_number:]) / cycle
-            #逆伝播を行うためにレイヤを反転
-            #self.sequential.reverse()
-
-            #逆伝搬および重みの更新
-            #dout = loss
             #dout = 1
             #dout = self.LastLayer.backward(dout)
-            #dout = np.full((batch_size, 1), dout)
-            #for layer in self.sequential:
-                #dout = layer.backward(dout)
-            
-            #self.sequential.reverse()
-
-            '''
-            for j in range(cycle):
-                batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-                x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
-                t_batch = t[batch_mask]
-
-                x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
-                t_val   = t_val_data[batch_mask]
-                
-                #推論を行う
-                print('#######    学習%d回目    ########' %Sequential.counter2)
-                output = self.Predict(x_batch)
-                Sequential.counter2 = Sequential.counter2 + 1
-                
-                #誤差を保存する
-                loss = self.LastLayer.forward(output, t_batch)
-                self.Output.history['loss'].append(loss)
-
-            loss_number = 0
-            loss = np.sum(self.Output.history['loss'][loss_number:]) / cycle
-            #逆伝播を行うためにレイヤを反転
-            self.sequential.reverse()
-
-            #逆伝搬および重みの更新
             dout = loss
-            #dout = 1
-            dout = self.LastLayer.backward(dout)
-            dout = np.full((batch_size, 1), dout)
             for layer in self.sequential:
                 dout = layer.backward(dout)
             
             self.sequential.reverse()
-            '''
-            '''
-            #逆伝播を行うためにレイヤを反転
-            self.sequential.reverse()
-
-            #逆伝搬および重みの更新
-            dout = 1
-            dout = self.LastLayer.backward(dout)
-            for layer in self.sequential:
-                dout = layer.backward(dout)
-            
-            self.sequential.reverse()
-            '''
 
             #全データから使用したbatchデータを削除。削除された分データは詰められる
             x = np.delete(x, batch_mask, 0)
@@ -170,11 +101,11 @@ class Sequential:
 
             #正解率を計算
             #val_loss  = self.ValLoss(x_val, t_val)
-            train_acc = self.accuracy(x_batch, t_batch)
-            test_acc  = self.accuracy(x_val, t_val)
+            #train_acc = self.accuracy(x_batch, t_batch)
+            #test_acc  = self.accuracy(x_val, t_val)
             #self.Output.history['val_loss'].append(val_loss)
-            self.Output.history['acc'].append(train_acc)
-            self.Output.history['val_acc'].append(test_acc)
+            #self.Output.history['acc'].append(train_acc)
+            #self.Output.history['val_acc'].append(test_acc)
 
         print('loss = %f' %self.Output.history['loss'][epochs-1])
         return self.Output
@@ -262,7 +193,12 @@ module.compile(loss = 'mean_squared_error')
 #学習
 epochs = 20
 batch_size = 128
-history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test))
+
+# Gradient descent parameters (数値は一般的に使われる値を採用) 
+epsilon = 0.01    # gradient descentの学習率
+reg_lambda = 0.01 # regularizationの強さ 
+
+history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
 
 #lossグラフ
 loss     = history.history['loss']

@@ -53,6 +53,7 @@ class relu:
         return out
 
     def backward(self, dout, counter):
+        print('第%d層 ReLU' %counter)
         dout[self.mask] = 0
         delta = dout
 
@@ -95,7 +96,7 @@ class liner:
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
-    def __init__(self, W, b):
+    def __init__(self, W, b, epsilon, reg_lambda):
         self.W = W
         self.B = b
 
@@ -105,13 +106,17 @@ class affine:
         self.dW = None
         self.dB = None
 
+        #学習率の設定
+        self.epsilon    = epsilon    # gradient descentの学習率
+        self.reg_lambda = reg_lambda # regularizationの強さ
+
     def forward(self, x):
         #テンソル対応
         self.original_x_shape = x.shape #元の形を記憶させる
         x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
         
-        out = np.dot(self.x, self.W) + self.B
+        out = self.x.dot(self.W) + self.B
 
         return out
 
@@ -122,14 +127,21 @@ class affine:
         print('第%d層 - AffineLayer - Bias%d' %(counter, counter))
         print(self.B)
 
-        dx = np.dot(dout, self.W.T)
+        #dx = np.dot(dout, self.W.T)
         #self.W = self.W - np.dot(self.x.T, dout)
         #self.B = self.B - np.sum(dout, axis = 0)
-        self.W = np.dot(self.x.T, dout)
-        self.B = np.sum(dout, axis = 0)
+        #self.W = np.dot(self.x.T, dout)
+        #self.B = np.sum(dout, axis = 0)
+        self.dW = (self.x.T).dot(dout)
+        self.dW += self.reg_lambda * self.W
+        self.dB = np.sum(dout, axis=0, keepdims=True)
+        
+        self.W += -self.epsilon * self.dW
+        self.B += -self.epsilon * self.dB
+        delta = np.dot(dout, self.W.T)
 
-        dx = dx.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
-        return dx
+        delta = delta.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
+        return delta
 
 
 #出力層
@@ -232,7 +244,7 @@ class InputLayer:
             #self.input = input_shape[1]
 
 
-    def unit(self, Data_Col_Size, counter):
+    def unit(self, Data_Col_Size, counter, epsilon, reg_lambda):
         print('第%d層 - InputLayer' %counter)
         self.Input_Col_Size = Data_Col_Size
     
@@ -270,15 +282,17 @@ class InputLayer2:
 
 #全結合レイヤ
 class Dense:
-    def __init__(self,  hidden_dim, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
+    def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
         self.dense = OrderedDict()         #関数の辞書
         self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
         self.activation = activation       #活性化関数名
 
-        self.params = {}               #ユニット内での計算に必要なパラメータの辞書
-        self.params['Hidden_dim']  = Units  #ユニットの数
-        self.params['Weight'] = None   #重み
-        self.params['Bias']   = None   #閾値
+        self.params = {}                 #ユニット内での計算に必要なパラメータの辞書
+        self.params['Units']  = Units    #ユニットの数
+        self.params['Weight'] = None     #重み
+        self.params['Bias']   = None     #閾値
+        self.params['epsilon'] = None    #学習率
+        self.params['reg_lambda'] = None #regularizationの強さ
 
         #####   初期値の設定   #####
         self.initialisation   = InitParams()
@@ -292,19 +306,21 @@ class Dense:
         #K = 2
         #初期値の計算
         #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
-        weight = InitParams.glorot_uniform(input_dim=BefLayer_Size, h_dim=Unit_size)
+        weight = InitParams.glorot_uniform(input_dim=BefLayer_Size, h_dim=self.params['Units'])
         bias   = np.zeros(self.params['Units'])                                                                           #閾値
                 
         return weight, bias
 
-    def unit(self, BefLayer_Size, counter):
+    def unit(self, BefLayer_Size, counter, epsilon, reg_lambda):
         #初期値を設定
-        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Hidden_dim'])
-        self.params['Bias']   = np.zeros(self.params['Hidden_dim'])  
+        self.params['epsilon'] = epsilon
+        self.params['reg_lambda'] = reg_lambda
+        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
+        self.params['Bias']   = np.zeros((1, self.params['Units']))  
+        
         #活性化関数を設定
-        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
-        #self.dense['BatchNome'] = globals()['BatchNormalization'](gamma = 1, beta = 1)
-        self.dense['Activation'] = globals()[self.activation]()                                #活性化関数のレイヤをセット
+        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias'], epsilon, reg_lambda) #アフィン変換を行うレイヤをセット
+        self.dense['Activation'] = globals()[self.activation]()                                    #活性化関数のレイヤをセット
 
         self.counter = counter
         print('第%d層 - AffineLayer' %self.counter)
@@ -313,8 +329,7 @@ class Dense:
         return self.params['Units']
 
 
-    def forward(self, input_data):
-        x = input_data
+    def forward(self, x):
         for layer in self.dense.values():
             x = layer.forward(x)
 
@@ -338,7 +353,7 @@ class InitParams:
     #重みの初期値
     #Xavierの一様分布
     def glorot_uniform(self, input_dim, h_dim):
-        np.random(0)
+        np.random.seed(0)
         weight = np.random.randn(input_dim, h_dim) / np.sqrt(input_dim)
 
         return weight

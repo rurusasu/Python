@@ -236,3 +236,16 @@ for i in range(20):
         th2[i] = x[i] * y[j]
 
 print(th2)
+
+
+y1 = np.array([0.1, 0.2, 0.7])
+y2 = np.array([0.7, 0.2, 0.1])
+y3 = np.array([0.3, 0.3, 0.4])
+
+#正解データと仮定
+t = np.array([0, 0, 1])
+
+#2乗和誤差
+def MeanSquaredError(y, t):
+    out = 0.5 * np.sum((y-t)**2)
+    out = 

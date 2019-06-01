@@ -36,10 +36,14 @@ def Softmax(x):
 #損失関数
 #2乗和誤差
 def MeanSquaredError(y, t):
-    return 0.5 * np.sum((y-t)**2)
+    return 0.5 * np.sum((y-t)**2, axis=1, keepdims=True)
 
 
 def MeanSquaredError2(y, t):
+    return 0.5 * np.sum((y-t)**2)
+
+
+def MeanSquaredError3(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
