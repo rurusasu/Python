@@ -25,7 +25,7 @@ def digitize_state(observation):
  
 # [2]行動a(t)を求める関数 -------------------------------------
 def get_action(next_state, episode):
-           #徐々に最適行動のみをとる、ε-greedy法
+    #徐々に最適行動のみをとる、ε-greedy法
     epsilon = 0.5 * (1 / (episode + 1))
     if epsilon <= np.random.uniform(0, 1):
         next_action = np.argmax(q_table[next_state])
@@ -46,10 +46,11 @@ def update_Qtable(q_table, state, action, reward, next_state):
  
 # [4]. メイン関数開始 パラメータ設定--------------------------------------------------------
 env = gym.make('CartPole-v0')
-max_number_of_steps = 200  #1試行のstep数
+max_number_of_steps = 200         #1試行のstep数
 num_consecutive_iterations = 100  #学習完了評価に使用する平均試行回数
-num_episodes = 2000  #総試行回数
-goal_average_reward = 195  #この報酬を超えると学習終了（中心への制御なし）
+num_episodes = 2000               #総試行回数
+goal_average_reward = 195         #この報酬を超えると学習終了（中心への制御なし）
+
 # 状態を6分割^（4変数）にデジタル変換してQ関数（表）を作成
 num_dizitized = 6  #分割数
 q_table = np.random.uniform(
@@ -58,7 +59,7 @@ q_table = np.random.uniform(
 total_reward_vec = np.zeros(num_consecutive_iterations)  #各試行の報酬を格納
 final_x = np.zeros((num_episodes, 1))  #学習後、各試行のt=200でのｘの位置を格納
 islearned = 0  #学習が終わったフラグ
-isrender = 0  #描画フラグ
+isrender = 0   #描画フラグ
  
  
 # [5] メインルーチン--------------------------------------------------
@@ -70,10 +71,10 @@ for episode in range(num_episodes):  #試行数分繰り返す
     episode_reward = 0
  
     for t in range(max_number_of_steps):  #1試行のループ
-        if islearned == 1:  #学習終了したらcartPoleを描画する
+        if islearned == 1:                #学習終了したらcartPoleを描画する
             env.render()
             time.sleep(0.1)
-            print (observation[0])  #カートのx位置を出力
+            print (observation[0])        #カートのx位置を出力
  
         # 行動a_tの実行により、s_{t+1}, r_{t}などを計算する
         observation, reward, done, info = env.step(action)
@@ -83,7 +84,7 @@ for episode in range(num_episodes):  #試行数分繰り返す
             if t < 195:
                 reward = -200  #こけたら罰則
             else:
-                reward = 1  #立ったまま終了時は罰則はなし
+                reward = 1     #立ったまま終了時は罰則はなし
         else:
             reward = 1  #各ステップで立ってたら報酬追加
  

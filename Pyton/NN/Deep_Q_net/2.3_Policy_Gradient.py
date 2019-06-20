@@ -3,11 +3,9 @@
 
 # In[1]:
 
-
 # 使用するパッケージの宣言
 import numpy as np
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # In[2]:
@@ -73,22 +71,22 @@ theta_0 = np.array([[np.nan, 1, 1, np.nan], # s0
 
 def softmax_convert_into_pi_from_theta(theta):
     '''ソフトマックス関数で割合を計算する'''
-    
+
     beta = 10 # 逆温度
     [m, n] = theta.shape # thetaの行列サイズを取得
     pi = np.zeros((m, n))
-    
+
     exp_theta = np.exp(beta * theta) # thetaをexp(theta)へと変換
-    
+
     for i in range(0, m):
         # pi[i, :] = theta[i, :] / np.nansum(theta[i, :])
         # simpleに割合の計算の場合
-        
+
         pi[i, :] = exp_theta[i, :] / np.nansum(exp_theta[i, :])
         #softmaxで計算の場合
-        
+
     pi = np.nan_to_num(pi) #nanを0に変換
-    
+
     return pi
 
 
@@ -111,7 +109,7 @@ def get_action_and_next_s(pi, s):
     direction = ["up", "right", "down", "left"]
     #pi[s, :]の確立に従って、directionが選択される
     next_direction = np.random.choice(direction, p=pi[s, :])
-    
+
     if next_direction == "up":
         action = 0
         s_next = s - 3 # 上に移動するときは状態の数値が3小さくなる
@@ -124,7 +122,7 @@ def get_action_and_next_s(pi, s):
     elif next_direction == "left":
         action = 3
         s_next = s - 1 # 左に移動するときは状態の数字が1小さくなる
-        
+
     return [action, s_next]
 
 
@@ -137,20 +135,20 @@ def get_action_and_next_s(pi, s):
 def goal_maze_ret_s_a(pi):
     s = 0 # スタート地点
     s_a_history = [[0, np.nan]] # エージェントの移動を記録するリスト
-    
+
     while(1):           # ゴールするまでループ
         [action, next_s] = get_action_and_next_s(pi, s)
         s_a_history[-1][1] = action
         # 現在の状態（つまり一番最後なのでindex=-1）の行動を代入
-        
+
         s_a_history.append([next_s, np.nan])
         # 次の状態を代入。行動はまだわからないのでnanにしておく
-        
+
         if next_s == 8: # ゴール地点なら終了
             break
         else:
             s = next_s
-        
+
     return s_a_history
 
 
@@ -189,7 +187,7 @@ def update_theta(theta, pi, s_a_history):
 
                 N_i = len(SA_i)  # 状態iで行動した総回数
                 N_ij = len(SA_ij)  # 状態iで行動jをとった回数
-                
+
                 # 初版では符号の正負に間違いがありました（修正日：180703）
                 #delta_theta[i, j] = (N_ij + pi[i, j] * N_i) / T
                 delta_theta[i, j] = (N_ij - pi[i, j] * N_i) / T
@@ -275,4 +273,3 @@ anim = animation.FuncAnimation(fig, animate, init_func=init, frames=len(
     s_a_history), interval=200, repeat=False)
 
 HTML(anim.to_jshtml())
-
