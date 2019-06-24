@@ -30,16 +30,16 @@ class Sequential:
         self.LastLayer = globals()[loss]()
 
 
-    def fit(self, x_train, t_train, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
+    def fit(self, learning_data, training_data, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
         #TrainingData
-        x = x_train
-        t = t_train
-        TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
-        TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
+        x = learning_data
+        t = training_data
+        TrainRow_size = x.shape[0] # learning_dataの行数を取得 返り値：整数
+        TrainCol_size = x.shape[1] # learning_dataの列数を取得 返り値：整数
         
         #ValidationData
-        x_val_data = validation_data[0]
-        t_val_data = validation_data[1]
+        x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
+        t_val_data = validation_data[1] # ValidationDataの列数を取得 返り値：整数
                
         ValidationRow_size = x_val_data.shape[0]
         ValidationCol_size = x_val_data.shape[1]
@@ -50,14 +50,10 @@ class Sequential:
         y = TrainCol_size
         for layers in self.sequential:
             y = layers.unit(y, Sequential.counter, epsilon, reg_lambda)
-            Sequential.counter = Sequential.counter + 1
+            Sequential.counter += 1
 
+        # メインルーチン
         for i in range(epochs):
-            
-            #x = x_train
-            #t = t_train
-            #TrainRow_size = x.shape[0] # train_dataの行数を取得 返り値：整数
-            #TrainCol_size = x.shape[1] # train_dataの列数を取得 返り値：整数
             batch_mask = np.random.choice(TrainRow_size, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
             x_batch = x[batch_mask, 0:TrainCol_size] #全データからbatch_size分データを抽出
             t_batch = t[batch_mask]
@@ -82,30 +78,11 @@ class Sequential:
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            #dout = 1
-            #dout = self.LastLayer.backward(dout)
-            dout = loss
+            dout = 1
             for layer in self.sequential:
                 dout = layer.backward(dout)
             
             self.sequential.reverse()
-
-            #全データから使用したbatchデータを削除。削除された分データは詰められる
-            x = np.delete(x, batch_mask, 0)
-            t = np.delete(t, batch_mask)
-            TrainRow_size = TrainRow_size - batch_size
-                
-
-
-
-
-            #正解率を計算
-            #val_loss  = self.ValLoss(x_val, t_val)
-            #train_acc = self.accuracy(x_batch, t_batch)
-            #test_acc  = self.accuracy(x_val, t_val)
-            #self.Output.history['val_loss'].append(val_loss)
-            #self.Output.history['acc'].append(train_acc)
-            #self.Output.history['val_acc'].append(test_acc)
 
         print('loss = %f' %self.Output.history['loss'][epochs-1])
         return self.Output
@@ -173,8 +150,8 @@ data_ = data_nom(data_)
 test_ = data_nom(test_)
 
 #訓練データのセット
-x_train = data_[:, 0:2] #入力データをセット
-t_train = data_[:, 2]   #正解データをセット
+learning_data = data_[:, 0:2] #学習データをセット
+training_data = data_[:, 2]   #教師データをセット
 
 #テストデータのセット
 x_test  = test_[:, 0:2] #入力データをセット
@@ -182,7 +159,7 @@ t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = (2,)))
+module.add(InputLayer(input_shape = 2))
 #module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
 module.add(Dense(50, activation = 'relu'))
@@ -198,7 +175,7 @@ batch_size = 128
 epsilon = 0.01    # gradient descentの学習率
 reg_lambda = 0.01 # regularizationの強さ 
 
-history = module.fit(x_train, t_train, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
+history = module.fit(learning_data, training_data, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
 
 #lossグラフ
 loss     = history.history['loss']

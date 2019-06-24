@@ -52,8 +52,7 @@ class relu:
 
         return out
 
-    def backward(self, dout, counter):
-        print('第%d層 ReLU' %counter)
+    def backward(self, dout):
         dout[self.mask] = 0
         delta = dout
 
@@ -71,8 +70,7 @@ class sigmoid:
 
         return out
 
-    def backward(self, dout, counter):
-        print('第%d層 Sigmoid' %counter)
+    def backward(self, dout):
         delta = dout * (1.0 - self.out) * self.out
 
         return delta
@@ -87,7 +85,7 @@ class liner:
         self.x = x
         return self.x
 
-    def backward(self, dout, counter):
+    def backward(self, dout):
         delta = 1 * dout
 
         return delta
@@ -97,18 +95,17 @@ class liner:
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
     def __init__(self, W, b, epsilon, reg_lambda):
+        # パラメータの設定
         self.W = W
         self.B = b
-
-        self.x = None
-        self.original_x_shape = None
-        #重み・バイアスパラメータの微分
-        self.dW = None
-        self.dB = None
-
-        #学習率の設定
+        self.dW = None # 重みの微分
+        self.dB = None # バイアスの微分
         self.epsilon    = epsilon    # gradient descentの学習率
         self.reg_lambda = reg_lambda # regularizationの強さ
+   
+        self.x = None
+        self.original_x_shape = None
+
 
     def forward(self, x):
         #テンソル対応
@@ -120,12 +117,7 @@ class affine:
 
         return out
 
-    def backward(self, dout, counter):
-        #printの設定
-        print('第%d層 - AffineLayer - Weight%d, %d' %(counter, counter-1, counter))
-        print(self.W)
-        print('第%d層 - AffineLayer - Bias%d' %(counter, counter))
-        print(self.B)
+    def backward(self, dout):
 
         #dx = np.dot(dout, self.W.T)
         #self.W = self.W - np.dot(self.x.T, dout)
@@ -234,9 +226,11 @@ class SoftmaxWithLoss:
 class InputLayer:
     def __init__(self, input_shape):
         #self.Input_Row_Size = input_shape
+        self.params = {}                    #ユニット内での計算に必要なパラメータの辞書
+        self.params['Units']  = input_shape #ユニットの数
         self.Input_Col_Size = None
         self.input          = None
-        #
+       
         #if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
             #self.input = 1
             #pass
@@ -244,15 +238,15 @@ class InputLayer:
             #self.input = input_shape[1]
 
 
-    def unit(self, Data_Col_Size, counter, epsilon, reg_lambda):
+    def unit(self, Col_Size, counter, epsilon, reg_lambda):
         print('第%d層 - InputLayer' %counter)
-        self.Input_Col_Size = Data_Col_Size
-    
-        return self.Input_Col_Size
+        #self.Input_Col_Size = Col_Size
+        #return self.Input_Col_Size
+
+        return self.params['Units']
 
     def forward(self, input_data):
-        out = np.reshape(input_data, [-1, self.Input_Col_Size])
-
+        out = np.reshape(input_data, [-1, self.params['Units']])
         return out
 
     def backward(self, dout):
@@ -298,8 +292,6 @@ class Dense:
         self.initialisation   = InitParams()
         self.init_weight      = weight_initializer
         self.init_bias        = bias_initializer
-
-        self.counter          = None
         
 
     def initparams(self, BefLayer_Size, Unit_size):
@@ -318,13 +310,13 @@ class Dense:
         self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
         self.params['Bias']   = np.zeros((1, self.params['Units']))  
         
-        #活性化関数を設定
+        #レイヤの設定
         self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias'], epsilon, reg_lambda) #アフィン変換を行うレイヤをセット
         self.dense['Activation'] = globals()[self.activation]()                                    #活性化関数のレイヤをセット
 
-        self.counter = counter
-        print('第%d層 - AffineLayer' %self.counter)
-        print('第%d層 - Activation %s' %(self.counter, self.activation))
+        #レイヤの名前を表示
+        print('第%d層 - AffineLayer' %counter)
+        print('第%d層 - Activation %s' %(counter, self.activation))
 
         return self.params['Units']
 
@@ -340,7 +332,7 @@ class Dense:
         self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
         self.RevDense.reverse()
         for RevLayer in self.RevDense:
-            dout = RevLayer.backward(dout, self.counter)
+            dout = RevLayer.backward(dout)
 
         return dout
 
