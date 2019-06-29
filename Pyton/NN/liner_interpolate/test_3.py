@@ -75,6 +75,7 @@ class Sequential:
         self.Output = output()
         self.Output.history = {}
 
+        self.OutputBuff = []
         self.Output.history['loss']     = []
         self.Output.history['loss_ave'] = []
         #self.Output.history['val_loss'] = []
@@ -107,13 +108,8 @@ class Sequential:
    #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
    #-------------------------------------------------
     def fit(self, training_input, training_test, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
-        plot = Plot(0, 0)
-        #TrainingData
-        #x = training_input
-        #t = training_test
+        plot = Plot(1, 1)
 
-        #TrainRow_size = x.shape[0] # learning_dataの行数を取得 返り値：整数
-        #TrainCol_size = x.shape[1] # learning_dataの列数を取得 返り値：整数
         IRS = training_input.shape[0]
         ICS = training_input.shape[1]
         
@@ -145,22 +141,26 @@ class Sequential:
             print('#######    学習%d回目    ########' %Sequential.counter)
             Sequential.counter += 1
 
+            out_sum  = 0
+            out_ave  = 0
             loss_sum = 0
+            loss_ave = 0
             for j in range(batch_size):
                 output = self.Predict(TrainingI_batch[j, :]) # 学習を行う
                 
+                out_sum += output
                 #####     誤差を保存する     #####
                 loss = 0
                 loss = self.LastLayer.forward(output, TrainingT_batch[j])
                 loss_sum += loss
                 self.Output.history['loss'].append(loss)
 
+            out_ave  = out_sum  / batch_size
             loss_ave = loss_sum / batch_size
             plot.grah_plot(i+1, loss_ave)
             self.Output.history['loss_ave'].append(loss_ave)
 
-
-
+            
             ########################
             #####     追加     #####
             ########################
@@ -168,7 +168,7 @@ class Sequential:
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            dout = 1
+            dout = self.LastLayer.backward(out_ave, loss_ave)
             for layer in self.sequential:
                 dout = layer.backward(dout)
             
@@ -250,15 +250,15 @@ t_test  = test_[:, 2]   #正解データをセット
 
 module = Sequential()
 module.add(InputLayer(input_shape = 2))
-module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
-#module.add(Dense(50, activation = 'relu'))
+#module.add(Dense(50, activation = 'sigmoid'))
+module.add(Dense(50, activation = 'relu'))
 #module.add(Dense(50, activation = 'relu'))
 module.add(Dense(1,  activation = 'liner'))
 module.compile(loss = 'mean_squared_error')
 
 #学習
-epochs = 20
+epochs = 100
 batch_size = 128
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 

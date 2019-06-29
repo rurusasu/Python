@@ -122,8 +122,8 @@ class affine:
         self.dW = np.dot(self.x.T, dout)
         self.dB = np.sum(dout, axis = 0)
 
-        self.W += self.epsilon * self.dW
-        self.B += self.epsilon * self.dB
+        self.W -= self.epsilon * self.dW
+        self.B -= self.epsilon * self.dB
 
         dx = dx.reshape(self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
@@ -138,21 +138,21 @@ class mean_squared_error:
         self.t    = None #教師データ
 
     def forward(self, x, t):
-        self.y = x
-        self.t = t
         #if t.shape != x.shape:
             #self.y = self.y.reshape(self.y.size, 1)
             #self.t = self.t.reshape(self.t.size, 1)
-        self.loss = MeanSquaredError(self.y, self.t)
+        self.loss = MeanSquaredError(x, t)
 
         return self.loss
 
-    def backward(self, dout = 1):
-        #if dout != 1:
+    def backward(self, y, t, dout = 1):
         if dout == 1:
-            batch_size = self.t.shape[0]
-            if self.y.size == self.t.size:
-                dout = (self.y - self.t) / batch_size
+            if y.size == t.size:
+                batch_size = t.shape[0]
+                if batch_size == 1:
+                    dout = y - t
+                else:
+                    dout = (y - t) / batch_size
 
         return dout
 
