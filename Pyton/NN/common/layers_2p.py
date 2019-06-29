@@ -118,22 +118,15 @@ class affine:
         return out
 
     def backward(self, dout):
+        dx = np.dot(dout, self.W.T)
+        self.dW = np.dot(self.x.T, dout)
+        self.dB = np.sum(dout, axis = 0)
 
-        #dx = np.dot(dout, self.W.T)
-        #self.W = self.W - np.dot(self.x.T, dout)
-        #self.B = self.B - np.sum(dout, axis = 0)
-        #self.W = np.dot(self.x.T, dout)
-        #self.B = np.sum(dout, axis = 0)
-        self.dW = (self.x.T).dot(dout)
-        self.dW += self.reg_lambda * self.W
-        self.dB = np.sum(dout, axis=0, keepdims=True)
-        
-        self.W += -self.epsilon * self.dW
-        self.B += -self.epsilon * self.dB
-        delta = np.dot(dout, self.W.T)
+        self.W += self.epsilon * self.dW
+        self.B += self.epsilon * self.dB
 
-        delta = delta.reshape(*self.original_x_shape) #逆伝播を入力信号の形に戻す
-        return delta
+        dx = dx.reshape(self.original_x_shape) #逆伝播を入力信号の形に戻す
+        return dx
 
 
 #出力層
@@ -147,9 +140,9 @@ class mean_squared_error:
     def forward(self, x, t):
         self.y = x
         self.t = t
-        if t.shape != x.shape:
-            self.y = self.y.reshape(self.y.size, 1)
-            self.t = self.t.reshape(self.t.size, 1)
+        #if t.shape != x.shape:
+            #self.y = self.y.reshape(self.y.size, 1)
+            #self.t = self.t.reshape(self.t.size, 1)
         self.loss = MeanSquaredError(self.y, self.t)
 
         return self.loss
@@ -248,6 +241,7 @@ class InputLayer:
     def forward(self, input_data):
         out = np.reshape(input_data, [-1, self.params['Units']])
         return out
+        #return input_data
 
     def backward(self, dout):
         pass
