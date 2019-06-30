@@ -2,8 +2,8 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from common.functions import *
-from common.layers_2p import *
+from nn_pt2.functions import *
+from nn_pt2.layers import *
 from collections import OrderedDict
 
 class output: pass
@@ -30,43 +30,6 @@ class Plot:
         plt.pause(.01)
 
 
-class Loss:
-   #-------------------------------------------------
-   # __init__:初期化を行う
-   #     引数
-   #     @self
-   #     @loss_function :誤差を計算する関数を指定
-   #-------------------------------------------------
-    def __init__(self, loss_function):
-        self.function = globals()[loss]()
-        self.loss = 0
-        self.loss_sum = []
-    
-   #-------------------------------------------------
-   # loss:誤差を計算する
-   #     引数
-   #     @self
-   #     @x             :NNからの出力
-   #     @t             :テストデータ
-   #     @sum           :誤差を記録するか選べる（0:記録させない, 1:記録させる）
-   #-------------------------------------------------
-    def loss(self, x, t, sum = 0):
-        self.loss = self.function(x, t)
-        if sum == 1:
-            self.loss_sum.append(loss)
-        return self.loss
-    
-   #-------------------------------------------------
-   # ave_loss:誤差を計算する
-   #     引数
-   #     @self
-   #     @batch_size    :バッチ数
-   #-------------------------------------------------
-    def ave_loss(self, batch_size):
-        batch_loss = sum(self.loss_sum)
-        return batch_loss / batch_size
-
-
 class Sequential:
     counter  = 1
 
@@ -87,8 +50,8 @@ class Sequential:
         self.sequential.append(layer_name)
 
     def compile(self, loss):
-        self.LastLayer = globals()[loss]()
-
+        #self.LastLayer = globals()[loss]()
+        self.loss = Loss(loss)
 
    #-------------------------------------------------
    # fit:学習のメイン
@@ -108,11 +71,12 @@ class Sequential:
    #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
    #-------------------------------------------------
     def fit(self, training_input, training_test, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
-        plot = Plot(1, 1)
+        plot = Plot(0, 1)
 
         IRS = training_input.shape[0]
         ICS = training_input.shape[1]
-        
+       
+        minibatch = 1
         #ValidationData
         #x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
         #t_val_data = validation_data[1] # ValidationDataの列数を取得 返り値：整数
@@ -125,7 +89,7 @@ class Sequential:
         #レイヤの行列を計算する
         y = ICS
         for layers in self.sequential:
-            y = layers.unit(y, Sequential.counter, epsilon, reg_lambda)
+            y = layers.unit(minibatch, y, Sequential.counter, epsilon, reg_lambda)
             Sequential.counter += 1
 
         Sequential.counter = 1
@@ -141,36 +105,25 @@ class Sequential:
             print('#######    学習%d回目    ########' %Sequential.counter)
             Sequential.counter += 1
 
-            out_sum  = 0
-            out_ave  = 0
-            loss_sum = 0
-            loss_ave = 0
             for j in range(batch_size):
                 output = self.Predict(TrainingI_batch[j, :]) # 学習を行う
-                
-                out_sum += output
-                #####     誤差を保存する     #####
-                loss = 0
-                loss = self.LastLayer.forward(output, TrainingT_batch[j])
-                loss_sum += loss
+
+                #####     誤差を計算する     #####
+                loss = self.loss.forward(output, TrainingT_batch[j], minibatch, sum=1)
+
                 self.Output.history['loss'].append(loss)
 
-            out_ave  = out_sum  / batch_size
-            loss_ave = loss_sum / batch_size
-            plot.grah_plot(i+1, loss_ave)
-            self.Output.history['loss_ave'].append(loss_ave)
+            BatchLoss, BackSignal = self.loss.backward(batch_size)
+            plot.grah_plot(i+1, BatchLoss)
+            self.Output.history['loss_ave'].append(BatchLoss)
 
             
-            ########################
-            #####     追加     #####
-            ########################
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            dout = self.LastLayer.backward(out_ave, loss_ave)
             for layer in self.sequential:
-                dout = layer.backward(dout)
+                BackSignal = layer.backward(BackSignal)
             
             self.sequential.reverse()
         
@@ -249,16 +202,16 @@ t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 2))
+module.add(InputLayer(input_shape = (2, )))
 #module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
 module.add(Dense(50, activation = 'relu'))
-#module.add(Dense(50, activation = 'relu'))
+module.add(Dense(50, activation = 'relu'))
 module.add(Dense(1,  activation = 'liner'))
-module.compile(loss = 'mean_squared_error')
+module.compile(loss = 'MeanSquaredError')
 
 #学習
-epochs = 100
+epochs = 20
 batch_size = 128
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
@@ -267,15 +220,3 @@ reg_lambda = 0.01 # regularizationの強さ
 
 history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
 
-#lossグラフ
-loss     = history.history['loss_ave']
-#val_loss = history.history['val_loss']
-
-nb_epoch = len(loss)
-plt.plot(range(nb_epoch), loss,     marker = '.', label = 'loss')
-#plt.plot(range(nb_epoch), val_loss, marker = '.', label = 'val_loss')
-plt.legend(loc = 'best', fontsize = 10)
-plt.grid()
-plt.xlabel('epoch')
-plt.ylabel('loss')
-plt.show()
