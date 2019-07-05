@@ -145,21 +145,10 @@ class MeanSquaredError:
 
         return self.loss
 
-    '''
-    def backward(self, y, t, dout = 1):
-        if dout == 1:
-            if y.size == t.size:
-                batch_size = t.shape[0]
-                if batch_size == 1:
-                    dout = y - t
-                else:
-                    dout = (y - t) / batch_size
-
-        return dout
-    '''
     
     def backward(self, loss, dout = 1):
         return loss
+
 
 #####損失関数#####
 
