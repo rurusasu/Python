@@ -217,8 +217,8 @@ class InputLayer:
    #     @counter                :何層目か示すために必要
    #     @epsilon                :学習率
    #-------------------------------------------------
-    def unit(self, minibatch_size, input_col_size, counter, epsilon, reg_lambda):
-        #入力するデータの列数が、input_col_sizeと等しいか判定
+    def unit(self, batch_or_minibatch_size, input_col_size, counter, epsilon, reg_lambda):
+        #入力するデータの列数が、batch_or_minibatch_sizeと等しいか判定
         if self.InputParams['ColSize'] != input_col_size:
             if self.InputParams['RowSize'] == input_col_size: # RowSizeとColSizeを間違えて入力している可能性を判定
                 self.InputParams['ColSize'] = self.InputParams['RowSize']
@@ -226,12 +226,12 @@ class InputLayer:
             elif self.InputParams['RowSize'] != input_col_size: # 等しくなければColSizeの値を更新
                 self.InputParams['ColSize'] = input_col_size
 
-        # 入力するデータの行数がminibatch_sizeと等しいか判定
-        if self.InputParams['RowSize'] == minibatch_size: # 等しければpass
+        # 入力するデータの行数がbatch_or_minibatch_sizeと等しいか判定
+        if self.InputParams['RowSize'] == batch_or_minibatch_size: # 等しければpass
             pass
 
-        elif self.InputParams['RowSize'] != minibatch_size: # 等しくなければRowSizeの値を更新
-            self.InputParams['RowSize'] = minibatch_size
+        elif self.InputParams['RowSize'] != batch_or_minibatch_size: # 等しくなければRowSizeの値を更新
+            self.InputParams['RowSize'] = batch_or_minibatch_size
 
         print('第%d層 - InputLayer' %counter)
 

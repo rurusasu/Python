@@ -81,33 +81,36 @@ class Sequential:
         IRS_Buff = training_input.shape[0]
         ICS_Buff = training_input.shape[1]
       
-        BatchSize = batch_size
-        BatchSize_Buff = BatchSize
+        BatchSize_Buff = batch_size
 
         MiniBatchSize = 256
         
-        
-        
-        # もし、全データ数がBatchSizeで割り切れる場合
-        if IRS_Buff % BatchSize == 0:
-            iteration = IRS_Buff / BatchSize # iterationは全データ数÷BatchSizeにする
+        Dchoice = DataChoice()
+        plot = Plot(0, 1)
 
-        # もし、全データ数がBatchSizeで割り切れない場合
-        elif IRS_Buff % BatchSize != 0:
-            iteration = int(IRS_Buff / BatchSize) + 1 # (全データ数÷BatchSize)の小数点を切り捨てた数+1にする
+        # もし、BatchSizeが1000より小さいとき
+        if (BatchSize_Buff < 1000):
 
-        else:
-            print('iterationが決定できませんでした。')
-            return
+            # もし、全データ数がBatchSizeで割り切れる場合
+            if (IRS_Buff % BatchSize_Buff == 0):
+                iteration = IRS / BatchSize # iterationは全データ数÷BatchSizeにする
 
-        if(BatchSize < 1000):
-            Dchoice = DataChoice()
-            plot = Plot(0, 1)
+            # もし、全データ数がBatchSizeで割り切れない場合
+            elif (IRS_Buff % BatchSize_Buff != 0):
+                iteration = int(IRS_Buff / BatchSize_Buff) + 1 # (全データ数÷BatchSize)の小数点を切り捨てた数+1にする
+                RestBatchSize = IRS_Buff % BatchSize_Buff # Batchの最後に余るデータ数
+                #LastBatchSize = RestBatchSize + (BatchSize - RestBatchSize) # 最後のBatch数を拡張した数
+                               
+            # それ以外の場合
+            else:
+                print('iterationが決定できませんでした。')
+                return
 
+                       
             #レイヤの行列を計算する
             y = ICS_Buff
             for layers in self.sequential:
-                y = layers.unit(MiniBatchSize, y, Sequential.counter, epsilon, reg_lambda)
+                y = layers.unit(BatchSize_Buff, y, Sequential.counter, epsilon, reg_lambda)
                 Sequential.counter += 1
 
             Sequential.counter = 1
@@ -120,27 +123,36 @@ class Sequential:
                 TrainingT_batch = TrainingT_Buff
 
                 IRS = IRS_Buff
+                BatchSize = BatchSize_Buff
                 for j in range(iteration):
-
-                    if batch_size <= 1000:
+                    if IRS % BatchSize != 0:
                         I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize)
                         T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize)
-                        #batch_mask = np.random.choice(IRS, BatchSize, replace = False) 
-                        #TrainingI_batch = training_input[batch_mask, 0:ICS]
-                        #TrainingT_batch = training_test[batch_mask]
 
-                        output = self.Predict(I_batch) # 学習を行う
+                        ##### 使用したデータを削除 #####
+                        TrainingI_batch = Dchoice.DataDelete(TrainingI_batch, delete_size = RestBatchSize)
+                        TrainingT_batch = Dchoice.DataDelete(TrainingT_batch, delete_size = RestBatchSize)
 
-                        ##### 誤差を計算する #####
-                        loss = self.loss.forward(output, T_batch, MiniBatchSize, sum=1)
-                        self.Output.history['MiniBatchLoss'].append(loss)
+                        IRS -= RestBatchSize
+
+                    else:
+                        I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize)
+                        T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize)
 
                         ##### 使用したデータを削除 #####
                         TrainingI_batch = Dchoice.DataDelete(TrainingI_batch)
                         TrainingT_batch = Dchoice.DataDelete(TrainingT_batch)
-                        #TrainingI_batch = np.delete(TrainingI_batch, BatchMask, 0)
-                        #TrainingT_batch = np.delete(TrainingT_batch, BatchMask)
+
                         IRS -= BatchSize
+
+                    # 学習を行う
+                    output = self.Predict(I_batch)
+
+                    ##### 誤差を計算する #####
+                    loss = self.loss.forward(output, T_batch, MiniBatchSize, sum=1)
+                    self.Output.history['MiniBatchLoss'].append(loss)
+
+
 
                 BatchLoss, BackSignal = self.loss.backward(self.Output.history['MiniBatchLoss'], BatchSize_Buff)
                 plot.grah_plot(i+1, BatchLoss)
@@ -160,15 +172,15 @@ class Sequential:
             return self.Output
 
         '''
-        # もし、BatchSizeが1000以上 かつ BatchSizeがMiniBatchSize以上    かつ  BatchSizeがMiniBatchSizeで割り切れないとき
-        if (BatchSize >= 1000) and (BatchSize >= MiniBatchSize) and (BatchSize % MiniBatchSize != 0):
+        # もし、BatchSizeが1000以上 かつ BatchSizeがMiniBatchSize以上    かつ  BatchSizeがMiniBatchSizeで割り切れるとき
+        if (BatchSize >= 1000) and (BatchSize >= MiniBatchSize) and (BatchSize % MiniBatchSize == 0):
+            cycle = BatchSize / MiniBatchSize
+
+        # もし、BatchSizeが1000以上   かつ BatchSizeがMiniBatchSize以上    かつ  BatchSizeがMiniBatchSizeで割り切れない
+        elif (BatchSize >= 1000) and (BatchSize >= MiniBatchSize) and (BatchSize % MiniBatchSize != 0):
             cycle = int(BatchSize / MiniBatchSize) + 1 # (BatchSize÷MiniBatchSize)の小数点を切り捨てた数+1にする
             RestBatchSize = BatchSize % MiniBatchSize
             LastBatchSize = RestBatchSize + (MiniBatchSize - RestBatchSize)
-
-        # もし、BatchSizeが1000以上   かつ BatchSizeがMiniBatchSize以上    かつ  BatchSizeがMiniBatchSizeで割り切れるとき
-        elif (BatchSize >= 1000) and (BatchSize >= MiniBatchSize) and (BatchSize % MiniBatchSize == 0):
-            cycle = BatchSize / MiniBatchSize
 
         # もし、BatchSizeが1000以上   かつ BatchSizeがMiniBatchSizeより小さいとき
         elif (BatchSize >= 1000) and (BatchSize < MiniBatchSize):
@@ -356,7 +368,7 @@ module.compile(loss = 'MeanSquaredError')
 
 #学習
 epochs = 20
-batch_size = 1000
+batch_size = 999
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
 epsilon = 0.01    # gradient descentの学習率
