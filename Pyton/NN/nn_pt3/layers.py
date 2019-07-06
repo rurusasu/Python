@@ -380,7 +380,7 @@ class Loss:
    #     @BatchLoss     :誤差のbatch平均
    #     @BackSignal    :逆伝播信号
    #-------------------------------------------------
-    def backward(self, loss_data, batch_size):
+    def backward(self, loss_data, cycle):
         if(len(loss_data) == 1):
             BatchLoss  = sum(loss_data)
             BackSignal  = np.full((self.LossShape['Row'], self.LossShape['Col']), BatchLoss)
@@ -388,7 +388,7 @@ class Loss:
             
 
         elif(len(loss_data) != 1):
-            BatchLoss  = sum(loss_data) / batch_size
+            BatchLoss  = sum(loss_data) / cycle
             BackSignal  = np.full((self.LossShape['Row'], self.LossShape['Col']), BatchLoss)
             BackSignal = self.Function.backward(BackSignal)
 

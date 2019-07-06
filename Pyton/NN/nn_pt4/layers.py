@@ -2,7 +2,7 @@
 import sys, os
 sys.path.append(os.pardir)
 import numpy as np
-from nn_pt2.functions import *
+from nn_pt4.functions import *
 from collections import OrderedDict
 
 #乗算レイヤ
@@ -249,6 +249,7 @@ class InputLayer:
 
     def forward(self, input_data):
         out = np.reshape(input_data, [self.InputParams['RowSize'], self.InputParams['ColSize']])
+        
         return out
 
     def backward(self, dout):

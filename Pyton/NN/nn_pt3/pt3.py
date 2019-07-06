@@ -123,11 +123,11 @@ class Sequential:
                 TrainingT_batch = TrainingT_Buff
 
                 IRS = IRS_Buff
-                BatchSize = BatchSize_Buff
+                #BatchSize = BatchSize_Buff
                 for j in range(iteration):
-                    if IRS % BatchSize != 0:
-                        I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize)
-                        T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize)
+                    if IRS % BatchSize_Buff != 0:
+                        I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize_Buff)
+                        T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize_Buff)
 
                         ##### 使用したデータを削除 #####
                         TrainingI_batch = Dchoice.DataDelete(TrainingI_batch, delete_size = RestBatchSize)
@@ -136,25 +136,24 @@ class Sequential:
                         IRS -= RestBatchSize
 
                     else:
-                        I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize)
-                        T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize)
+                        I_batch = Dchoice.RandomChoice(TrainingI_batch, IRS, BatchSize_Buff)
+                        T_batch = Dchoice.RandomChoice(TrainingT_batch, IRS, BatchSize_Buff)
 
                         ##### 使用したデータを削除 #####
                         TrainingI_batch = Dchoice.DataDelete(TrainingI_batch)
                         TrainingT_batch = Dchoice.DataDelete(TrainingT_batch)
 
-                        IRS -= BatchSize
+                        IRS -= BatchSize_Buff
 
                     # 学習を行う
                     output = self.Predict(I_batch)
 
                     ##### 誤差を計算する #####
-                    loss = self.loss.forward(output, T_batch, MiniBatchSize, sum=1)
+                    loss = self.loss.forward(output, T_batch, BatchSize_Buff, sum=1)
                     self.Output.history['MiniBatchLoss'].append(loss)
 
 
-
-                BatchLoss, BackSignal = self.loss.backward(self.Output.history['MiniBatchLoss'], BatchSize_Buff)
+                BatchLoss, BackSignal = self.loss.backward(self.Output.history['MiniBatchLoss'], iteration)
                 plot.grah_plot(i+1, BatchLoss)
                 self.Output.history['BatchLoss'].append(BatchLoss)
                 self.Output.history['MiniBatchLoss'] = [] # 配列の初期化
@@ -368,7 +367,7 @@ module.compile(loss = 'MeanSquaredError')
 
 #学習
 epochs = 20
-batch_size = 999
+batch_size = 32
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
 epsilon = 0.01    # gradient descentの学習率
