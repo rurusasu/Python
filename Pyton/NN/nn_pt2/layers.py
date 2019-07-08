@@ -110,7 +110,7 @@ class affine:
     def forward(self, x):
         #テンソル対応
         self.original_x_shape = x.shape #元の形を記憶させる
-        x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
+        #x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
         
         out = self.x.dot(self.W) + self.B
@@ -249,6 +249,8 @@ class InputLayer:
 
     def forward(self, input_data):
         out = np.reshape(input_data, [self.InputParams['RowSize'], self.InputParams['ColSize']])
+        #out = input_data
+
         return out
 
     def backward(self, dout):

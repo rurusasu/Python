@@ -12,21 +12,34 @@ class output: pass
 class Plot:
     def __init__(self, x, y):
         #グラフの初期化
-        self.fig, self.ax = plt.subplots(1, 1)
+        self.fig, (self.axL, self.axR) = plt.subplots(ncols=2, figsize=(10, 4))
         self.x = []
         self.y = []
 
         self.x.append(x)
         self.y.append(y)
 
-        self.lines,  = self.ax.plot(self.x, self.y)
+        self.lines_L,  = self.axL.plot(self.x, self.y)
+        self.lines_R,  = self.axR.plot(self.x, self.y)
 
-    def grah_plot(self, x, y):
+    def grah_plot_L(self, x, y):
         self.x.append(x)
         self.y.append(y)
-        self.lines.set_data(self.x, self.y)
-        self.ax.set_xlim(0, len(self.x))
-        self.ax.set_ylim(min(self.y), max(self.y))
+        self.lines_L.set_data(self.x, self.y)
+        self.axL.set_xlim(0, len(self.x))
+        self.axL.set_ylim(min(self.y), max(self.y))
+        plt.pause(.01)
+
+    def grah_plot_R(self, x):
+        loss = x
+        nb_epoch = len(loss)
+        #self.lines_R.set_data(range(nb_epoch), loss,  marker = '.', label = 'loss')
+        self.lines_R.set_data(range(nb_epoch), loss)
+        self.axR.set_xlim(0, nb_epoch)
+        self.axR.set_ylim(min(loss), max(loss))
+        self.axR.set_xlabel('epoch')
+        self.axR.set_ylabel('loss')
+        self.axR.grid(False)
         plt.pause(.01)
 
 
@@ -42,7 +55,7 @@ class Sequential:
         self.Output.history['loss']     = []
         self.Output.history['loss_ave'] = []
         #self.Output.history['val_loss'] = []
-        #self.Output.history['acc']      = []
+        self.Output.history['train_acc']      = []
         #self.Output.history['val_acc']  = []
 
     def add(self, layer_name):
@@ -71,7 +84,7 @@ class Sequential:
    #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
    #-------------------------------------------------
     def fit(self, training_input, training_test, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
-        plot = Plot(0, 1)
+        plot = Plot(0, 0.125)
 
         IRS = training_input.shape[0]
         ICS = training_input.shape[1]
@@ -92,42 +105,55 @@ class Sequential:
             y = layers.unit(minibatch, y, Sequential.counter, epsilon, reg_lambda)
             Sequential.counter += 1
 
+        iter = int(IRS /batch_size) + 1 
         Sequential.counter = 1
         # メインルーチン
         for i in range(epochs):
-            batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-            TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
-            TrainingT_batch = training_test[batch_mask]
-
-            #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
-            #t_val   = t_val_data[batch_mask]
-            
             print('#######    学習%d回目    ########' %Sequential.counter)
             Sequential.counter += 1
 
-            for j in range(batch_size):
-                output = self.Predict(TrainingI_batch[j, :]) # 学習を行う
+            for j in range(iter):
+                batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
+                TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
+                TrainingT_batch = training_test[batch_mask]
 
-                #####     誤差を計算する     #####
-                loss = self.loss.forward(output, TrainingT_batch[j], minibatch, sum=1)
+                #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
+                #t_val   = t_val_data[batch_mask]
+            
 
-                self.Output.history['loss'].append(loss)
 
-            BatchLoss, BackSignal = self.loss.backward(batch_size)
-            plot.grah_plot(i+1, BatchLoss)
+                for k in range(batch_size):
+                    output = self.Predict(TrainingI_batch[k, :]) # 学習を行う
+
+                    #####     誤差を計算する     #####
+                    loss = sum(mean_squared_error(output, TrainingT_batch[k]))
+                    #self.Output.history['loss'].append(sum(loss))
+                    self.Output.history['loss'].append(sum(loss)/float(output.shape[0]))
+
+            BatchLoss = sum(self.Output.history['loss']) / (IRS)
+            #plot.grah_plot_L(i+1, BatchLoss)
             self.Output.history['loss_ave'].append(BatchLoss)
-
+            self.Output.history['loss'] = []
             
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
+            BackSignal = sum(self.Output.history['loss']) / batch_size
             for layer in self.sequential:
                 BackSignal = layer.backward(BackSignal)
             
             self.sequential.reverse()
         
-        print('loss = %f' %self.Output.history['loss'][epochs-1])
+            # 正解率の計算
+            TrainAcc = self.accuracy(TrainingI_batch[0, :], TrainingT_batch)
+            self.Output.history['train_acc'].append(TrainAcc)
+            
+
+        print('loss = %f' %self.Output.history['loss_ave'][epochs-1])
+        print('train_acc = %f' %self.Output.history['train_acc'][epochs-1])
+
+        plot.grah_plot_R(self.Output.history['loss_ave'])
         return self.Output
 
 
@@ -157,7 +183,9 @@ class Sequential:
             y = y.reshape(-1, 1)
             t = t.reshape(-1, 1)
 
-        accuracy = np.sum(y == t) / float(x.shape[0])
+        #accuracy = np.sum(y == t) / float(x.shape[0])
+        accuracy = np.sum(y - t) / float(x.shape[0])
+
         return accuracy
 
 
@@ -211,8 +239,8 @@ module.add(Dense(1,  activation = 'liner'))
 module.compile(loss = 'MeanSquaredError')
 
 #学習
-epochs = 120
-batch_size = 128
+epochs = 10
+batch_size = 32
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
 epsilon = 0.01    # gradient descentの学習率
@@ -220,3 +248,14 @@ reg_lambda = 0.01 # regularizationの強さ
 
 history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
 
+
+loss = history.history['loss_ave']
+'''
+nb_epoch = len(loss)
+plt.plot(range(nb_epoch), loss,  marker = '.', label = 'loss')
+#plt.legend(loc = 'best', fontsize = 10)
+plt.grid(False)
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.show()
+'''
