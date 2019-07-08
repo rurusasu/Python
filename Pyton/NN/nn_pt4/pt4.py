@@ -131,7 +131,7 @@ class Sequential:
                     self.Output.history['loss'].append(sum(loss)/float(output.shape[0]))
 
             BatchLoss = sum(self.Output.history['loss']) / (IRS)
-            plot.grah_plot_L(i+1, BatchLoss)
+            #plot.grah_plot_L(i+1, BatchLoss)
             self.Output.history['loss_ave'].append(BatchLoss)
             self.Output.history['loss'] = []
             
@@ -239,7 +239,7 @@ module.add(Dense(1,  activation = 'liner'))
 module.compile(loss = 'MeanSquaredError')
 
 #学習
-epochs = 5
+epochs = 10
 batch_size = 32
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
