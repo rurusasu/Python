@@ -94,14 +94,12 @@ class liner:
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
-    def __init__(self, W, b, epsilon, reg_lambda):
+    def __init__(self, W, b):
         # パラメータの設定
         self.W = W
         self.B = b
         self.dW = None # 重みの微分
         self.dB = None # バイアスの微分
-        self.epsilon    = epsilon    # gradient descentの学習率
-        self.reg_lambda = reg_lambda # regularizationの強さ
    
         self.x = None
         self.original_x_shape = None
@@ -122,8 +120,8 @@ class affine:
         self.dW = np.dot(self.x.T, dout)
         self.dB = np.sum(dout, axis = 0)
 
-        self.W -= self.epsilon * self.dW
-        self.B -= self.epsilon * self.dB
+        self.W -= self.dW
+        self.B -= self.dB
 
         dx = dx.reshape(self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
@@ -196,23 +194,16 @@ class InputLayer:
    # __init__:初期化を行う
    #     引数
    #     @self
-   #     @input_shape            :学習データの形状(タプル)
+   #     @input_shape :学習データの形状(タプル)
    #     変数
-   #     @InputParams            :ユニット内での計算に必要なパラメータ(配列)             
-   #     @InputParams['RowSize'] :入力データの行数
-   #     @InputParams['ColSize'] :入力データの列数
+   #     @ColSize     :入力データの列数
    #-------------------------------------------------
     def __init__(self, input_shape):
-        self.InputParams = {}
-        self.InputParams['RowSize'] = None
-        self.InputParams['ColSize'] = None
-       
         if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
-            self.InputParams['RowSize'] = input_shape[0]
+            self.ColSize = input_shape[0]
 
         elif len(input_shape) == 2:
-            self.InputParams['RowSize'] = input_shape[0]
-            self.InputParams['ColSize'] = input_shape[1]
+            self.ColSize = input_shape[1]
 
         else:
             print("input_OverDimension")
@@ -226,29 +217,16 @@ class InputLayer:
    #     @counter                :何層目か示すために必要
    #     @epsilon                :学習率
    #-------------------------------------------------
-    def unit(self, minibatch, input_col_size, counter, epsilon, reg_lambda):
+    def unit(self, input_col_size):
         #入力するデータの列数が、input_col_sizeと等しいか判定
-        if self.InputParams['ColSize'] != input_col_size:
-            if self.InputParams['RowSize'] == input_col_size: # RowSizeとColSizeを間違えて入力している可能性を判定
-                self.InputParams['ColSize'] = self.InputParams['RowSize']
+        if self.ColSize != input_col_size:
+            self.ColSize = input_col_size
 
-            elif self.InputParams['RowSize'] != input_col_size: # 等しくなければColSizeの値を更新
-                self.InputParams['ColSize'] = input_col_size
-
-        # 入力するデータの行数がminibatchと等しいか判定
-        if self.InputParams['RowSize'] == minibatch: # 等しければpass
-            pass
-
-        elif self.InputParams['RowSize'] != minibatch: # 等しくなければRowSizeの値を更新
-            self.InputParams['RowSize'] = minibatch
-
-        print('第%d層 - InputLayer' %counter)
-
-        return self.InputParams['ColSize']
+        return self.ColSize
 
 
     def forward(self, input_data):
-        out = np.reshape(input_data, [self.InputParams['RowSize'], self.InputParams['ColSize']])
+        out = np.reshape(input_data, [-1, self.ColSize])
         #out = input_data
 
         return out
@@ -259,7 +237,18 @@ class InputLayer:
 
 #全結合レイヤ
 class Dense:
-    def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
+   #-------------------------------------------------
+   # __init__:初期化を行う
+   #     引数
+   #     @self
+   #     @Units :ユニットの数(層の列数)
+   #     @activation :活性化関数
+   #     @weight_initializer :重みの初期化関数
+   #     @bias_initializer   :バイアスの初期化関数
+   #     変数
+   #     @ColSize     :入力データの列数
+   #-------------------------------------------------
+    def __init__(self, Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
         self.dense = OrderedDict()         #関数の辞書
         self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
         self.activation = activation       #活性化関数名
@@ -268,8 +257,6 @@ class Dense:
         self.params['Units']  = Units    #ユニットの数
         self.params['Weight'] = None     #重み
         self.params['Bias']   = None     #閾値
-        self.params['epsilon'] = None    #学習率
-        self.params['reg_lambda'] = None #regularizationの強さ
 
         #####   初期値の設定   #####
         self.initialisation   = InitParams()
@@ -286,20 +273,14 @@ class Dense:
                 
         return weight, bias
 
-    def unit(self, _, BefLayer_Size, counter, epsilon, reg_lambda):
+    def unit(self, BefLayer_Size):
         #初期値を設定
-        self.params['epsilon'] = epsilon
-        self.params['reg_lambda'] = reg_lambda
         self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
         self.params['Bias']   = np.zeros((1, self.params['Units']))  
         
         #レイヤの設定
-        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias'], epsilon, reg_lambda) #アフィン変換を行うレイヤをセット
+        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias']) #アフィン変換を行うレイヤをセット
         self.dense['Activation'] = globals()[self.activation]()                                    #活性化関数のレイヤをセット
-
-        #レイヤの名前を表示
-        print('第%d層 - AffineLayer' %counter)
-        print('第%d層 - Activation %s' %(counter, self.activation))
 
         return self.params['Units']
 
