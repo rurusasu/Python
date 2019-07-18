@@ -44,12 +44,13 @@ BOOL    CALLBACK EnumAxesCallback(const DIDEVICEOBJECTINSTANCE*, VOID*);
 int WINAPI WinMain(_In_ HINSTANCE hInst, _In_opt_ HINSTANCE hPrevinst, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
 	MSG msg;
+	
 
 	g_hWnd = InitApp(hInst, nCmdShow);
 	if (!g_hWnd) return FALSE;
 
 	if (!InitDirectInput(g_hWnd)) return FALSE;
-
+	GetMessage(&msg,NULL,0,0);
 	while (msg.message != WM_QUIT) {
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);

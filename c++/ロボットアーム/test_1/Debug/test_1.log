@@ -1,4 +1,3 @@
 ﻿  Source.cpp
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
-  C:\Data\H31_Miki\lab\c++\ロボットアーム\test_1\Source.cpp(53) : error C4700: 初期化されていないローカル変数 'msg' が使用されます
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(429,5): error MSB6006: "CL.exe" はコード 2 を伴って終了しました。
+  C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\include\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+ucrtd.lib(ucrtbased.dll) : fatal error LNK1112: モジュールのコンピューターの種類 'x64' は対象コンピューターの種類 'x86' と競合しています。
