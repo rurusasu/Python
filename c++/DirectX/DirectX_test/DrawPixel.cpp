@@ -11,8 +11,7 @@
 #include <dinput.h>
 //#include <dinputex.h>
 
-//#pragma comment(lib, "dinput8.dll")
-//#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dinput8.lib")
 
 
 //-----------------------------------------------------------------
