@@ -1,0 +1,2 @@
+﻿  Main.cpp
+LINK : fatal error LNK1104: ファイル 'DxUseCLib_vs2015_x86_MT.lib' を開くことができません。
