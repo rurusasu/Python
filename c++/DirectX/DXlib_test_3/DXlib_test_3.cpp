@@ -14,7 +14,7 @@ int main()
 
 	// メインループ
 	// ESCキーが押されるまでループ
-	while (PAD_INPUT_9 == 0)
+	while ((GetJoypadInputState(DX_INPUT_PAD1) & PAD_INPUT_9) == 0)
 	{
 		// 入力状態を取得
 		GetJoypadDirectInputState(DX_INPUT_PAD1, &g_pDInput);
