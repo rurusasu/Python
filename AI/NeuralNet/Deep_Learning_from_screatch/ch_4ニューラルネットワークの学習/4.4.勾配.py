@@ -23,7 +23,6 @@ def _numerical_gradient_no_batch(f, x):
     return grad
 
 
-
 def numerical_gradient(f, X):
     if X.ndim == 1:
         return _numerical_gradient_no_batch(f, X)
@@ -48,14 +47,13 @@ if __name__ == '__main__':
     x1 = np.arange(-2, 2.5, 0.25)
     X, Y = np.meshgrid(x0, x1) # meshgrid：配列の要素から格子列を生成する
 
-    # flatten：配列を1次元に変換する
-    X = X.flatten() 
+    X = X.flatten()  # flatten：配列を1次元に変換する
     Y = Y.flatten()
 
     grad = numerical_gradient(function_2, np.array([X, Y]) )
 
     plt.figure()
-    plt.quiver(X, Y, -grad[0], -grad[1],  angles='xy', color='#666666')
+    plt.quiver(X, Y, -grad[0], -grad[1], angles='xy', color='#666666')
     plt.xlim([-2, 2])
     plt.ylim([-2, 2])
     plt.xlabel('x0')
