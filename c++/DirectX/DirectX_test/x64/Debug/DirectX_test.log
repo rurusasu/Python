@@ -1,4 +1,0 @@
-﻿dinput8.dll : warning LNK4003: ライブラリの形式が無効です。ライブラリは無視されます。
-DrawPixel.obj : error LNK2019: 未解決の外部シンボル DirectInput8Create が関数 "int __cdecl InitDirectInput(struct HWND__ *)" (?InitDirectInput@@YAHPEAUHWND__@@@Z) で参照されました。
-DrawPixel.obj : error LNK2001: 外部シンボル "c_dfDIJoystick" は未解決です。
-C:\Data\H31_Miki\lab\c++\DirectX\DirectX_test\x64\Debug\DirectX_test.exe : fatal error LNK1120: 2 件の未解決の外部参照

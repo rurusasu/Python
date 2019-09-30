@@ -1,1 +1,0 @@
-Update 2019/03/12: replace the new dobot.dll file with a new method to get the slider parameters and move the slider.

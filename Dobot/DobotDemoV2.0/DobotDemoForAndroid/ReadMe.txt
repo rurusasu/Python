@@ -1,1 +1,0 @@
-Update 2019/03/12: new Demo based on AndroidStudio3.0 and above.
