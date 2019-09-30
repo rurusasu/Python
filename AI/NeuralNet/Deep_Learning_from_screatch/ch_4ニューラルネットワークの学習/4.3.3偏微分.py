@@ -1,8 +1,8 @@
 # cording: utf-8
 
 import numpy as np
-import matplotlib as plt
-
+import matplotlib.pylab as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def _numerical_gradient_no_batch(f, x):
@@ -26,9 +26,9 @@ def _numerical_gradient_no_batch(f, x):
 
 def numerical_gradient(f, X):
     if X.ndim == 1:
-        return _numerical_gradient_no_batch(f, x)
+        return _numerical_gradient_no_batch(f, X)
     else:
-        grad = np.zeros_like(x) # gradの初期化
+        grad = np.zeros_like(X) # gradの初期化
 
         for idx, x in enumerate(X): # enumrate(x) インデックス番号, 要素の順に取得する
             grad[idx] = _numerical_gradient_no_batch(f, x)
@@ -52,5 +52,15 @@ if __name__ == '__main__':
     X = X.flatten() 
     Y = Y.flatten()
 
-    grad = numerical_gradient(function_2, np.array[X, Y])
-    print(grad)
+    grad = numerical_gradient(function_2, np.array([X, Y]) )
+
+    plt.figure()
+    plt.quiver(X, Y, -grad[0], -grad[1],  angles='xy', color='#666666')
+    plt.xlim([-2, 2])
+    plt.ylim([-2, 2])
+    plt.xlabel('x0')
+    plt.ylabel('x1')
+    plt.grid()
+    plt.legend()
+    plt.draw()
+    plt.show()
