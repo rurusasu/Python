@@ -1,0 +1,188 @@
+*コマンドプロンプトを管理者として実行*
+conda install -y conda-build  //後日エラーが発生
+
+anacondaインストールファイルのプロパティ
+セキュリティを選択
+Usersをフルコントロールに移行
+
+*再度インストールを開始*
+conda install -y conda-build
+
+*インストールができない場合コンピュータを再起動*
+*インストール成功した場合以下続行*
+*コマンドプロンプトを再起動*
+pip install msgpack
+conda update -y pip
+conda update -y setuptools
+conda update -y conda
+conda update -y conda-build
+pip install --ignore-installed --upgrade ipykernel
+python -m pip install --upgrade pip
+conda update -y --all
+*同様にエラー*
+*一つずつインストール*
+conda install -y numpy
+conda install -y six
+conda install -y protobuf
+conda install -y pillow
+conda install -y hdf5
+conda install -y h5py
+conda install -y chainer
+conda install -y scikit-learn
+conda install -y scikit-image
+conda install -y matplotlib
+conda install -y seaborn
+conda install -y graphviz
+conda install -y pydot
+conda install -y yaml
+conda install -y flask
+conda install -y django
+conda install -y sympy
+conda install -y pandas
+conda install -y sqlite
+conda install -y redis
+conda install -y scipy
+conda install -y gensim
+conda install -y cython
+conda install -y opencv
+conda install -y pylint
+pip install --ignore-installed --upgrade smart-open
+pip install --ignore-installed --upgrade msgpack
+pip install --ignore-installed --upgrade tensorboard
+pip install --ignore-installed --upgrade tensorflow
+pip install --ignore-installed --upgrade keras
+pip install --ignore-installed --upgrade pyglet
+pip install --ignore-installed --upgrade pygame
+pip install --ignore-installed --upgrade cocos2d
+pip install --ignore-installed --upgrade geopandas
+pip install --ignore-installed --upgrade overpy
+conda install -y -c conda-forge folium
+conda install -y -c conda-forge dlib
+conda install -y -c conda-forge exifread
+conda install -y -c conda-forge haversine
+conda install -y -c conda-forge utm
+conda install -y -c conda-forge gdal
+conda install -y conda
+conda update -y --all
+*エラーをいったん放置して以下のコマンドを実行*
+conda update -y python//なぜかアップデート成功
+*よって同様にconda pudate --allの内容も一つずつアップデート*
+*以下に表示したものは2018/7/01の内容である*
+*実際に操作を行う場合は, conda update --all で表示される内容にプログラム名を変更*
+conda update -y alabaster
+conda update -y astroid
+conda update -y astropy
+conda update -y babel
+conda update -y bitarray
+conda update -y bleach
+conda update -y bokeh
+conda update -y cython
+conda update -y dask-core
+conda update -y dask
+conda update -y distributed
+conda update -y flask-cors
+conda update -y gensim
+conda update -y gevent
+conda update -y h5py
+conda update -y html5lib
+conda update -y idna
+conda update -y intel-openmp
+conda update -y libprotobuf
+conda update -y llvmlite
+conda update -y lxml
+conda update -y mkl
+conda update -y more-itertools
+conda update -y numba
+conda update -y numpy-base
+conda update -y numpy
+conda update -y openpyxl
+conda update -y pandas
+conda update -y pandoc
+conda update -y parso
+conda update -y protobuf
+conda update -y psutil
+conda update -y pycrypto
+conda update -y pycurl
+conda update -y pyflakes
+conda update -y pylint 
+conda update -y pytables
+conda update -y pytest
+conda update -y pytest-astropy
+conda update -y pytest-remotedata
+conda update -y pywinpty
+conda update -y qt           
+conda update -y qtpy
+conda update -y requests
+conda update -y ruamel_yaml
+conda update -y scikit-image
+conda update -y setuptools        
+conda update -y sortedcollections
+conda update -y sphinx
+conda update -y sphinxcontrib-websupport
+conda update -y sqlalchemy
+conda update -y sqlite
+conda update -y urllib3
+conda update -y xlsxwriter
+*この操作の後, エラーが表示されたプログラムに関してアンインストールを実行*
+*例としてここでは2018/07*01の状況を記載する*
+*pylintをアンインストールしてみる*
+conda uninstall pylint
+
+/*結果*/
+The following packages will be REMOVED:
+    pylint: 1.8.4-py36_0
+    spyder: 3.2.8-py36_0
+Proceed ([y]/n)? y
+
+*同様にqtもアンインストール*
+conda uninstall qt
+
+/*結果*/
+The following packages will be REMOVED:
+    anaconda-navigator: 1.8.7-py36_0
+    jupyter:            1.0.0-py36_4
+    matplotlib:         2.2.2-py36h153e9ff_1
+    navigator-updater:  0.2.1-py36_0
+    pyqt:               5.9.2-py36h1aa27d4_0
+    qt:                 5.9.5-vc14he4a7d60_0
+    qtconsole:          4.3.1-py36h99a29a9_0
+    scikit-image:       0.14.0-py36h6538335_1
+    seaborn:            0.8.1-py36h9b69545_0
+Proceed ([y]/n)? y
+
+*再度インストール*
+*アンインストールするプログラムによっては, 複数のアンインストールが発生するので注意が必要！*
+*アンインストールしたプログラムすべてを再度インストール*
+/*pyline*/
+pip install --ignore-installed --upgrade pylint
+pip install --ignore-installed --upgrade spyder
+
+/*qt*/
+pip install --ignore-installed --upgrade jupyter
+pip install --ignore-installed --upgrade matplotlib
+pip install --ignore-installed --upgrade navigator-updater
+pip install --ignore-installed --upgrade pyqt
+pip install --ignore-installed --upgrade qt
+pip install --ignore-installed --upgrade qtconsole
+pip install --ignore-installed --upgrade scikit-image
+pip install --ignore-installed --upgrade seaborn
+
+*場合によっては削除されたパッケージが存在することもある*
+*これがconda update --allで悪さをしていた模様!!*
+
+*最後にupdate --allを実行*
+C:\Users\Miki>conda update --all
+Solving environment: done
+
+# All requested packages already installed.
+
+*やっと, すべてのアップデートが成功しました.*
+*さらにインストールできなかった以下のパッケージ類を再度インストール*
+conda install -y -c conda-forge folium
+conda install -y -c conda-forge dlib
+conda install -y -c conda-forge exifread
+conda install -y -c conda-forge haversine
+conda install -y -c conda-forge utm
+conda install -y -c conda-forge gdal
+
+*こちらも同様にインストールが成功!!

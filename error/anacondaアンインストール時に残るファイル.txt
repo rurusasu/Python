@@ -1,0 +1,14 @@
+*anacondaアンインストール時に残るファイル*
+C:\Users\Miki\
+.anaconda
+.conda
+.ipynb_checkpoints
+.ipython
+.jupyter
+.matplotlib
+.spyder-py3
+
+C:\Users\Miki\AppData\Local\
+conda
+pip
+spyder
