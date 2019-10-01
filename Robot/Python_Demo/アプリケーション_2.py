@@ -84,16 +84,28 @@ def act(api, lastIndex):
 
 
 # X方向に移動する指令をループさせる関数
+def OneAction_X(api, mode, x, y, z, r):
+    lastIndex = dType.SetPTPCmd(api, mode,
+                                x, y, z, r, isQueued=1)[0]
+    act(api, lastIndex)
+
+
 # fileへの書き込み指令は後に消す予定
 def roop_plusX(api, x, y, z, r, roop):
+    #Clean Command Queued
+    dType.SetQueuedCmdClear(api)
+    
     counter = x
-
     #Async PTP Motion
     for j in range(1, roop + 1):
+        """
         lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
                                     counter + j, y, z, r, isQueued=1)[0]
         act(api, lastIndex)
-        pose = dType.GetPose(api)
+        """
+        OneAction_X(api, dType)
+        pose = dType.GetPose(
+            api, dType.PTPMode.PTPMOVLXYZMode, counter + j, y, z, r)
 
         file_write(pose)
 
@@ -164,17 +176,6 @@ def connect_click():
     #キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
 
-    """
-    x_roop1 = 4
-    x_roop2 = 5
-    y_roop = 5
-    z_roop = 2
-    counter_x = 150
-    counter_x_init = 150
-    counter_y = -201
-    counter_y_init = -201
-    counter_z = 101
-    """
     x_roop1 = 4
     x_roop2 = 20
     y_roop = 5
@@ -205,7 +206,7 @@ def connect_click():
             if j % 2 == 0:
                 for k in range(0, x_roop1 + 1):
                     #Clean Command Queued
-                    dType.SetQueuedCmdClear(api)
+                    #dType.SetQueuedCmdClear(api)
 
                     #Async Motion Params Setting
                     dType.SetPTPJointParams(api, 200, 200, 200, 200,

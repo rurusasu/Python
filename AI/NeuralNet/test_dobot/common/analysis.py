@@ -7,7 +7,7 @@ import matplotlib.pylab as plt
 #-------------------------------------------------
 # 常微分方程式の解法(gradient.pyに使用)
 #-------------------------------------------------
-def CenterDiffMethod(x):
+def CenterDiffMethod(f, x):
     """
     Function of center difference method
 
@@ -37,17 +37,3 @@ def CenterDiffMethod(x):
         x[idx] = tmp_val  # 値を元に戻す
 
     return grad
-
-
-if __name__ == '__main__':
-    x0 = np.arange(-2, 2.5, 0.1)
-
-    grad = CenterDiffMethod(x0)
-
-
-    """
-    plt.plot(grad, 'o')
-    plt.xLabel('x0')
-    plt.ylabel('f(x)')
-    plt.show()
-    """
