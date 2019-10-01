@@ -1,7 +1,10 @@
 # cording: utf-8
 
-import numpy as np
+import sys, os
+sys.path.append(os.getcwd())
 
+import numpy as np
+from common.analysis import CenterDiffMethod
 
 def _numerical_gradient_1d(f, x):
     h = 1e-4  # 0.0001

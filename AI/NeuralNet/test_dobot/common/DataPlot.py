@@ -5,6 +5,9 @@ import matplotlib.pylab as plt
 
 
 def PlanePlot(X, Y):
+    """
+    """
+    
     plt.plot(X, Y)
     plt.xlabel("x")
     plt.ylabel("f(x)")
@@ -34,6 +37,15 @@ def twoD_ArrayQuiver(X, Y, Z):
     plt.grid()
     plt.legend()
     plt.draw()
+    plt.show()
+
+
+def two_D_PointPlot(X, Y):
+    """
+    """
+    plt.plot(X, Y, 'o')
+    plt.xLabel('x0')
+    plt.ylabel('x1')
     plt.show()
 
 

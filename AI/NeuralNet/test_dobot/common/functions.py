@@ -2,22 +2,22 @@
 import numpy as np
 
 
-#ステップ関数
+# ステップ関数
 def StepFunction(x):
     return np.array(x > 0, dtype=np.int)
 
-#シグモイド関数
+# シグモイド関数
 def Sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-#ReLU関数(ランプ関数)
+# ReLU関数(ランプ関数)
 def Relu(x):
     return np.maximum(0, x)
 
 #---------------------------------
 #出力層
 #---------------------------------
-#恒等関数(回帰問題で使用)
+# 恒等関数(回帰問題で使用)
 def LinerFunction(x):
     return x
 
@@ -30,7 +30,7 @@ def logistic(x):
     y = 1 / (1 + np.exp(-x))
     return y
 
-#ソフトマックス関数(分類問題で使用)
+# ソフトマックス関数(分類問題で使用)
 def Softmax(x):
     if x.ndim == 2:
         x = x.T
@@ -43,7 +43,7 @@ def Softmax(x):
 #--------------------------------------------
 #損失関数
 #--------------------------------------------
-#2乗和誤差
+# 2乗和誤差
 def MeanSquaredError(y, t):
     return 0.5 * np.sum((y-t)**2, axis=1, keepdims=True)
 
@@ -62,7 +62,7 @@ def MeanSquaredError3(y, t):
 
     return out
 
-#交差エントロピー誤差
+# 交差エントロピー誤差
 def cross_entropy_error(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
@@ -79,7 +79,7 @@ def cross_entropy_error(y, t):
 #################################
 ####    新しく機能を追加    #####
 #################################
-#データコピー
+# データコピー
 def data_copy(data):
     dim = data.ndim  # 受け取ったdataの次元を確認
 
@@ -94,7 +94,7 @@ def data_copy(data):
 
         return data_copy
 
-#標準化
+# 標準化
 def data_std(data):
     dim = data.ndim  # 受け取ったdataの次元を確認
 
@@ -116,7 +116,7 @@ def data_std(data):
         return data_std
 
 
-#正規化
+# 正規化
 def data_nom(data):
     dim = data.ndim  # 受け取ったdataの次元を確認
 
