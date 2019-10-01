@@ -15,12 +15,19 @@ def Sigmoid(x):
 def Relu(x):
     return np.maximum(0, x)
 
-
 #出力層
 #恒等関数(回帰問題で使用)
 def LinerFunction(x):
     return x
 
+# tanh関数
+def tanh(x):
+    return np.tanh(x)
+
+# logistic関数
+def logistic(x):
+    y = 1 / (1 + np.exp(-x))
+    return y
 
 #ソフトマックス関数(分類問題で使用)
 def Softmax(x):

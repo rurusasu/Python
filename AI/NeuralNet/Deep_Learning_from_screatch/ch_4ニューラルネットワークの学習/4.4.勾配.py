@@ -2,8 +2,6 @@
 
 import numpy as np
 import matplotlib.pylab as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 
 def _numerical_gradient_no_batch(f, x):
     h = 1e-4  # 0.0001
@@ -45,6 +43,7 @@ def function_2(x):
 if __name__ == '__main__':
     x0 = np.arange(-2, 2.5, 0.25)
     x1 = np.arange(-2, 2.5, 0.25)
+    
     X, Y = np.meshgrid(x0, x1) # meshgrid：配列の要素から格子列を生成する
 
     X = X.flatten()  # flatten：配列を1次元に変換する
