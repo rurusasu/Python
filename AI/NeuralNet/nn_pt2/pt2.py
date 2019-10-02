@@ -24,7 +24,7 @@ class Plot:
 
     def grah_plot_L(self, x, y):
         self.x.append(x)
-        self.y.append(y)
+        self.y.appensd(y)
         self.lines_L.set_data(self.x, self.y)
         self.axL.set_xlim(0, len(self.x))
         self.axL.set_ylim(min(self.y), max(self.y))
@@ -250,7 +250,7 @@ class InputData:
     # データの読み込み
     # データに対する正規化
     # データに対する標準化
-
+    """
     def input_data(self, data_name, dtype, delimiter, data_dim, conv=None):
         out = np.loadtxt(data_name, dtype=dtype, delimiter=delimiter, ndmin=data_dim)
 
@@ -265,6 +265,7 @@ class InputData:
         out = self.input_data()
         for i in conv:
             out = 
+    """
 
     #標準化
     def standardization(self, data):
@@ -365,7 +366,7 @@ train_acc = history.history['train_acc']
 
 nb_epoch = len(loss)
 plt.plot(range(nb_epoch), loss,  marker = '.', label = 'loss')
-plt.plot(range(nb_epoch), train_acc,  marker = '.', label = 'train_acc')
+plt.plot(range(nb_sepoch), train_acc,  marker = '.', label = 'train_acc')
 
 plt.grid(False)
 plt.xlabel('epoch')

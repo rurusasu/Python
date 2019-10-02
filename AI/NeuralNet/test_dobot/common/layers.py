@@ -193,6 +193,7 @@ class SoftmaxWithLoss:
 ####    新しくレイヤを追加    #####
 ###################################
 #入力レイヤ
+"""
 class InputLayer:
    #-------------------------------------------------
    # __init__:初期化を行う
@@ -258,7 +259,7 @@ class InputLayer:
     def backward(self, dout):
         pass
 
-
+"""
 #全結合レイヤ
 class Dense:
     def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
