@@ -178,7 +178,7 @@ def connect_click():
 
     x_roop1 = 4
     x_roop2 = 20
-    y_roop = 5
+    y_roop = 100
     z_roop = 2
     counter_x = 150
     counter_x_init = 150
