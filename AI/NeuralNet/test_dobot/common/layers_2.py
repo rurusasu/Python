@@ -1,12 +1,9 @@
 #coding: utf-8
+
 from collections import OrderedDict
 #from functions import*
-import importlib
-#import weight
+from functions import _CallFunction
 import numpy as np
-import sys
-import os
-sys.path.append(os.pardir)
 
 
 def InputLayer(x):
@@ -22,42 +19,36 @@ def InputLayer(x):
         print('error InputLayer!')
 
 """
-def Dense(Units, activation='relu', weight_initializer='glorot_uniform', bias_initializer='zeros'):
-    if (type(Units) == int):
-        if (activation in dir(functions) == True):
-            if (weight_initializer in dir(weight) == True):
-                if (bias_initializer in dir(bias) == True):
-                    return Units, activation, weight_initializer, bias_initializer
-
-    else:
-        print('error Units!')
-"""
-
-def CallFunction(function_name):
+def _Call(function_name):
     return importlib.import_module(function_name)
 
 
-def _init_params(call, initializer):
-    m = CallFunction(call)  # モジュール呼び出し
-    if (initializer in dir(m)):  # 関数がモジュール内にあるか確認
-        return getattr(m, initializer)  # 関数呼び出し
+def _CallFunction(module, function):
+    m = _Call(module)  # モジュール呼び出し
+    if (function in dir(m)):  # 関数がモジュール内にあるか確認
+        return getattr(m, function)  # 関数呼び出し
     else:
-        print('initializerが存在しません！')
-
+        print('functionが存在しません！')
+"""
 
 
 class Dense:
-    def __init__(self, Units=50, activation='relu', weight_initializer='he', bias_initializer='zeros'):
-        self.units = Units
-        self.params = {}
+    def __init__(self, Units, activation='relu', weight_initializer='he', bias_initializer='zeros'):
+        if (Units != None and type(Units) == int):
+            self.units = Units
+        self.initializer  = {} 
+        self.initializer['w'] = weight_initializer
+        self.initializer['b'] = bias_initializer
+        self.params = {}      
 
 
+    def _initParams(self, forward_node):
         # 重みの初期化
-        self.__init_weight(weight_initializer)
-        self.__init_bias(bias_initializer)
-        print(self.params)
+        #self.__init_weight(self.initializer['w'])
+        self.__init_weight(self.initializer['w'])
+        self.__init_bias(self.initializer['b'])
 
-
+    """
     def __init_weight(self, weight_initializer):
         """
         重みの初期設定
@@ -72,7 +63,7 @@ class Dense:
             weight_initializer = 'he_nomal'
         elif str(weight_initializer).lower() in ('sigmoid', 'xavier'):
             weight_initializer = 'glorot_uniform'
-        method = _init_params('weight', weight_initializer)
+        method = _CallFunction('weight', weight_initializer)
         scale = method(self.units)
         self.params['W'] = scale * np.random.randn(10, 1)
 
@@ -85,7 +76,7 @@ class Dense:
         ----------
         bias_initializer : biasを指定
         """
-        method = _init_params('bias', bias_initializer)
+        method = _CallFunction('bias', bias_initializer)
         self.params['b'] = method(self.units)
 
 
@@ -94,6 +85,6 @@ class Dense:
 if __name__ == "__main__":
     #print(InputLayer(2))
     #print(InputLayer((2, 3)))
-
-    dense = Dense()
+    
+    dense = Dense(50)
     #Dense(weight_initializer='relu')

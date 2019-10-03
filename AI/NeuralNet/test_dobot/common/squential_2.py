@@ -1,12 +1,15 @@
 # coding: utf-8
 
+from functions import _CallFunction
 import numpy as np
+
 
 class Sequential:
     counter = 1
 
     def __init__(self):
         self.sequential = {}
+        self.units = {}
         self.counter = 1
         """
         self.Output = output()
@@ -19,12 +22,29 @@ class Sequential:
     def add(self, layer_name):
         #リストにレイヤの名前を代入
         self.sequential[self.counter] = layer_name
+        self.units[self.counter] = self.sequential[self.counter].units
         self.counter += 1
+        #print(self.sequential)
+        print(self.units)
 
-    def compile(self, loss):
-        self.LastLayer = globals()[loss]()
 
+    def compile(self, loss='mean_squared_error', optimizer='sgd', metrics=['accuracy']):
+        for i in range(len(self.units)):
+            print(i+1)
+            print(self.sequential[i+1])
+            self.sequential[i+1]._initParams
+        #self.LastLayer = globals()[loss]()
+
+
+    def _loss(self, loss):
+        methoed = _CallFunction('functions', loss)
+        loss = method()
+
+
+    def _optimizer(self, optimizer):
+        method = _CallFunction('optimizer', optimizer)
     
+
     def fit(self, training_input, training_test, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
         """
         fit
@@ -102,3 +122,12 @@ class Sequential:
 
         print('loss = %f' % self.Output.history['loss'][epochs-1])
         return self.Output
+
+
+if __name__ == "__main__":
+    from layers_2 import*
+    model = Sequential()
+    model.add(Dense(50))
+    model.add(Dense(50))
+
+    model.compile()

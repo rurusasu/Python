@@ -29,42 +29,6 @@ hCheck   = [] # チェックボックスのハンドルを格納する
 CheckVal = [] # チェックボックスにチェックが入っているかを格納する
 
 
-#-----------------
-# Dobotの初期化
-#-----------------
-def initDobot():
-    # Clean Command Queued
-    dType.SetQueuedCmdClear(api)
-
-    # デバイスのシリアルナンバーを取得する
-    dSN = dType.GetDeviceSN(api)
-    print(dSN)
-
-    # デバイス名を取得する
-    dName = dType.GetDeviceName(api)
-    print(dName)
-
-    # デバイスのバージョンを取得する
-    majorV, minorV, revision = dType.GetDeviceVersion(api)
-    print(majorV, minorV, revision)
-
-    # JOGパラメータの設定
-    dType.SetJOGJointParams(api, 200, 200, 200, 200,
-                            200, 200, 200, 200, isQueued=1)      # 関節座標系での各モータの速度および加速度の設定
-    dType.SetJOGCoordinateParams(api, 200, 200, 200, 200,
-                                 200, 200, 200, 200, isQueued=1)  # デカルト座標系での各方向への速度および加速度の設定
-    # JOG動作の速度、加速度の比率を設定
-    dType.SetJOGCommonParams(api, 100, 100, isQueued=1)
-
-    # PTPパラメータの設定
-    dType.SetPTPJointParams(api, 200, 200, 200, 200,
-                            200, 200, 200, 200, isQueued=1)           # 関節座標系の各モータの速度および加速度を設定
-    # デカルト座標系での各方向への速度および加速度の設定
-    dType.SetPTPCoordinateParams(api, 200, 200, 200, 200, isQueued=1)
-    # PTP動作の速度、加速度の比率を設定
-    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
-
-
 #------------------------
 # ボタンが押されたときの処理
 #------------------------
@@ -90,6 +54,11 @@ def connect_click():
     #キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
 
+    # Dobotの初期設定
+    initDobot()
+   
+
+def DetaGet_click():
     """
     x_roop1 = 4
     x_roop2 = 20
@@ -101,7 +70,6 @@ def connect_click():
     counter_y_init = -201
     counter_z = 101
     """
-
     x_roop1 = 4
     x_roop2 = 2
     y_roop = 2
@@ -131,29 +99,26 @@ def connect_click():
                 for k in range(0, x_roop1 + 1):
 
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
-                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)      
+                    dType.SetPTPJointParams(
+                        api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
+                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
                     Operation(api, 'x')
                     csv_write('data.csv', dType.GetPose(api))
             else:
                 for k in range(0, x_roop1 + 1):
 
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
-                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)      
+                    dType.SetPTPJointParams(
+                        api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
+                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
                     Operation(api, 'x', -1)
                     csv_write('data.csv', dType.GetPose(api))
         counter_x = counter_x_init
         counter_y = counter_y_init
 
-
     pose = dType.GetPose(api)
-    
-    
 
-    # Dobotの初期設定
-    initDobot()
-   
+
 
 # ウインドウの作成
 win = tk.Tk()
@@ -162,11 +127,28 @@ win.geometry('500x250')  # サイズを指定
 
 
 #------------
+# ラベル
+#------------
+# テキストボックス用ラベル
+lbl = tk.Label(text='SaveFile')
+lbl.place(x=55, y=50)
+
+
+#------------
 # ボタン
 #------------
-connectBtn = tk.Button(win, text='connect', command=connect_click) # ボタンを作成
-connectBtn.pack()
+connectBtn = tk.Button(win, text='connect', command=connect_click, width=10) # ボタンを作成
+connectBtn.place(x=20, y=10)
 
-datagetBtn = tk.Button(win, text='DataGet', )
+datagetBtn = tk.Button(win, text='DataGet', command=DetaGet_click, width=10)
+datagetBtn.place(x=20, y=100)
+
+#---------------------
+# テキストボックス
+#---------------------
+txt = tk.Entry(width=20)
+txt.place(x=20, y=70)
+txt.insert(tk.END, 'data.csv') # テキストボックスに文字をセット
+
 
 win.mainloop()          # ウインドウを動かす
