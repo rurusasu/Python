@@ -1,3 +1,5 @@
+# cording: utf-8
+
 import threading
 import DobotDllType as dType
 from ctypes import * # cdllを呼ぶために必要
@@ -6,7 +8,7 @@ from ctypes import * # cdllを呼ぶために必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
-
+from DobotFunction import*
 import csv
 
 # Load Dll
@@ -26,10 +28,9 @@ hLabel   = [] # ラベルのハンドルを格納する
 hCheck   = [] # チェックボックスのハンドルを格納する
 CheckVal = [] # チェックボックスにチェックが入っているかを格納する
 
-# pose = []
 
 #-----------------
-# Dobot用関数
+# Dobotの初期化
 #-----------------
 def initDobot():
     # Clean Command Queued
@@ -64,93 +65,6 @@ def initDobot():
     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
 
 
-def file_write(pose):
-    fp = open('data.csv', 'a')
-    writer = csv.writer(fp, lineterminator='\n')
-    writer.writerow(pose)
-    fp.close()
-
-
-def act(api, lastIndex):
-    #キューに入っているコマンドを実行
-    dType.SetQueuedCmdStartExec(api)
-
-    #Wait for Executing Last Command
-    while lastIndex > dType.GetQueuedCmdCurrentIndex(api)[0]:
-        dType.dSleep(100)
-
-    #キューに入っているコマンドを停止
-    dType.SetQueuedCmdStopExec(api)
-
-
-# X方向に移動する指令をループさせる関数
-def OneAction_X(api, mode, x, y, z, r):
-    lastIndex = dType.SetPTPCmd(api, mode,
-                                x, y, z, r, isQueued=1)[0]
-    act(api, lastIndex)
-
-
-# fileへの書き込み指令は後に消す予定
-def roop_plusX(api, x, y, z, r, roop):
-    #Clean Command Queued
-    dType.SetQueuedCmdClear(api)
-    
-    counter = x
-    #Async PTP Motion
-    for j in range(1, roop + 1):
-        """
-        lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
-                                    counter + j, y, z, r, isQueued=1)[0]
-        act(api, lastIndex)
-        """
-        OneAction_X(api, dType)
-        pose = dType.GetPose(
-            api, dType.PTPMode.PTPMOVLXYZMode, counter + j, y, z, r)
-
-        file_write(pose)
-
-    counter += j
-    return counter
-
-
-def roop_minusX(api, x, y, z, r, roop):
-    counter = x
-
-    #Async PTP Motion
-    for j in range(1, roop + 1):
-        lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
-                                    counter - j, y, z, r, isQueued=1)[0]
-
-        act(api, lastIndex)    
-        pose = dType.GetPose(api)
-
-        file_write(pose)
-
-    counter -= j
-    return counter
-
-
-def act_plusY(api, x, y, z, r, roop = 1):
-    counter = y
-
-    lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
-                                    x, counter + 1, z, r, isQueued=1)[0]
-    act(api, lastIndex)
-    pose = dType.GetPose(api)
-    
-    file_write(pose)
-
-    counter += 1
-    return counter
-
-
-def act_minusZ(api, x, y, z, r):
-    lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
-                                x, y, z, r, isQueued=1)[0]
-    act(api, lastIndex)
-
-
-
 #------------------------
 # ボタンが押されたときの処理
 #------------------------
@@ -176,6 +90,7 @@ def connect_click():
     #キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
 
+    """
     x_roop1 = 4
     x_roop2 = 20
     y_roop = 100
@@ -185,53 +100,49 @@ def connect_click():
     counter_y = -201
     counter_y_init = -201
     counter_z = 101
+    """
 
+    x_roop1 = 4
+    x_roop2 = 2
+    y_roop = 2
+    z_roop = 2
+    counter_x = 150
+    counter_x_init = 150
+    counter_y = -201
+    counter_y_init = -201
+    counter_z = 101
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
     for i in range(0, z_roop):
-        print('第' + str(i) + 'ステップ目')
-        act_minusZ(api, counter_x_init, counter_y_init, counter_z, 0)
-        counter_z -= 1
+        print('第' + str(i + 1) + 'ステップ目')
+        Operation(api, 'z', -1)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            counter_y = act_plusY(api, counter_x, counter_y, counter_z, 0,)
+            Operation(api, 'y')
 
             #-------------------------
             # 以下X軸方向の動作
             #-------------------------
             if j % 2 == 0:
                 for k in range(0, x_roop1 + 1):
-                    #Clean Command Queued
-                    #dType.SetQueuedCmdClear(api)
 
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(api, 200, 200, 200, 200,
-                                            200, 200, 200, 200, isQueued=1)
+                    dType.SetPTPJointParams(api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
                     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)      
-
-                    #Async PTP Motion
-                    counter_x = roop_plusX(api, counter_x, counter_y, counter_z, 0, x_roop2)
+                    Operation(api, 'x')
+                    csv_write('data.csv', dType.GetPose(api))
             else:
                 for k in range(0, x_roop1 + 1):
-                    #Clean Command Queued
-                    dType.SetQueuedCmdClear(api)
 
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(api, 200, 200, 200, 200,
-                                            200, 200, 200, 200, isQueued=1)
+                    dType.SetPTPJointParams(api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
                     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)      
-
-                    #Async PTP Motion
-                    counter_x = roop_minusX(api, counter_x, counter_y, counter_z, 0, x_roop2)
-        
-            #act_plusY(api, counter_x, counter_y, counter_z, 0)
-            
-
-       # act_minusZ(api, counter_x_init, counter_y_init, counter_z, 0)
+                    Operation(api, 'x', -1)
+                    csv_write('data.csv', dType.GetPose(api))
         counter_x = counter_x_init
         counter_y = counter_y_init
 
