@@ -4,6 +4,42 @@ import csv
 import DobotDllType as dType
 
 
+#-----------------
+# Dobotの初期化
+#-----------------
+def initDobot():
+    # Clean Command Queued
+    dType.SetQueuedCmdClear(api)
+
+    # デバイスのシリアルナンバーを取得する
+    dSN = dType.GetDeviceSN(api)
+    print(dSN)
+
+    # デバイス名を取得する
+    dName = dType.GetDeviceName(api)
+    print(dName)
+
+    # デバイスのバージョンを取得する
+    majorV, minorV, revision = dType.GetDeviceVersion(api)
+    print(majorV, minorV, revision)
+
+    # JOGパラメータの設定
+    dType.SetJOGJointParams(api, 200, 200, 200, 200,
+                            200, 200, 200, 200, isQueued=1)      # 関節座標系での各モータの速度および加速度の設定
+    dType.SetJOGCoordinateParams(api, 200, 200, 200, 200,
+                                 200, 200, 200, 200, isQueued=1)  # デカルト座標系での各方向への速度および加速度の設定
+    # JOG動作の速度、加速度の比率を設定
+    dType.SetJOGCommonParams(api, 100, 100, isQueued=1)
+
+    # PTPパラメータの設定
+    dType.SetPTPJointParams(api, 200, 200, 200, 200,
+                            200, 200, 200, 200, isQueued=1)           # 関節座標系の各モータの速度および加速度を設定
+    # デカルト座標系での各方向への速度および加速度の設定
+    dType.SetPTPCoordinateParams(api, 200, 200, 200, 200, isQueued=1)
+    # PTP動作の速度、加速度の比率を設定
+    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
+
+
 #-----------------------------------
 # Dobotの動作用_汎用関数
 #-----------------------------------
