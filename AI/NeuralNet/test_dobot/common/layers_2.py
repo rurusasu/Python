@@ -1,19 +1,54 @@
 #coding: utf-8
-
-from collections import OrderedDict
-#from functions import*
-from functions import _CallFunction
+import sys, os
+sys.path.append(os.pardir)
 import numpy as np
+from common.functions import*
+from collections import OrderedDict
+
+#乗算レイヤ
+class MulLayer:
+    def __init__(self):
+        self.x = None
+        self.y = None
+
+    def forward(self, x, y):
+        self.x = x
+        self.y = y
+        out = x * y
+
+        return out
+
+    def backward(self, dout):
+        dx = dout * self.y #xとyをひっくり返す
+        dy = dout * self.x
+
+        return dx, dy
+
+
+#加算レイヤ
+class AddLayer:
+    def __init__(self):
+        pass
+
+    def forward(self, x, y):
+        out = x + y
+        return out
+
+    def backward(self, dout):
+        dx = dout * 1
+        dy = dout * 1
+        
+        return dx, dy
 
 
 #活性化関数のレイヤ
 #ReLUレイヤ
-class relu:
+class Relu:
     def __init__(self):
         self.mask = None
-
+    
     def forward(self, x):
-        self.mask = (x <= 0)  # xが0以下ならFalseを返す(0より大きければTrue)
+        self.mask = (x <= 0) #xが0以下ならFalseを返す(0より大きければTrue)
         out = x.copy()
         out[self.mask] = 0
 
@@ -27,8 +62,8 @@ class relu:
 
 
 #Sigmoidレイヤ
-class sigmoid:
-    def __init__(self):
+class Sigmoid:
+    def __init__ (self):
         self.out = None
 
     def forward(self, x):
@@ -44,9 +79,9 @@ class sigmoid:
 
 
 #恒等関数レイヤ
-class linear:
+class Liner:
     def __init__(self):
-        self.x = None
+        self.x = None 
 
     def forward(self, x):
         self.x = x
@@ -57,26 +92,29 @@ class linear:
 
         return delta
 
+
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
-class affine:
-    def __init__(self, W, b, lr=0.01):
+class Affine:
+    def __init__(self, W, b, epsilon, reg_lambda):
         # パラメータの設定
         self.W = W
         self.B = b
-        self.dW = None  # 重みの微分
-        self.dB = None  # バイアスの微分
-        self.lr = lr    # gradient descentの学習率
-        
+        self.dW = None # 重みの微分
+        self.dB = None # バイアスの微分
+        self.epsilon    = epsilon    # gradient descentの学習率
+        self.reg_lambda = reg_lambda # regularizationの強さ
+   
         self.x = None
         self.original_x_shape = None
 
+
     def forward(self, x):
         #テンソル対応
-        self.original_x_shape = x.shape  # 元の形を記憶させる
-        x = x.reshape(x.shape[0], -1)  # 奥行き方向の幅を固定しつつ、行列の大きさを変更
+        self.original_x_shape = x.shape #元の形を記憶させる
+        #x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
-
+        
         out = self.x.dot(self.W) + self.B
 
         return out
@@ -84,118 +122,378 @@ class affine:
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
         self.dW = np.dot(self.x.T, dout)
-        self.dB = np.sum(dout, axis=0)
+        self.dB = np.sum(dout, axis = 0)
 
-        self.W -= self.lr * self.dW
-        self.B -= self.lr * self.dB
+        self.W -= self.epsilon * self.dW
+        self.B -= self.epsilon * self.dB
 
-        dx = dx.reshape(self.original_x_shape)  # 逆伝播を入力信号の形に戻す
+        dx = dx.reshape(self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
 
 
-class InputLayer:
-    """
-    fit時に入力データの行数を整列する関数
+#出力層
+#2乗和誤差レイヤ
+class MeanSquaredError:
+    def __init__(self):
+        self.loss = None #損失
+        self.y    = None #linerの出力
+        self.t    = None #教師データ
 
-    """
-    def __init__(self, input_shape):
-        if (type(input_shape) == int):
-            self.units = input_shape
-        elif (type(input_shape) == tuple):
-            self.units = input_shape[0]
+    def forward(self, x, t):
+        #if t.shape != x.shape:
+            #self.y = self.y.reshape(self.y.size, 1)
+            #self.t = self.t.reshape(self.t.size, 1)
+        self.loss = mean_squared_error(x, t)
+
+        return self.loss
+
+    def backward(self, y, t, dout = 1):
+        if dout == 1:
+            if y.size == t.size:
+                batch_size = t.shape[0]
+                if batch_size == 1:
+                    dout = y - t
+                else:
+                    dout = (y - t) / batch_size
+
+        #dout = t
+
+        return dout
+
+
+#####損失関数#####
+
+#Softmax & 交差エントロピー誤差を含めた計算を行うレイヤ
+class SoftmaxWithLoss:
+    def __init__(self):
+        self.loss = None #損失
+        self.y = None    #softmaxの出力
+        self.t = None    #教師データ
+
+    def forward(self, x, t):
+        self.t = t
+        self.y = softmax(x)
+        self.loss = cross_entropy_error(self.y, self.t)
+
+        return self.loss
+    
+    def backward(self, dout = 1):
+        batch_size = self.t.shape[0]
+        if self.t.size == self.y.size:
+            dx = (self.y - self.t) / batch_size
         else:
-            print('error InputLayer!')
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1
+            dx = dx / batch_size
 
-    def _initParams(self, rear_node):
-        self.units = (self.units, rear_node)
-
-    def forward(self, data):
-        return data
-        #batch_mask = np.random.choice(self.units[0], self.units[1], replace=False)
+        return dx
 
 
+###################################
+####    新しくレイヤを追加    #####
+###################################
+#入力レイヤ
+"""
+class InputLayer:
+   #-------------------------------------------------
+   # __init__:初期化を行う
+   #     引数
+   #     @self
+   #     @input_shape            :学習データの形状(タプル)
+   #     変数
+   #     @InputParams            :ユニット内での計算に必要なパラメータ(配列)             
+   #     @InputParams['RowSize'] :入力データの行数
+   #     @InputParams['ColSize'] :入力データの列数
+   #-------------------------------------------------
+    def __init__(self, input_shape):
+        self.InputParams = {}
+        self.InputParams['RowSize'] = None
+        self.InputParams['ColSize'] = None
+       
+        if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
+            self.InputParams['RowSize'] = input_shape[0]
+
+        elif len(input_shape) == 2:
+            self.InputParams['RowSize'] = input_shape[0]
+            self.InputParams['ColSize'] = input_shape[1]
+
+        else:
+            print("input_OverDimension")
+
+   #-------------------------------------------------
+   # unit:データに必要なユニット数を設定する
+   #     引数
+   #     @self
+   #     @input_col_size         :入力するデータの列数
+   #     @minibatch              :ミニバッチ数
+   #     @counter                :何層目か示すために必要
+   #     @epsilon                :学習率
+   #-------------------------------------------------
+    def unit(self, minibatch, input_col_size, counter, epsilon, reg_lambda):
+        #入力するデータの列数が、input_col_sizeと等しいか判定
+        if self.InputParams['ColSize'] != input_col_size:
+            if self.InputParams['RowSize'] == input_col_size: # RowSizeとColSizeを間違えて入力している可能性を判定
+                self.InputParams['ColSize'] = self.InputParams['RowSize']
+
+            elif self.InputParams['RowSize'] != input_col_size: # 等しくなければColSizeの値を更新
+                self.InputParams['ColSize'] = input_col_size
+
+        # 入力するデータの行数がminibatchと等しいか判定
+        if self.InputParams['RowSize'] == minibatch: # 等しければpass
+            pass
+
+        elif self.InputParams['RowSize'] != minibatch: # 等しくなければRowSizeの値を更新
+            self.InputParams['RowSize'] = minibatch
+
+        print('第%d層 - InputLayer' %counter)
+
+        return self.InputParams['ColSize']
+
+
+    def forward(self, input_data):
+        out = np.reshape(input_data, [self.InputParams['RowSize'], self.InputParams['ColSize']])
+        #out = input_data
+
+        return out
+
+    def backward(self, dout):
+        pass
+
+"""
+#全結合レイヤ
 class Dense:
-    def __init__(self, Units, activation='relu', weight_initializer='he', bias_initializer='zeros'):
-        if (Units != None and type(Units) == int):
-            self.units = Units
-        self.activation = activation
-        self.initializer  = {} 
-        self.initializer['W'] = weight_initializer
-        self.initializer['b'] = bias_initializer
-        self.params = {}   
-        self.function = {}
+    def __init__(self,  Units, activation, weight_initializer='glorot_uniform', bias_initializer='zeros'):
+        self.dense = OrderedDict()         #関数の辞書
+        self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
+        self.activation = activation       #活性化関数名
 
+        self.params = {}                 #ユニット内での計算に必要なパラメータの辞書
+        self.params['Units']  = Units    #ユニットの数
+        self.params['Weight'] = None     #重み
+        self.params['Bias']   = None     #閾値
+        self.params['epsilon'] = None    #学習率
+        self.params['reg_lambda'] = None #regularizationの強さ
+
+        #####   初期値の設定   #####
+        self.initialisation   = InitParams()
+        self.init_weight      = weight_initializer
+        self.init_bias        = bias_initializer
         
-    def _initParams(self, rear_node):
-        # 重みの初期化
-        self.__init_weight(self.initializer['W'], rear_node)
-        self.__init_bias(self.initializer['b'], rear_node)
 
-    
-    def __init_weight(self, weight_initializer, rear_node):
-        """
-        重みの初期設定
+    def initparams(self, BefLayer_Size, Unit_size):
+        #K = 2
+        #初期値の計算
+        #weight =  K*(np.ones((input_size, self.params['Units']))*0.5 - np.random.rand(input_size, self.params['Units'])) #重み
+        weight = InitParams.glorot_uniform(input_dim=BefLayer_Size, h_dim=self.params['Units'])
+        bias   = np.zeros(self.params['Units'])                                                                           #閾値
+                
+        return weight, bias
 
-        Parameters
-        ----------
-        weight_initializer : 重みの標準偏差を指定
-            'relu'または'he'を指定した場合は「Heの初期値」を設定
-            'sigmoid'または'xavier'を指定した場合は「Xavierの初期値」を設定
-        rear_node : 次のnodeの行数
-        """
-        if str(weight_initializer).lower() in ('relu', 'he'):
-            weight_initializer = 'he_nomal'
-        elif str(weight_initializer).lower() in ('sigmoid', 'xavier'):
-            weight_initializer = 'glorot_uniform'
-        method = _CallFunction('weight', weight_initializer)
-        scale = method(self.units)
-        self.params['W'] = scale * np.random.randn(self.units, rear_node)
-
-   
-    def __init_bias(self, bias_initializer, rear_node):
-        """
-        重みの初期設定
-
-        Parameters
-        ----------
-        bias_initializer : biasを指定
-        rear_node        : 次のnodeの行数
-        """
-        method = _CallFunction('bias', bias_initializer)
-        self.params['b'] = method(rear_node)
-
-
-    def setFunc(self, lr):
-        """
-        ユニット内部関数をセットする
-
-        Parameters
-        ----------
-        lr : float
-            学習率
-        """
+    def unit(self, _, BefLayer_Size, counter, epsilon, reg_lambda):
+        #初期値を設定
+        self.params['epsilon'] = epsilon
+        self.params['reg_lambda'] = reg_lambda
+        self.params['Weight'] = self.initialisation.glorot_uniform(BefLayer_Size, self.params['Units'])
+        self.params['Bias']   = np.zeros((1, self.params['Units']))  
+        
         #レイヤの設定
-        self.function['Affine'] = globals()['affine'](self.params['W'], self.params['b'])  # アフィン変換を行うレイヤをセット
-        self.function['Activation'] = globals()[self.activation]()
-    
-    
-    def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
-        method = _CallFunction('optimizer', optimizer)
-        print(self.params.keys())
-        #method.update(self.params, loss)
+        self.dense['Affine']     = globals()['affine'](self.params['Weight'], self.params['Bias'], epsilon, reg_lambda) #アフィン変換を行うレイヤをセット
+        self.dense['Activation'] = globals()[self.activation]()                                    #活性化関数のレイヤをセット
+
+        #レイヤの名前を表示
+        print('第%d層 - AffineLayer' %counter)
+        print('第%d層 - Activation %s' %(counter, self.activation))
+
+        return self.params['Units']
 
 
     def forward(self, x):
-        for layer in self.function.values():
+        for layer in self.dense.values():
             x = layer.forward(x)
+
         return x
 
 
-if __name__ == "__main__":
-    #print(InputLayer(2))
-    #print(InputLayer((2, 3)))
+    def backward(self, dout):
+        self.RevDense = list(self.dense.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
+        self.RevDense.reverse()
+        for RevLayer in self.RevDense:
+            dout = RevLayer.backward(dout)
+
+        return dout
+
+
+#重みの初期値計算
+class InitParams:
+    def __init__(self):
+        pass
+
+    #重みの初期値
+    #Xavierの一様分布
+    def glorot_uniform(self, input_dim, h_dim):
+        np.random.seed(0)
+        weight = np.random.randn(input_dim, h_dim) / np.sqrt(input_dim)
+
+        return weight
+
+    #Heの初期値
+    def he_nomal(self, input_dim, h_dim):
+        weight = np.sqrt(2) * np.random.randn(input_dim, h_dim) / np.sqrt(input_dim)
+
+        return weight
+
+
+#誤差を計算
+class Loss:
+   #-------------------------------------------------
+   # __init__:初期化を行う
+   #     引数
+   #     @self
+   #     @loss_function :誤差を計算する関数を指定
+   #     変数
+   #     @Function      :誤差を計算する関数
+   #     @ResultSum     :NN出力のbatch数分の合計
+   #     @LossSum       :誤差のbatch数分の合計
+   #-------------------------------------------------
+    def __init__(self, loss_function):
+        self.Function = globals()[loss_function]()
+        self.ResultSum = []
+        self.LossSum   = []
+   
+   #-------------------------------------------------
+   # ave_loss:誤差を計算する
+   #     引数
+   #     @self
+   #     @batch_size    :バッチ数
+   #     変数
+   #     BatchResult   :NN出力のbatch平均
+   #     BatchLoss     :誤差のbatch平均
+   #-------------------------------------------------
+    def ave_loss(self, batch_size):
+        BatchResult = sum(self.ResultSum) / batch_size
+        BatchLoss = sum(self.LossSum) / batch_size
+        self.ResultSum = []
+        self.LossSum   = []
+
+        return BatchResult, BatchLoss
+
+   #-------------------------------------------------
+   # forward:誤差を計算する
+   #     引数
+   #     @self
+   #     @data          :NNからの出力
+   #     @copm_data     :テストデータ(comper_dataの略　comper:比較)
+   #     @sum           :誤差を記録するか選べる（0:記録させない, 1:記録させる）
+   #     変数
+   #     @ResultSum     :NN出力のbatch数分の合計
+   #     @LossSum       :誤差のbatch数分の合計
+   #-------------------------------------------------
+    def forward(self, data, comp_data, minibatch, sum = 0):
+        loss = self.Function.forward(data, comp_data) / minibatch
+        if sum == 1:
+            self.ResultSum.append(data)
+            self.LossSum.append(loss)
+
+        return loss
     
-    dense = Dense(50)
-    #Dense(weight_initializer='relu')
-    dense._initParams(50)
-    dense._optimizer()
+   #-------------------------------------------------
+   # backward:逆伝播出力を計算する
+   #     引数
+   #     @self
+   #     @batch_size    :バッチ数
+   #     変数
+   #     @BatchResult   :NN出力のbatch平均
+   #     @BatchLoss     :誤差のbatch平均
+   #     @BackSignal    :逆伝播信号
+   #-------------------------------------------------
+    def backward(self, batch_size):
+        BatchResult, BatchLoss = self.ave_loss(batch_size)
+        BackSignal = self.Function.backward(BatchResult, BatchLoss)
+
+        return BatchLoss, BackSignal
+
+
+class BatchNormalization:
+    """
+    http://arxiv.org/abs/1502.03167
+    """
+    def __init__(self, gamma, beta, momentum=0.9, running_mean=None, running_var=None):
+        self.gamma = gamma
+        self.beta = beta
+        self.momentum = momentum
+        self.input_shape = None # Conv層の場合は4次元、全結合層の場合は2次元  
+
+        # テスト時に使用する平均と分散
+        self.running_mean = running_mean
+        self.running_var = running_var  
+        
+        # backward時に使用する中間データ
+        self.batch_size = None
+        self.xc = None
+        self.std = None
+        self.dgamma = None
+        self.dbeta = None
+
+    def forward(self, x, train_flg=True):
+        self.input_shape = x.shape
+        if x.ndim != 2:
+            N, C, H, W = x.shape
+            x = x.reshape(N, -1)
+
+        out = self.__forward(x, train_flg)
+        
+        return out.reshape(*self.input_shape)
+            
+    def __forward(self, x, train_flg):
+        if self.running_mean is None:
+            N, D = x.shape
+            self.running_mean = np.zeros(D)
+            self.running_var = np.zeros(D)
+                        
+        if train_flg:
+            mu = x.mean(axis=0)
+            xc = x - mu
+            var = np.mean(xc**2, axis=0)
+            std = np.sqrt(var + 10e-7)
+            xn = xc / std
+            
+            self.batch_size = x.shape[0]
+            self.xc = xc
+            self.xn = xn
+            self.std = std
+            self.running_mean = self.momentum * self.running_mean + (1-self.momentum) * mu
+            self.running_var = self.momentum * self.running_var + (1-self.momentum) * var            
+        else:
+            xc = x - self.running_mean
+            xn = xc / ((np.sqrt(self.running_var + 10e-7)))
+            
+        out = self.gamma * xn + self.beta 
+        return out
+
+    def backward(self, dout, counter):
+        print("第%d層 BatchNome" %counter)
+        if dout.ndim != 2:
+            N, C, H, W = dout.shape
+            dout = dout.reshape(N, -1)
+
+        dx = self.__backward(dout)
+
+        dx = dx.reshape(*self.input_shape)
+        return dx
+
+    def __backward(self, dout):
+        dbeta = dout.sum(axis=0)
+        dgamma = np.sum(self.xn * dout, axis=0)
+        dxn = self.gamma * dout
+        dxc = dxn / self.std
+        dstd = -np.sum((dxn * self.xc) / (self.std * self.std), axis=0)
+        dvar = 0.5 * dstd / self.std
+        dxc += (2.0 / self.batch_size) * self.xc * dvar
+        dmu = np.sum(dxc, axis=0)
+        dx = dxc - dmu / self.batch_size
+        
+        self.dgamma = dgamma
+        self.dbeta = dbeta
+        
+        return dx
+ 
