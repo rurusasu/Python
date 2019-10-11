@@ -1,4 +1,8 @@
 #coding: utf-8
+
+import sys, os
+sys.path.append(os.getcwd())
+
 import numpy as np
 import importlib
 
@@ -44,7 +48,7 @@ def Softmax(x):
 #損失関数
 #--------------------------------------------
 # 2乗和誤差
-def MeanSquaredError(y, t):
+def mean_squared_error(y, t):
     return 0.5 * np.sum((y-t)**2, axis=1, keepdims=True)
 
 
@@ -52,7 +56,7 @@ def MeanSquaredError2(y, t):
     return 0.5 * np.sum((y-t)**2)
 
 
-def mean_squared_error(y, t):
+def MeanSquaredError(y, t):
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)

@@ -3,8 +3,40 @@
 import sys, os
 sys.path.append(os.getcwd())
 #from collections import OrderedDict
-from common.functions import _CallFunction
+#from common.functions import _CallFunction
 import numpy as np
+
+#------------------------
+# CallFunction
+#------------------------
+import importlib
+
+def _Call(function_name):
+    return importlib.import_module(function_name)
+
+
+def _CallFunction(module, function):
+    """
+    Call function with module
+
+    Parameters
+    ----------
+    module : str
+        呼び出したいmodule名
+    function : str
+        module内の関数名
+    
+    Return
+    ------
+    method : method
+        実行可能な関数
+    """
+    m = _Call(module)  # モジュール呼び出し
+    if (function in dir(m)):  # 関数がモジュール内にあるか確認
+        return getattr(m, function)  # 関数呼び出し
+    else:
+        print('functionが存在しません！')
+
 
 
 #乗算レイヤ
@@ -142,10 +174,8 @@ class InputLayer:
         else:
             print('error InputLayer!')
 
-
-    def compile(self, rear_node):
+    def _initParams(self, rear_node):
         self.units = (self.units, rear_node)
-
 
     def forward(self, data):
         """
@@ -183,49 +213,24 @@ class Dense:
     def __init__(self, Units, activation='relu', weight_initializer='he', bias_initializer='zeros'):
         if (Units != None and type(Units) == int):
             self.units = Units
-        # 損失関数名
         self.activation = activation
-        # 重みとバイアスの初期化関数名
         self.initializer  = {} 
         self.initializer['W'] = weight_initializer
         self.initializer['b'] = bias_initializer
-        # 重みとバイアスの初期値
-        self.params = {} 
-        self.params['W'] = None
-        self.params['b'] = None
-        # 内部レイヤ
+        self.params = {}   
         self.function = {}
-        self.function['Affine'] = None
-        self.function['Activation'] = None
-
-
-    def _GetParams(self):
-        print('activation  = ' + self.activation)
-        print('WeightInit  = ' + self.initializer['W'])
-        print('WeightShape = ')
-        print(self.params['W'].shape)
-        print('BiasInit    = ' + self.initializer['b'])
-        print('BiasShape   = ')
-        print(self.params['b'].shape)
-        print('function_1  = ')
-        print(self.function['Affine'])
-        print('function_2  = ')
-        print(self.function['Activation'])
 
     
-
     def compile(self, rear_node):
         """
         compile関数から呼び出される処理
         """
         # 重みの初期化
-        self.__InitWeight__(rear_node, self.initializer['W'])
-        self.__InitBias__(rear_node, self.initializer['b'])
-        
-        # 内部レイヤを構築
-        self.__SetFunc__(lr=0.01)
+        self.__init_weight(rear_node, self.initializer['W'])
+        self.__init_bias(rear_node, self.initializer['b'])
 
-    def __InitWeight__(self, rear_node, weight_initializer='he'):
+
+    def __init_weight(self, rear_node, weight_initializer='he'):
         """
         重みの初期設定
 
@@ -244,7 +249,8 @@ class Dense:
         scale = method(self.units)
         self.params['W'] = scale * np.random.randn(self.units, rear_node)
 
-    def __InitBias__(self, rear_node, bias_initializer='zeros'):
+
+    def __init_bias(self, rear_node, bias_initializer='zeros'):
         """
         重みの初期設定
 
@@ -257,7 +263,7 @@ class Dense:
         self.params['b'] = method(rear_node)
 
 
-    def __SetFunc__(self, lr):
+    def setFunc(self, lr):
         """
         ユニット内部関数をセットする
 

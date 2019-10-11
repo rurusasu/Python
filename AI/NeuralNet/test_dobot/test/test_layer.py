@@ -3,7 +3,6 @@
 import sys, os
 sys.path.append(os.getcwd())
 import numpy as np
-import matplotlib.pyplot as plt
 
 # テストしたい関数をセット
 from unittest import TestCase, main
@@ -81,7 +80,7 @@ class TestLayers(TestCase):
 
 
 class TestAffine_forward(TestCase):
-    """test method of AffineLayer_forwardfunction"""
+    """test class of AffineLayer"""
 
     def setUp(self):
         print('setup')
@@ -102,18 +101,17 @@ class TestAffine_forward(TestCase):
         test_patterns = [
             (np.ones((3, 5)), (3, 5)),
             # OK
-            (np.ones((3, 1)), (3, 5)),
+            #(np.ones((3, 1)), (3, 5)),
             # shapes (3,1) and (5,5) not aligned: 1 (dim 1) != 5 (dim 0)
         ]
-
         # テストを行う関数をセット
         for x, expect_result in test_patterns:
             with self.subTest(x=x):
-                self.assertEqual(self.affine.forward(x=x).shape, expect_result)
+                 self.assertEqual(self.affine.forward(x=x).shape, expect_result)
     
 
-class TestAffine_forward(TestCase):
-    """test method of AffineLayer_forwardfunction"""
+class TestAffine_backward(TestCase):
+    """test class of AffineLayer"""
 
     def setUp(self):
         print('setup')
@@ -140,10 +138,46 @@ class TestAffine_forward(TestCase):
             # b = [-0.01 -0.01 -0.01 -0.01 -0.01]
         ]
 
+
         # テストを行う関数をセット
         for dout, expect_result in test_patterns:
             with self.subTest(dout=dout):
                 self.assertEqual(self.affine.backward(dout).shape, expect_result)
+
+
+class TestDense(TestCase):
+    """test class of DenseLayer"""
+
+    def setUp(self):
+        print('setup')
+        self.dense = Dense(10) # ユニット数を10に設定
+        self.rear_node = 3
+        print(self.dense.initializer)
+
+    def tearDown(self):
+        print('tearDown')
+        del self.dense
+        del self.rear_node
+
+
+    def test__init_weight(self):
+        expect = (10, self.rear_node)
+
+        self.dense.compile(self.rear_node)
+        self.assertEqual(self.dense.params['W'].shape, expect)
+
+    """
+    def test_compile(self):
+
+        expect_result = 2
+
+        # テスト
+        for i in range(4):
+            with self.subTest(rear_node = (3 + i)):
+                self.dense.compile(rear_node)
+
+                self.asserrtEqual(self.dense.params['W'].shape, (3+i, expect_result))
+    """
 
 
 
