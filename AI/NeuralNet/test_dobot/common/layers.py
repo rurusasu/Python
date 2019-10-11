@@ -177,6 +177,13 @@ class InputLayer:
             return None
 
         #batch_mask = np.random.choice(self.units[0], self.units[1], replace=False)
+    
+
+    def _GetParams(self):
+        print('----------------------')
+        print(self.units)
+        print('-----------------------')
+        
 
 
 class Dense:
@@ -200,6 +207,7 @@ class Dense:
 
 
     def _GetParams(self):
+        print('-----------------------------------')
         print('activation  = ' + self.activation)
         print('WeightInit  = ' + self.initializer['W'])
         print('WeightShape = ')
@@ -211,6 +219,7 @@ class Dense:
         print(self.function['Affine'])
         print('function_2  = ')
         print(self.function['Activation'])
+        print('-----------------------------------')
 
     
 

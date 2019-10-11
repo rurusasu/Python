@@ -35,7 +35,7 @@ class Sequential:
     def _GetLayerParams(self):
         # sequentialに格納されているオブジェクトを表示
         print(self.sequential.values())
-        for i in range(2, len(self.units)):
+        for i in range(len(self.units)):
             self.sequential[i+1]._GetParams()
 
 
@@ -126,6 +126,7 @@ class Sequential:
     def gradient(self, input, test):
         test = test
         y = self._predict(input)
+        print(y.shape)
         #loss = self._loss(y, test)
         #print(loss)
 
@@ -168,7 +169,7 @@ class Sequential:
     def _predict(self, x):
         for layer in self.sequential.values():
             x = layer.forward(x)
-            print(x.shape)
+            #print(x.shape)
         return x
 
     
