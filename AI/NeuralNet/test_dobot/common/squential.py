@@ -15,8 +15,9 @@ class Sequential:
         self.sequential = OrderedDict()
         self.units = {}
         self.func = {}
-        self.loss = None
-        self.optimizer = None
+        self.func['loss'] = None
+        self.func['optimizer'] = None
+        self.func['metrics'] = None
         self.i = 1
         """
         self.Output = output()
@@ -85,7 +86,6 @@ class Sequential:
                 """
                 self.gradient(TrainI_batch[mask, 0:], TrainT_batch[mask])
     
-
     def __classif__(self, trainI, trainT, batch_size):
         """
         すべてのデータからバッチ数分だけデータを抽出する関数
@@ -147,14 +147,15 @@ class Sequential:
 
     def gradient(self, input, test):
         # forward
-        loss = self._loss(input, test)
+        dout = self.__loss__(input, test)
+        print(dout.shape)
         # backward
         revSequence = list(self.sequential.values())
         revSequence.reverse()
         for revLayer in revSequence:
-            dout = revLayer.backward
+            dout = revLayer.backward(dout)
 
-    def _loss(self, x, t):
+    def __loss__(self, x, t):
         """
         誤差の計算を行う関数
 
@@ -179,6 +180,9 @@ class Sequential:
             x = layer.forward(x)
         return x
 
+    #def __optimizer__(self):
+        #for layer in 
+
 
 if __name__ == "__main__":
     from layers import*
@@ -198,4 +202,4 @@ if __name__ == "__main__":
 
     model.compile()
     model.fit(training_input, training_test, batch, epoch)
-    model._GetLayerParams()
+    #model._GetLayerParams()

@@ -92,6 +92,9 @@ def _Act(api, lastIndex):
     dType.SetQueuedCmdStopExec(api)
 
 
+def 
+
+
 #-----------------------------------
 # Dobotの動作用関数
 #-----------------------------------

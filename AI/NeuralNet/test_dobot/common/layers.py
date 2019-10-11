@@ -277,16 +277,19 @@ class Dense:
             dout = revLayers.backward(dout)
         del revDense
 
+        self._optimizer()
+
         return dout
 
 
     def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
         method = _CallFunction('optimizer', optimizer)
         #print(self.params.keys())
-        print(self.function)
         self.diffParams['dW'] = self.function['Affine'].dW
         self.diffParams['db'] = self.function['Affine'].dB
-        #method.update(self.params, loss)
+        print(self.params)
+        method.update(self.params, self.diffParams)
+        print(params)
 
 
     def _GetParams(self):

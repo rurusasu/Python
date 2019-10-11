@@ -79,12 +79,14 @@ def DetaGet_click():
     counter_y = -201
     counter_y_init = -201
     counter_z = 101
+
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
         Operation(api, 'z', -1)
+
 
         #-------------------------
         # 以下Y軸方向の動作
