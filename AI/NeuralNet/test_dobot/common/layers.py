@@ -2,7 +2,7 @@
 
 import sys, os
 sys.path.append(os.getcwd())
-#from collections import OrderedDict
+from collections import OrderedDict
 from common.functions import _CallFunction
 import numpy as np
 
@@ -26,7 +26,6 @@ class mulLayer:
 
         return dx, dy
 
-
 #加算レイヤ
 class addLayer:
     def __init__(self):
@@ -41,6 +40,7 @@ class addLayer:
         dy = dout * 1
 
         return dx, dy
+
 
 #活性化関数のレイヤ
 #ReLUレイヤ
@@ -61,7 +61,6 @@ class relu:
 
         return delta
 
-
 #Sigmoidレイヤ
 class sigmoid:
     def __init__(self):
@@ -77,7 +76,6 @@ class sigmoid:
         delta = dout * (1.0 - self.out) * self.out
 
         return delta
-
 
 #恒等関数レイヤ
 class linear:
@@ -121,9 +119,6 @@ class affine:
         dx = np.dot(dout, self.W.T)
         self.dW = np.dot(self.x.T, dout)
         self.dB = np.sum(dout, axis=0)
-
-        #self.W -= self.lr * self.dW
-        self.B -= self.lr * self.dB
 
         dx = dx.reshape(self.original_x_shape)  # 逆伝播を入力信号の形に戻す
         return dx
@@ -179,6 +174,10 @@ class InputLayer:
         #batch_mask = np.random.choice(self.units[0], self.units[1], replace=False)
     
 
+    def backward(self, dout):
+        pass
+
+
     def _GetParams(self):
         print('----------------------')
         print(self.units)
@@ -201,27 +200,14 @@ class Dense:
         self.params['W'] = None
         self.params['b'] = None
         # 内部レイヤ
-        self.function = {}
+        self.function = OrderedDict() # 関数の辞書
         self.function['Affine'] = None
         self.function['Activation'] = None
+        # 更新用の重みとバイアス
+        self.diffParams = {}
+        self.diffParams['dW'] = None
+        self.diffParams['db'] = None
 
-
-    def _GetParams(self):
-        print('-----------------------------------')
-        print('activation  = ' + self.activation)
-        print('WeightInit  = ' + self.initializer['W'])
-        print('WeightShape = ')
-        print(self.params['W'].shape)
-        print('BiasInit    = ' + self.initializer['b'])
-        print('BiasShape   = ')
-        print(self.params['b'].shape)
-        print('function_1  = ')
-        print(self.function['Affine'])
-        print('function_2  = ')
-        print(self.function['Activation'])
-        print('-----------------------------------')
-
-    
 
     def compile(self, rear_node):
         """
@@ -265,7 +251,6 @@ class Dense:
         method = _CallFunction('bias', bias_initializer)
         self.params['b'] = method(rear_node)
 
-
     def __SetFunc__(self, lr):
         """
         ユニット内部関数をセットする
@@ -279,17 +264,49 @@ class Dense:
         self.function['Affine'] = globals()['affine'](self.params['W'], self.params['b'])  # アフィン変換を行うレイヤをセット
         self.function['Activation'] = globals()[self.activation]()
     
-    
-    def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
-        method = _CallFunction('optimizer', optimizer)
-        print(self.params.keys())
-        #method.update(self.params, loss)
-
 
     def forward(self, x):
         for layer in self.function.values():
             x = layer.forward(x)
         return x
+
+
+    def backward(self, dout):
+        revDense = list(self.function.values())
+        for revLayers in range(revDense.reverse()):
+            dout = revLayers.backward(dout)
+        del revDense
+
+        return dout
+
+
+    def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
+        method = _CallFunction('optimizer', optimizer)
+        #print(self.params.keys())
+        print(self.function)
+        self.diffParams['dW'] = self.function['Affine'].dW
+        self.diffParams['db'] = self.function['Affine'].dB
+        #method.update(self.params, loss)
+
+
+    def _GetParams(self):
+        print('-----------------------------------')
+        print('activation  = ' + self.activation)
+        print('WeightInit  = ' + self.initializer['W'])
+        print('WeightShape = ')
+        print(self.params['W'].shape)
+        print('BiasInit    = ' + self.initializer['b'])
+        print('BiasShape   = ')
+        print(self.params['b'].shape)
+        print('function_1  = ')
+        print(self.function['Affine'])
+        print('function_2  = ')
+        print(self.function['Activation'])
+        print('dW = ')
+        print(self.diffParams['dW'])
+        print('db = ')
+        print(self.diffParams['db'])
+        print('-----------------------------------')
 
 
 if __name__ == "__main__":

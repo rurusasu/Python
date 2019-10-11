@@ -2,7 +2,9 @@
 
 import sys, os
 sys.path.append(os.getcwd())
+from collections import OrderedDict
 from common.functions import _CallFunction
+from common.gradient import numerical_gradient_2d
 import numpy as np
 
 class Sequential:
@@ -10,10 +12,9 @@ class Sequential:
     # 汎用関数
     #----------------------
     def __init__(self):
-        self.sequential = {}
+        self.sequential = OrderedDict()
         self.units = {}
         self.func = {}
-        #self.frontUnit = 0
         self.loss = None
         self.optimizer = None
         self.i = 1
@@ -51,14 +52,6 @@ class Sequential:
                 Tuple = (self.units[i+1], self.units[i+2])
             self.sequential[i+1].compile(Tuple[1])
 
-        # それぞれのunit内部関数を設定（例：affine + relu）
-        #self.sequential[i].setFunc(lr=0.01)
-
-
-    def _loss(self, x, t):
-        method = _CallFunction('functions', self.func['loss'])
-        return method(x, t)
-
 
     def fit(self, training_input, training_test, batch_size, epochs, lr=0.01, reg_lambda=0.01):
         """
@@ -79,10 +72,10 @@ class Sequential:
 
         # メインルーチン
         for n in range(epoch):
-            TrainI_batch, TrainT_batch = self._classif(training_input, training_test, batch_size)
+            TrainI_batch, TrainT_batch = self.__classif__(training_input, training_test, batch_size)
 
             for i in range(batch_size):
-                mask = self._fitMask(TrainI_batch, self.units[1])
+                mask = self.__fitMask__(TrainI_batch, self.units[1])
                 """
                 if (-1 == mask):
                     print('Input Error')
@@ -93,45 +86,7 @@ class Sequential:
                 self.gradient(TrainI_batch[mask, 0:], TrainT_batch[mask])
     
 
-    def _fitMask(self, data, node_num):
-        """
-        入力層のノード数と入力データの行数を比較する
-
-        Parameter
-        ---------
-        data : numpy.ndarray
-            入力データ
-
-        Return
-        ------
-        data : numpy.ndarray
-            出力データ
-        """
-        data_rowSize = data.shape[0]
-        # 入力データの行数と入力層のノード数が
-        # 同じ場合
-        #if (data_rowSize == node_num):
-            #return None
-        # 入力データの行数が多い場合
-        if (data_rowSize >= node_num):
-            mask = np.random.choice(data_rowSize, node_num)
-            #data = data[mask, 0:]
-            #return data
-            return mask
-        # ノード数が多い場合
-        else:
-            print('batch_size < InputLayer')
-    
-
-    def gradient(self, input, test):
-        test = test
-        y = self._predict(input)
-        print(y.shape)
-        #loss = self._loss(y, test)
-        #print(loss)
-
-
-    def _classif(self, trainI, trainT, batch_size):
+    def __classif__(self, trainI, trainT, batch_size):
         """
         すべてのデータからバッチ数分だけデータを抽出する関数
 
@@ -158,22 +113,71 @@ class Sequential:
             return None
         elif (batch_size <= Input_rowSize):
             batch_mask = np.random.choice(
-                        Input_rowSize, batch_size, replace=False)
+                Input_rowSize, batch_size, replace=False)
         # 全データからbatch_size分データを抽出
         TrainI_batch = trainI[batch_mask, 0:]
         TrainT_batch = trainT[batch_mask]
 
         return TrainI_batch, TrainT_batch
 
-    
-    def _predict(self, x):
+    def __fitMask__(self, data, node_num):
+        """
+        入力層のノード数と入力データの行数を比較する
+
+        Parameter
+        ---------
+        data : numpy.ndarray
+            入力データ
+
+        Return
+        ------
+        data : numpy.ndarray
+            出力データ
+        """
+        data_rowSize = data.shape[0]
+        # 入力データの行数と入力層のノード数が
+        # 入力データの行数が多い場合
+        if (data_rowSize >= node_num):
+            mask = np.random.choice(data_rowSize, node_num)
+            return mask
+        # ノード数が多い場合
+        else:
+            print('batch_size < InputLayer')
+
+
+    def gradient(self, input, test):
+        # forward
+        loss = self._loss(input, test)
+        # backward
+        revSequence = list(self.sequential.values())
+        revSequence.reverse()
+        for revLayer in revSequence:
+            dout = revLayer.backward
+
+    def _loss(self, x, t):
+        """
+        誤差の計算を行う関数
+
+        Parameters
+        ----------
+        x : numpy.ndarray
+            入力データ
+        t : numpy.ndarray
+            教師データ
+
+        Return
+        ------
+        loss : list
+            誤差の計算結果
+        """
+        y = self.__predict__(x)
+        loss = _CallFunction('functions', self.func['loss'])
+        return loss(y, t)
+
+    def __predict__(self, x):
         for layer in self.sequential.values():
             x = layer.forward(x)
-            #print(x.shape)
         return x
-
-    
-
 
 
 if __name__ == "__main__":
@@ -193,6 +197,5 @@ if __name__ == "__main__":
     batch = 3
 
     model.compile()
-    model._GetLayerParams()
     model.fit(training_input, training_test, batch, epoch)
-
+    model._GetLayerParams()
