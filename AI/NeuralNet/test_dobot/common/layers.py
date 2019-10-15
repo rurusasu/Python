@@ -3,7 +3,7 @@
 import sys, os
 sys.path.append(os.getcwd())
 from collections import OrderedDict
-from common.functions import _CallFunction
+from common.functions import _CallFunction, _CallClass
 import numpy as np
 
 
@@ -90,6 +90,37 @@ class linear:
         delta = 1 * dout
 
         return delta
+
+
+#2乗和誤差レイヤ
+class mean_squared_error:
+    def __init__(self):
+        self.loss = None  # 損失
+        self.y = None  # linerの出力
+        self.t = None  # 教師データ
+        self.func = _CallFunction('functions', 'mean_aquared_error')
+
+    def forward(self, y, t):
+        #if t.shape != y.shape:
+            #self.y = y.reshape(self.y.size, 1)
+            #self.t = t.reshape(self.t.size, 1)
+        self.y = y
+        self.t = t
+        self.loss = self.func(self.y, self.t)
+
+        return self.loss
+
+    def backward(self, dout=1):
+        if dout == 1:
+            if self.y.size == self.t.size:
+                batch_size = self.t.shape[0]
+                if batch_size == 1:
+                    dout = self.y - self.t
+                else:
+                    dout = (self.y - self.t) / batch_size
+
+        return dout
+
 
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
@@ -205,8 +236,8 @@ class Dense:
         self.function['Activation'] = None
         # 更新用の重みとバイアス
         self.diffParams = {}
-        self.diffParams['dW'] = None
-        self.diffParams['db'] = None
+        self.diffParams['W'] = None
+        self.diffParams['b'] = None
 
 
     def compile(self, rear_node):
@@ -273,7 +304,8 @@ class Dense:
 
     def backward(self, dout):
         revDense = list(self.function.values())
-        for revLayers in range(revDense.reverse()):
+        revDense.reverse()
+        for revLayers in revDense:
             dout = revLayers.backward(dout)
         del revDense
 
@@ -283,13 +315,13 @@ class Dense:
 
 
     def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
-        method = _CallFunction('optimizer', optimizer)
-        #print(self.params.keys())
-        self.diffParams['dW'] = self.function['Affine'].dW
-        self.diffParams['db'] = self.function['Affine'].dB
-        print(self.params)
-        method.update(self.params, self.diffParams)
-        print(params)
+        self.diffParams['W'] = self.function['Affine'].dW
+        self.diffParams['b'] = self.function['Affine'].dB
+        # クラスのインスタンスを作成
+        class_def = _CallClass('optimizer', optimizer)
+        obj = class_def()
+
+        obj.update(self.params, self.diffParams)
 
 
     def _GetParams(self):

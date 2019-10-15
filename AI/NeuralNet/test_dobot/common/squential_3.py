@@ -42,8 +42,7 @@ class Sequential:
 
 
     def compile(self, loss='mean_squared_error', optimizer='sgd', metrics=['accuracy']):
-        self.func['loss'] = _CallClass('layers', loss)
-        self.func['loss']()
+        self.func['loss'] = _CallFunction('functions', loss)
         self.func['optimizer'] = _CallClass('optimizer', optimizer)
         #self.func['metrics'] = metrics
 
@@ -56,16 +55,15 @@ class Sequential:
             self.sequential[i+1].compile(Tuple[1])
 
 
-    def fit(self, training_input, training_test, batch_size, epochs, lr=0.01, reg_lambda=0.01):
+    def fit(self, input, test, batch_size, epochs, lr=0.01, reg_lambda=0.01):
         """
         fit
     
         Parameters
         ----------
-        self
-        training_input : 
+        input : 
             学習データ（入力）
-        training_test :
+        test :
             教師データ
         epochs :
             エポック数
@@ -73,18 +71,52 @@ class Sequential:
             学習率（初期値0.01）
         """
 
+        for i in range(len(self.units)):
+            if (i == len(self.units)-1):
+                Tuple = (self.units[i+1], 1)
+            else:
+                Tuple = (self.units[i+1], self.units[i+2])
+            self.sequential[i+1].compile(Tuple[1])
+
+
+
+
+
         # メインルーチン
         for n in range(epoch):
-            TrainI_batch, TrainT_batch = self.__classif__(training_input, training_test, batch_size)
+            input_bat, test_bat = self.__classif__(input, test, batch_size)
 
+            # データの成型
+            input_bat, test_bat = self.__Molding__(input_bat, test_bat)
+
+            """
             for i in range(batch_size):
                 mask = self.__fitMask__(TrainI_batch, self.units[1])
                 self.gradient(TrainI_batch[mask, 0:], TrainT_batch[mask])
+            """
+            
 
-            loss = self.__loss__(TrainI_batch[mask, 0:], TrainT_batch[mask])
-            self.history['loss'].append(loss)
+
+            #loss = self.__loss__(input_bat[mask, 0:], test_bat[mask])
+            #self.history['loss'].append(loss)
 
         print(self.history['loss'])
+
+
+    def __Molding__(self, input, test):
+        # 入力層の行数と入力データの行数が等しいとき
+        # もしくは入力層の行数と入力データの列数が等しいとき
+        if (input.shape[0] == self.units[1] or 
+                    input.shape[1] == self.units[1]):
+            input = input.T
+            test = test.T
+            return input, test
+        
+        # どちらとも等しくないとき
+        else:
+            print('Data Input Error')
+            return None, None
+
 
     def __classif__(self, trainI, trainT, batch_size):
         """
@@ -106,6 +138,7 @@ class Sequential:
         TrainT_batch : numpy.ndarray
             バッチ数だけ抽出した学習用テストデータ
         """
+        # 入力データの行数を保存
         Input_rowSize = trainI.shape[0]
         # 行数からbatch_sizeだけランダムに値を抽出 replace(重複)
         if (batch_size > Input_rowSize):
@@ -114,8 +147,8 @@ class Sequential:
         elif (batch_size <= Input_rowSize):
             batch_mask = np.random.choice(
                 Input_rowSize, batch_size, replace=False)
-        # 全データからbatch_size分データを抽出
-        TrainI_batch = trainI[batch_mask, 0:]
+        # 全データからbatch_size分、行を抽出
+        TrainI_batch = trainI[batch_mask]
         TrainT_batch = trainT[batch_mask]
 
         return TrainI_batch, TrainT_batch
@@ -151,7 +184,6 @@ class Sequential:
         # backward
         revSequence = list(self.sequential.values())
         revSequence.reverse()
-        dout = self.func['loss'].backward(dout=1)
         for revLayer in revSequence:
             dout = revLayer.backward(dout)
 
@@ -172,7 +204,7 @@ class Sequential:
             誤差の計算結果
         """
         y = self.__predict__(x)
-        return self.func['loss'].forward(y, t)
+        return self.func['loss'](y, t)
 
     def __predict__(self, x):
         for layer in self.sequential.values():
@@ -190,7 +222,7 @@ if __name__ == "__main__":
     training_test  = np.arange(90, 100, 0.2)
 
     model = Sequential()
-    model.add(InputLayer(input_shape=(2,)))
+    model.add(InputLayer(input_shape=(50,)))
     model.add(Dense(50, weight_initializer='sigmoid'))
     model.add(Dense(50, weight_initializer='he'))
     #model.add(Dense(3, activation='linear'))

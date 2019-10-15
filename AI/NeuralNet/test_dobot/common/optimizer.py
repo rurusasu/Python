@@ -33,7 +33,7 @@ if __name__ == "__main__":
     grads['x'], grads['y'] = 0, 0
 
     optimizers = OrderedDict()
-    optimizers['SGD'] = SGD(lr=0.95)
+    optimizers['SGD'] = sgd(lr=0.95)
     
     idx = 1
 

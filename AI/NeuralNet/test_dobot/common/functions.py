@@ -5,6 +5,7 @@ sys.path.append(os.getcwd())
 
 import numpy as np
 import importlib
+import inspect
 
 # ステップ関数
 def StepFunction(x):
@@ -166,3 +167,16 @@ def _CallFunction(module, function):
         return getattr(m, function)  # 関数呼び出し
     else:
         print('functionが存在しません！')
+
+
+def _CallClass(mod_name, cls_name):
+    # from optimizer import sgd
+    cls = __import__(mod_name, fromlist=[cls_name])
+    instance = getattr(cls, cls_name)
+    return instance
+
+
+if __name__ == "__main__":
+    class_def = _CallClass('optimizer', 'sgd')
+    obj = class_def()
+    obj.update()
