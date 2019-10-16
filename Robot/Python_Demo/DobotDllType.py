@@ -1,3 +1,9 @@
+# cording: utf-8
+
+import sys
+import os
+sys.path.append(os.getcwd())
+
 from ctypes import *
 import time,  platform
 from DobotDll import*

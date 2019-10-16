@@ -1,15 +1,19 @@
 # cording: utf-8
 
+import csv
+import sys, os
+sys.path.append(os.getcwd())
+
 import threading
 import DobotDllType as dType
+from DobotFunction import *
 from ctypes import * # cdllを呼ぶために必要
 
 # ウインドウ作成に必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
-from DobotFunction import*
-import csv
+
 
 # Load Dll
 api = cdll.LoadLibrary("DobotDll.dll")
