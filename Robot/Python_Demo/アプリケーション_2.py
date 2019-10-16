@@ -8,6 +8,7 @@ from ctypes import * # cdllを呼ぶために必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
+from common.csvIO import csvIO
 from DobotFunction import*
 import csv
 
@@ -80,6 +81,7 @@ def DetaGet_click():
     counter_y_init = -201
     counter_z = 101
 
+    file_name=txt.get()
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
@@ -105,7 +107,7 @@ def DetaGet_click():
                         api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
                     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
                     Operation(api, 'x')
-                    csv_write('data.csv', dType.GetPose(api))
+                    csv_write(file_name, dType.GetPose(api))
             else:
                 for k in range(0, x_roop1 + 1):
 
@@ -114,7 +116,7 @@ def DetaGet_click():
                         api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
                     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
                     Operation(api, 'x', -1)
-                    csv_write('data.csv', dType.GetPose(api))
+                    csv_write(file_name, dType.GetPose(api))
         counter_x = counter_x_init
         counter_y = counter_y_init
 
@@ -134,6 +136,15 @@ win.geometry('500x250')  # サイズを指定
 # テキストボックス用ラベル
 lbl = tk.Label(text='SaveFile')
 lbl.place(x=55, y=50)
+# データ変換部分用ラベル
+lbl_2 = tk.Label(text='DataConv')
+lbl_2.place(x=197, y=0)
+# 学習用データラベル
+lbl_3 = tk.Label(text='learn')
+lbl_3.place(x=170, y=20)
+# テスト用データラベル
+lbl_4 = tk.Label(text='test')
+lbl_4.place(x=170, y=60)
 
 
 #------------
@@ -150,7 +161,14 @@ datagetBtn.place(x=20, y=100)
 #---------------------
 txt = tk.Entry(width=20)
 txt.place(x=20, y=70)
-txt.insert(tk.END, 'data.csv') # テキストボックスに文字をセット
-
+txt.insert(tk.END, './data/data.csv') # テキストボックスに文字をセット
+# 学習用データ用
+txt_2 = tk.Entry(width=20)
+txt_2.place(x=170, y=40)
+txt_2.insert(tk.END, 'learn.csv')
+# テスト用
+txt_3 = tk.Entry(width=20)
+txt_3.place(x=170, y=80)
+txt_3.insert(tk.END, 'test.csv')
 
 win.mainloop()          # ウインドウを動かす
