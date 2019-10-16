@@ -2,7 +2,7 @@
 
 import csv
 import numpy as np
-
+from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
 
 class csvIO:
     #def csv_open(self, file_path, mode):
@@ -10,12 +10,11 @@ class csvIO:
         #f = open(file_path, mode, encoding='utf_8', errors='', newline='')
         #return f
 
-
     def twoD_array(self, x):
         """Convert 2D array"""
         array = [row for row in x]
-        return array
 
+        return array
 
     def open_twoD_array(self, filename):
         """Open csv file and Convert 2D array"""
@@ -37,18 +36,16 @@ class csvIO:
         return int_array
 
 
-    def twoD_FroatToStr(self, x):
+    def twoD_FroatToStr(self, x, digit):
         array = self.twoD_array(x)
-        froat_array = [[float(v) for v in row] for row in array]
+        froat_array = [[self.__roundOff__(v, digit) for v in row] for row in array]
 
         return froat_array
 
-
-    def twoD_Numpy(self, x):
+    
+    def toD_Numpy(self, x):
         """Convert array to numpy"""
-
         return np.array(x)
-
 
     #--------------------------------------------------------------
     # 特定の配列を取得する関数群
@@ -121,12 +118,21 @@ class csvIO:
 
 
     #--------------------------------------------------------------------------
+    # 四捨五入を行う関数
+    #--------------------------------------------------------------------------
+    def __roundOff__(self, x, digit):
+        """ある桁数(digit)で四捨五入を行う"""
+        y = Decimal(float(x)).quantize(Decimal(str(digit)), rounding=ROUND_HALF_UP)
+        
+        return float(y)
+
+
+    #--------------------------------------------------------------------------
     # ファイルへの書き出しを行う関数
     #--------------------------------------------------------------------------
 
     def csv_write(self, filename, data):
         """Write Data to csv file"""
-
         if (data == None):  # 書き込むデータが無いとき
             return
         with open(filename, 'w', encoding='utf_8', errors='', newline='') as f:
@@ -155,9 +161,9 @@ if __name__ == '__main__':
     
     # 2D arrayにデータを変換
     #v = io.twoD_array(file_data)
-    v = io.open_twoD_array('./data.csv')
+    v = io.open_twoD_array('./data/data.csv')
     # float型の変数に2D arrayのdata typeを変換
-    #v = io.twoD_FroatToStr(v)
+    v = io.twoD_FroatToStr(v, 0.01)
 
     # 2D arrayから行を取得する
     #data_row = io.GetOneRow(v, 1)
@@ -180,4 +186,4 @@ if __name__ == '__main__':
     #print(array)
 
     # ファイルに書き込む
-    io.csv_write('./test.csv', array)
+    io.csv_write('./data/test.csv', array)
