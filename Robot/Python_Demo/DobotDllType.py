@@ -35,7 +35,6 @@ class Pose(Structure):
     Parameters
     ----------
     _fields_ : list
-        Dobot
     """
     _pack_ = 1
     _fields_ = [
@@ -92,6 +91,7 @@ class EMotor(Structure):
         ("isEnabled", c_byte),
         ("speed", c_int)
         ]
+
 
 class EMotorS(Structure):
         _pack_ = 1
@@ -479,7 +479,6 @@ DobotCommunicate = enum(
 
 def load():
     """
-
     load関数は、プラットフォームごとに必要なライブラリを自動選択する。
 
     Returns
@@ -554,14 +553,6 @@ def GetQueuedCmdCurrentIndex(api):
     return [queuedCmdIndex.value]
 
 def SetQueuedCmdStartExec(api):
-    """
-
-    キューに入っているコマンドを実行する関数
-
-    Parameters
-    ----------
-    api : CDLL
-    """
     while(True):
         result = api.SetQueuedCmdStartExec()
         if result != DobotCommunicate.DobotCommunicate_NoError:
@@ -602,18 +593,6 @@ def SetQueuedCmdStopDownload(api):
         break
 
 def SetQueuedCmdClear(api):
-    """
-
-    古いコマンドの削除。
-
-    Parameters
-    ----------
-    api : CDLL
-
-    Returns
-    -------
-    api.SetQueuedCmdClear : int
-    """
     return api.SetQueuedCmdClear()
 
 def SetDeviceSN(api, str):
@@ -627,18 +606,6 @@ def SetDeviceSN(api, str):
         break
 
 def GetDeviceSN(api):
-    """
-
-    デバイスのシリアルナンバーを取得する。
-
-    Parameters
-    ----------
-    api : CDLL
-
-    Returns
-    -------
-    ret : str
-    """
     szPara = create_string_buffer(25)
     while(True):
         result = api.GetDeviceSN(szPara,  25)
@@ -661,18 +628,6 @@ def SetDeviceName(api, str):
         break
 
 def GetDeviceName(api):
-    """
-
-    デバイス名を取得する。
-
-    Parameters
-    ----------
-    api : CDLL
-
-    Returns
-    -------
-    ret : str
-    """
     szPara = create_string_buffer(66)
     while(True):
         result = api.GetDeviceName(szPara,  100)
@@ -685,20 +640,6 @@ def GetDeviceName(api):
     return ret
 
 def GetDeviceVersion(api):
-    """
-
-    デバイスのバージョンを取得する。
-
-    Parameters
-    ----------
-    api : CDLL
-
-    Returns
-    -------
-    majorVersion.value : int
-    minorVersion.value : int
-    revision.value     : int
-    """
     majorVersion = c_byte(0)
     minorVersion = c_byte(0)
     revision = c_byte(0)
@@ -741,25 +682,6 @@ def ResetPose(api, manual, rearArmAngle, frontArmAngle):
         break
 
 def GetPose(api):
-    """
-
-    Dobotの姿勢を取得する。
-
-    Parameters
-    ----------
-    api : CDLL
-
-    Returns
-    -------
-    pose.x : c_float, 
-    pose.y : c_float, 
-    pose.z : c_float,
-    pose.rHead : c_float, 
-    pose.joint1Angle : c_float, 
-    pose.joint2Angle : c_float, 
-    pose.joint3Angle : c_float, 
-    pose.joint4Angle : c_float
-    """
     pose = Pose()
     while(True):
         result = api.GetPose(byref(pose))
@@ -824,23 +746,6 @@ def GetUserParams(api):
     return [param.params1,param.params2,param.params3,param.params4,param.params5,param.params6,param.params7,param.params8]
 
 def SetHOMEParams(api,  x,  y,  z,  r,  isQueued=0):
-    """
-
-    Dobotの動作開始点を設定する。
-
-    Parameters
-    ----------
-    api : CDLL,
-    x : c_float,
-    y : c_float,
-    z : c_float,
-    r : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     param = HOMEParams()
     param.x = x
     param.y = y
@@ -867,20 +772,6 @@ def GetHOMEParams(api):
     return [param.temp]
 
 def SetHOMECmd(api, temp, isQueued=0):
-    """
-
-    Dobot本体に動作開始点のコマンドを送信する
-
-    Parameters
-    ----------
-    api : CDLL,
-    temp : int,
-    isQueued : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     cmd = HOMECmd()
     cmd.temp = temp
     queuedCmdIndex = c_uint64(0)
@@ -1048,27 +939,6 @@ def GetEndEffectorGripper(api):
     return [isOn.value]
 
 def SetJOGJointParams(api, j1Velocity, j1Acceleration, j2Velocity, j2Acceleration, j3Velocity, j3Acceleration, j4Velocity, j4Acceleration, isQueued=0):
-    """
-
-    JOGで動作する場合の関節座標系での各モータの速度および加速度の設定
-
-    Parameters
-    ----------
-    api : CDLL,
-    j1Velocity : c_float,
-    j1Acceleration : c_float,
-    j2Velocity : c_float,
-    j2Acceleration : c_float,
-    j3Velocity : c_float,
-    j3Acceleration : c_float,
-    j4Velocity : c_float,   
-    j4Acceleration : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     jogParam = JOGJointParams()
     jogParam.joint1Velocity = j1Velocity
     jogParam.joint1Acceleration = j1Acceleration
@@ -1099,27 +969,6 @@ def GetJOGJointParams(api):
     return [param.joint1Velocity, param.joint1Acceleration, param.joint2Velocity, param.joint2Acceleration, param.joint3Velocity, param.joint3Acceleration, param.joint4Velocity, param.joint4Acceleration]
 
 def SetJOGCoordinateParams(api, xVelocity, xAcceleration, yVelocity, yAcceleration, zVelocity, zAcceleration, rVelocity, rAcceleration, isQueued=0):
-    """
-
-    JOGで動作する場合のデカルト座標系での各方向への速度および加速度の設定
-
-    Parameters
-    ----------
-    api : CDLL,
-    xVelocity : c_float,
-    xAcceleration : c_float,
-    yVelocity : c_float,
-    yAcceleration : c_float,
-    zVelocity : c_float,
-    zAcceleration : c_float,
-    rVelocity : c_float, 
-    rAcceleration : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     param = JOGCoordinateParams()
     param.xVelocity = xVelocity
     param.xAcceleration = xAcceleration
@@ -1173,21 +1022,6 @@ def GetJOGLParams(api):
     return [param.velocity,  param.acceleration]
 
 def SetJOGCommonParams(api, value_velocityratio, value_accelerationratio, isQueued=0):
-    """
-
-    JOGで動作する場合の各モータの速度および加速度の比率
-
-    parameters
-    ----------
-    api : CDLL,
-    value_velocityRatio : c_float,
-    value_accelerationRatio : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     param = JOGCommonParams()
     param.velocityRatio = value_velocityratio
     param.accelerationRatio = value_accelerationratio
@@ -1225,27 +1059,6 @@ def SetJOGCmd(api, isJoint, cmd, isQueued=0):
     return [queuedCmdIndex.value]
 
 def SetPTPJointParams(api, j1Velocity, j1Acceleration, j2Velocity, j2Acceleration, j3Velocity, j3Acceleration, j4Velocity, j4Acceleration, isQueued=0):
-    """
-
-    PTPで動作する場合の関節座標系での各モータの速度および加速度の設定
-
-    Parameters
-    ----------
-    api : CDLL,
-    j1Velocity : c_float,
-    j1Acceleration : c_float,
-    j2Velocity : c_float,
-    j2Acceleration : c_float,
-    j3Velocity : c_float,
-    j3Acceleration : c_float,
-    j4Velocity : c_float,  
-    j4Acceleration : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     pbParam = PTPJointParams()
     pbParam.joint1Velocity = j1Velocity
     pbParam.joint1Acceleration = j1Acceleration
@@ -1276,23 +1089,6 @@ def GetPTPJointParams(api):
     return [pbParam.joint1Velocity,pbParam.joint1Acceleration,pbParam.joint2Velocity,pbParam.joint2Acceleration,pbParam.joint3Velocity,pbParam.joint3Acceleration,pbParam.joint4Velocity,pbParam.joint4Acceleration]
 
 def SetPTPCoordinateParams(api, xyzVelocity, xyzAcceleration, rVelocity,  rAcceleration,  isQueued=0):
-    """
-
-    PTPで動作する場合のデカルト座標系での各方向への速度および加速度の設定
-
-    Parameters
-    ----------
-    api : CDLL,
-    xyzVelocity : c_float,
-    xyzAcceleration : c_float,
-    rVelocity : c_float,
-    rAcceleration : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     pbParam = PTPCoordinateParams()
     pbParam.xyzVelocity = xyzVelocity
     pbParam.rVelocity = rVelocity
@@ -1366,21 +1162,6 @@ def GetPTPJumpParams(api):
     return [pbParam.jumpHeight, pbParam.zLimit]
 
 def SetPTPCommonParams(api, velocityRatio, accelerationRatio, isQueued=0):
-    """
-
-    PTPで動作する場合の各モータの速度および加速度の比率
-
-    parameters
-    ----------
-    api : CDLL,
-    velocityRatio : c_float,
-    accelerationRatio : c_float,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     pbParam = PTPCommonParams()
     pbParam.velocityRatio = velocityRatio
     pbParam.accelerationRatio = accelerationRatio
@@ -1405,24 +1186,6 @@ def GetPTPCommonParams(api):
     return [pbParam.velocityRatio, pbParam.accelerationRatio]
 
 def SetPTPCmd(api, ptpMode, x, y, z, rHead, isQueued=0):
-    """
-    
-    Dobot本体にPTP動作での次の位置を送信する。
-
-    Parameters
-    ----------
-    api : CDLL,
-    ptpMode, 
-    x : int,
-    y : int,
-    z : int,
-    rHead,
-    isQueued=0 : int
-
-    Returns
-    -------
-    queuedCmdIndex.value : list
-    """
     cmd = PTPCmd()
     cmd.ptpMode=ptpMode
     cmd.x=x
@@ -1478,7 +1241,7 @@ def GetCPParams(api):
             dSleep(5)
             continue
         break
-    output('GetCPParams: planAcc=%.4f juncitionVel=%.4f acc=%.4f' %(parm.planAcc, parm.juncitionVel, parm.acc))
+    output('GetCPParams: planAcc=%.4f juncitionVel=%.4f acc=%.4f' %(arm.planAcc, parm.juncitionVel, parm.acc))
     return [parm.planAcc, parm.juncitionVel, parm.acc]
 
 def SetCPCmd(api, cpMode, x, y, z, velocity, isQueued=0):

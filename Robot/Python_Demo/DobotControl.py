@@ -23,7 +23,7 @@ if (state == dType.DobotConnect.DobotConnect_NoError): #stateがDobotConnect_NoE
     dType.SetQueuedCmdClear(api)
 
     #Async Motion Params Setting
-    dType.SetHOMEParams(api, 130, -150, 50, 0, isQueued = 1)
+    dType.SetHOMEParams(api, 250, 0, 50, 0, isQueued = 1)
     dType.SetPTPJointParams(api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued = 1)
     dType.SetPTPCommonParams(api, 100, 100, isQueued = 1)
 
