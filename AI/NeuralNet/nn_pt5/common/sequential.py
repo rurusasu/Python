@@ -76,8 +76,8 @@ class Sequential:
         # メインルーチン
         for i in range(epochs):
             batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-            TrainingI_batch = input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
-            TrainingT_batch = test[batch_mask]
+            I_batch = input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
+            T_batch = test[batch_mask]
 
             #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             #t_val   = t_val_data[batch_mask]
@@ -85,23 +85,21 @@ class Sequential:
             #print('#######    学習%d回目    ########' %Sequential.counter)
             #Sequential.counter += 1
 
-            out_sum  = 0
-            out_ave  = 0
-            loss_sum = 0
-            loss_ave = 0
+            """
             for j in range(batch_size):
                 y = self.__predict__(TrainingI_batch[j, :]) # 学習を行う
                 
                 #####     誤差を保存する     #####
                 loss = self.func['loss'].forward(y, TrainingT_batch[j])
-                #loss = self.func['loss'].forward()
                 loss_sum += loss
                 self.history['loss'].append(loss)
-
+            """
+            y = self.__predict__(I_batch)
+            loss = self.func['loss'].forward(y, T_batch)
             #out_ave  = out_sum  / batch_size
-            loss_ave = loss_sum / batch_size
+            #loss_ave = loss_sum / batch_size
             plot.grah_plot(i+1, loss_ave)
-            self.history['loss_ave'].append(loss_ave)
+            # self.history['loss_ave'].append(loss_ave)
 
             
             ########################

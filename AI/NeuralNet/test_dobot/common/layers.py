@@ -98,7 +98,7 @@ class mean_squared_error:
         self.loss = None  # 損失
         self.y = None  # linerの出力
         self.t = None  # 教師データ
-        self.func = _CallFunction('functions', 'mean_aquared_error')
+        self.func = _CallFunction('common.functions', 'mean_squared_error')
 
     def forward(self, y, t):
         #if t.shape != y.shape:
@@ -266,20 +266,20 @@ class Dense:
             weight_initializer = 'he_nomal'
         elif str(weight_initializer).lower() in ('sigmoid', 'xavier'):
             weight_initializer = 'glorot_uniform'
-        method = _CallFunction('weight', weight_initializer)
+        method = _CallFunction('common.weight', weight_initializer)
         scale = method(self.units)
         self.params['W'] = scale * np.random.randn(self.units, rear_node)
 
     def __InitBias__(self, rear_node, bias_initializer='zeros'):
         """
-        重みの初期設定
+        閾値の初期設定
 
         Parameters
         ----------
         bias_initializer : biasを指定
         rear_node        : 次のnodeの行数
         """
-        method = _CallFunction('bias', bias_initializer)
+        method = _CallFunction('common.bias', bias_initializer)
         self.params['b'] = method(rear_node)
 
     def __SetFunc__(self, lr):

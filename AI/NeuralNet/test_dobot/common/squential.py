@@ -42,9 +42,9 @@ class Sequential:
 
 
     def compile(self, loss='mean_squared_error', optimizer='sgd', metrics=['accuracy']):
-        self.func['loss'] = _CallClass('layers', loss)
+        self.func['loss'] = _CallClass('common.layers', loss)
         self.func['loss']()
-        self.func['optimizer'] = _CallClass('optimizer', optimizer)
+        self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
         #self.func['metrics'] = metrics
 
 
@@ -74,7 +74,7 @@ class Sequential:
         """
 
         # メインルーチン
-        for n in range(epoch):
+        for n in range(epochs):
             TrainI_batch, TrainT_batch = self.__classif__(training_input, training_test, batch_size)
 
             for i in range(batch_size):
