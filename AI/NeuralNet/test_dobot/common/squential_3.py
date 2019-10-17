@@ -42,18 +42,19 @@ class Sequential:
 
 
     def compile(self, loss='mean_squared_error', optimizer='sgd', metrics=['accuracy']):
-        self.func['loss'] = _CallFunction('functions', loss)
-        self.func['optimizer'] = _CallClass('optimizer', optimizer)
+        self.func['loss'] = _CallClass('common.layers', loss)
+        self.func['loss'] = self.func['loss']()
+        self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
         #self.func['metrics'] = metrics
 
-
+        """
         for i in range(len(self.units)):
             if (i == len(self.units)-1):
                 Tuple = (self.units[i+1], 1)
             else:
                 Tuple = (self.units[i+1], self.units[i+2])
             self.sequential[i+1].compile(Tuple[1])
-
+        """
 
     def fit(self, input, test, batch_size, epochs, lr=0.01, reg_lambda=0.01):
         """
@@ -70,17 +71,13 @@ class Sequential:
         epsilon=0.01 :
             学習率（初期値0.01）
         """
-
-        for i in range(len(self.units)):
-            if (i == len(self.units)-1):
-                Tuple = (self.units[i+1], 1)
-            else:
-                Tuple = (self.units[i+1], self.units[i+2])
-            self.sequential[i+1].compile(Tuple[1])
-
-
-
-
+        
+        #zeros = np.zeros((batch_size, input.shape[1]))
+        #y = self.sequential[1].fit(zeros)
+        y = np.zeros((batch_size, input.shape[1]))
+        for i in self.sequential.keys():
+            y = self.sequential[i].fit(y)
+        print(y.shape)
 
         # メインルーチン
         for n in range(epoch):
@@ -94,12 +91,11 @@ class Sequential:
                 mask = self.__fitMask__(TrainI_batch, self.units[1])
                 self.gradient(TrainI_batch[mask, 0:], TrainT_batch[mask])
             """
-            
-
-
             #loss = self.__loss__(input_bat[mask, 0:], test_bat[mask])
+            #loss = self.__loss__(input_bat, test_bat)
             #self.history['loss'].append(loss)
-
+            loss = self.gradient(input_bat, test_bat)
+            self.history['loss'].append(loss)
         print(self.history['loss'])
 
 
@@ -178,14 +174,17 @@ class Sequential:
             print('batch_size < InputLayer')
 
 
-    def gradient(self, input, test):
+    def gradient(self, x, t):
         # forward
-        dout = self.__loss__(input, test)
+        loss = self.__loss__(x, t)
         # backward
-        revSequence = list(self.sequential.values())
-        revSequence.reverse()
-        for revLayer in revSequence:
-            dout = revLayer.backward(dout)
+        dout = 1
+        dout = self.func['loss'].backward(dout)
+        layers = list(self.sequential.values())
+        layers.reverse()
+        for layer in layers:
+            dout = layer.backward(dout)
+        return loss
 
     def __loss__(self, x, t):
         """
@@ -204,7 +203,7 @@ class Sequential:
             誤差の計算結果
         """
         y = self.__predict__(x)
-        return self.func['loss'](y, t)
+        return self.func['loss'].forward(x, t)
 
     def __predict__(self, x):
         for layer in self.sequential.values():
@@ -219,13 +218,14 @@ if __name__ == "__main__":
     from layers import*
     training_input = np.array(
         [np.arange(0, 5, 0.1), np.arange(10, 15, 0.1), np.arange(20, 25, 0.1)])
-    training_test  = np.arange(90, 100, 0.2)
+    training_test  = np.array(
+        [np.arange(90, 100, 0.2), np.arange(110, 120, 0.2), np.arange(130, 140, 0.2)])
 
     model = Sequential()
     model.add(InputLayer(input_shape=(50,)))
     model.add(Dense(50, weight_initializer='sigmoid'))
     model.add(Dense(50, weight_initializer='he'))
-    #model.add(Dense(3, activation='linear'))
+    model.add(Dense(3, activation='linear'))
     #model.add(Dense(3, weight_initializer='he'))
 
     epoch = 5

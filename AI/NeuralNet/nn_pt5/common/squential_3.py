@@ -47,13 +47,6 @@ class Sequential:
         #self.func['metrics'] = metrics
 
 
-        for i in range(len(self.units)):
-            if (i == len(self.units)-1):
-                Tuple = (self.units[i+1], 1)
-            else:
-                Tuple = (self.units[i+1], self.units[i+2])
-            self.sequential[i+1].compile(Tuple[1])
-
 
     def fit(self, input, test, batch_size, epochs, lr=0.01, reg_lambda=0.01):
         """
@@ -70,16 +63,25 @@ class Sequential:
         epsilon=0.01 :
             学習率（初期値0.01）
         """
-
+        """
         for i in range(len(self.units)):
             if (i == len(self.units)-1):
                 Tuple = (self.units[i+1], 1)
             else:
                 Tuple = (self.units[i+1], self.units[i+2])
-            self.sequential[i+1].compile(Tuple[1])
+            self.sequential[i+1].fit(Tuple[1])
+        """
 
-
-
+        # レイヤfit
+        # 入力データと同じ配列のゼロ行列を作成
+        # 1.InputLayerにデータを通して、成型
+        # 2.InputLayerから、データの行数および列数をタプルとしてreturn
+        # 3.Denseにタプルを通し、行列数を決定
+        # 4.Denseの出力を出力層に入力し、層の行列を決定
+        zeros = np.zeros((batch_size, input.shape[1]))
+        y = self.sequential[1].fit(zeros)
+        for i in self.sequential.keys():
+            print(i)
 
 
         # メインルーチン
@@ -96,9 +98,9 @@ class Sequential:
             """
             
 
-
+            loss = self.__loss__(input_bat, test_bat)
             #loss = self.__loss__(input_bat[mask, 0:], test_bat[mask])
-            #self.history['loss'].append(loss)
+            self.history['loss'].append(loss)
 
         print(self.history['loss'])
 

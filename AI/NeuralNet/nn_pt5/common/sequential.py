@@ -97,7 +97,7 @@ class Sequential:
             y = self.__predict__(I_batch)
             loss = self.func['loss'].forward(y, T_batch)
             #out_ave  = out_sum  / batch_size
-            #loss_ave = loss_sum / batch_size
+            loss_ave = np.sum(loss) / batch_size
             plot.grah_plot(i+1, loss_ave)
             # self.history['loss_ave'].append(loss_ave)
 
@@ -111,10 +111,9 @@ class Sequential:
 
             #逆伝搬および重みの更新
             dout = self.func['loss'].backward(dout=1)
-            for revLayer in revSequrnce:
+            for revLayer in revSequence:
                 dout = revLayer.backward(dout)
             del revSequence
-            self.sequential.reverse()
         
         print('loss = %f' %self.history['loss'][epochs-1])
         return self.history

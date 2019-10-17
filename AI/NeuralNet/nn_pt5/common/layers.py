@@ -224,21 +224,27 @@ class SoftmaxWithLoss:
 #入力レイヤ
 class InputLayer:
     def __init__(self, input_shape):
-        #self.Input_Row_Size = input_shape
-        self.params = {}                    #ユニット内での計算に必要なパラメータの辞書
-        self.params['units']  = input_shape #ユニットの数
-        self.Input_Col_Size = None
-        self.input          = None
-       
-        #if len(input_shape) == 1:   #もし、入力数が配列で指定されたとき
-            #self.input = 1
-            #pass
-        #elif len(input_shape) == 2:
-            #self.input = input_shape[1]
+        if (type(input_shape) == int):
+            self.units = input_shape
+        elif (type(input_shape) == tuple):
+            self.units = input_shape[0]
+        else:
+            print('error InputLayer!')
 
 
-    def fit(self, Col_Size, epsilon, reg_lambda):
-        return self.params['units']
+    def fit(self, x):
+        # 入力層の行数と入力データの行数が等しいとき
+        # もしくは入力層の行数と入力データの列数が等しいとき
+        if (x.shape[0] == self.units or
+                x.shape[1] == self.units):
+            x = x.T
+            return x.shape
+
+        # どちらとも等しくないとき
+        else:
+            print('Data Input Error')
+            return None
+
 
     def forward(self, input_data):
         out = np.reshape(input_data, [-1, self.params['units']])
@@ -314,9 +320,9 @@ class Dense:
             'sigmoid'または'xavier'を指定した場合は「Xavierの初期値」
         """
         if str(weight_initializer).lower() in ('relu', 'he'):
-            self.initializer['W'] = 'he_nomal'
+            weight_initializer = 'he_nomal'
         elif str(weight_initializer).lower() in ('sigmoid', 'xavier'):
-            self.initializer['W'] = 'glorot_uniform'
+            weight_initializer = 'glorot_uniform'
         method = _CallFunction('common.weight', weight_initializer)
         scale = method(self.units)
         self.params['W'] = scale * np.random.randn(BefNode, self.units)
@@ -351,7 +357,7 @@ class Dense:
         self.func['Activation'] = globals()[activation]()
 
 
-    def fit(self, BefLayer_Size, epsilon, reg_lambda):
+    def fit(self, BefLayer_Size):
         #初期値を設定
         #self.params['epsilon'] = epsilon
         #self.params['reg_lambda'] = reg_lambda
@@ -382,7 +388,7 @@ class Dense:
     def backward(self, dout):
         revDense = list(self.func.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
         revDense.reverse()
-        for revLayer in self.revDense:
+        for revLayer in revDense:
             dout = revLayer.backward(dout)
         del revDense
 

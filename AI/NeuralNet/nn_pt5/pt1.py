@@ -47,12 +47,12 @@ t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 2))
+module.add(InputLayer(input_shape = 128))
 #module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(1,  activation = 'liner'))
+#module.add(Dense(1,  activation = 'liner'))
 module.compile(loss = 'mean_squared_error')
 
 #学習

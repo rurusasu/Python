@@ -168,24 +168,46 @@ class InputLayer:
         else:
             print('error InputLayer!')
 
-    def fit(self, x):
-        # 入力層の行数と入力データの行数が等しいとき
-        # もしくは入力層の行数と入力データの列数が等しいとき
-        if (x.shape[0] == self.units or
-                x.shape[1] == self.units):
-            x = x.T
-            return x
 
-        # どちらとも等しくないとき
+    def fit(self, rear_node):
+        self.units = (self.units, rear_node)
+
+
+    def forward(self, data):
+        """
+        入力層のノード数と入力データの行数を比較する
+
+        Parameter
+        ---------
+        data : numpy.ndarray
+            入力データ
+
+        Return
+        ------
+        data : numpy.ndarray
+            出力データ
+        """
+        data_rowSize = data.shape[0]
+        # 入力データの行数と入力層のノード数が
+        # 同じ場合
+        if (data_rowSize == self.units[0]):
+            return data
+        # 入力データの行数が多い場合
+        elif (data_rowSize > self.units[0]):
+            mask = np.random.choice(data_rowSize, self.units[0])
+            data = data[mask, 0:]
+            return data
+        # ノード数が多い場合
         else:
-            print('Data Input Error')
+            print('batch_size < InputLayer')
             return None
 
-    def forward(self, x):
-        return x
+        #batch_mask = np.random.choice(self.units[0], self.units[1], replace=False)
     
+
     def backward(self, dout):
         pass
+
 
     def _GetParams(self):
         print('----------------------')
@@ -218,53 +240,47 @@ class Dense:
         self.diffParams['b'] = None
 
 
-    def fit(self, x):
+    def fit(self, rear_node):
         """
-        fit関数から呼び出される処理
+        compile関数から呼び出される処理
         """
         # 重みの初期化
-        self.__InitWeight__(x.shape[1], self.units, x.shape[0], self.initializer['W'])
-        self.__InitBias__(self.units, self.initializer['b'])
+        self.__InitWeight__(rear_node, self.initializer['W'])
+        self.__InitBias__(rear_node, self.initializer['b'])
         
         # 内部レイヤを構築
         self.__SetFunc__(lr=0.01)
 
-        x = self.forward(x)
-        return x
-
-
-    def __InitWeight__(self, row, col, n, weight_initializer='he'):
+    def __InitWeight__(self, rear_node, weight_initializer='he'):
         """
         重みの初期設定
 
         Parameters
         ----------
-        row : 重みの行数
-        col : 重みの列数
-        n   : 前の層のユニット数
         weight_initializer : 重みの標準偏差を指定
             'relu'または'he'を指定した場合は「Heの初期値」を設定
             'sigmoid'または'xavier'を指定した場合は「Xavierの初期値」を設定
+        rear_node : 次のnodeの行数
         """
         if str(weight_initializer).lower() in ('relu', 'he'):
             weight_initializer = 'he_nomal'
         elif str(weight_initializer).lower() in ('sigmoid', 'xavier'):
             weight_initializer = 'glorot_uniform'
         method = _CallFunction('common.weight', weight_initializer)
-        scale = method(n)
-        self.params['W'] = scale * np.random.randn(row, col)
+        scale = method(self.units)
+        self.params['W'] = scale * np.random.randn(self.units, rear_node)
 
-    def __InitBias__(self, row, bias_initializer='zeros'):
+    def __InitBias__(self, rear_node, bias_initializer='zeros'):
         """
         閾値の初期設定
 
         Parameters
         ----------
-        row : 重みの行数
         bias_initializer : biasを指定
+        rear_node        : 次のnodeの行数
         """
         method = _CallFunction('common.bias', bias_initializer)
-        self.params['b'] = method(row)
+        self.params['b'] = method(rear_node)
 
     def __SetFunc__(self, lr):
         """
