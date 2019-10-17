@@ -101,23 +101,27 @@ class mean_squared_error:
         self.func = _CallFunction('common.functions', 'mean_squared_error')
 
     def forward(self, y, t):
-        #if t.shape != y.shape:
-            #self.y = y.reshape(self.y.size, 1)
-            #self.t = t.reshape(self.t.size, 1)
-        self.y = y
-        self.t = t
+        """
+        batch平均の損失を計算する。
+        """
+        self.y = y #(128, 3)
+        self.t = t #(128, 3)
         self.loss = self.func(self.y, self.t)
 
         return self.loss
 
     def backward(self, dout=1):
         if dout == 1:
+            """
             if self.y.size == self.t.size:
                 batch_size = self.t.shape[0]
                 if batch_size == 1:
                     dout = self.y - self.t
                 else:
                     dout = (self.y - self.t) / batch_size
+            """
+            batch_size = self.t.shape[0]
+            dout = (self.y - self.t) / batch_size
 
         return dout
 
@@ -151,6 +155,9 @@ class affine:
         self.dW = np.dot(self.x.T, dout)
         self.dB = np.sum(dout, axis=0)
 
+        #self.W -= 0.01 * self.dW
+        #self.B -= 0.01 * self.dB
+
         dx = dx.reshape(self.original_x_shape)  # 逆伝播を入力信号の形に戻す
         return dx
 
@@ -171,21 +178,24 @@ class InputLayer:
     def fit(self, x):
         # 入力層の行数と入力データの行数が等しいとき
         # もしくは入力層の行数と入力データの列数が等しいとき
-        if (x.shape[0] == self.units or
-                x.shape[1] == self.units):
-            x = x.T
+        if (x.shape[0] == self.units):
+            x =  x.T
+            return x
+
+        elif(x.shape[1] == self.units):
             return x
 
         # どちらとも等しくないとき
         else:
-            print('Data Input Error')
+            print('InpuLayer fit \
+                    Data Input Error')
             return None
 
     def forward(self, x):
         return x
     
     def backward(self, dout):
-        pass
+        return dout
 
     def _GetParams(self):
         print('----------------------')
@@ -293,16 +303,16 @@ class Dense:
             dout = revLayers.backward(dout)
         del revDense
 
-        self._optimizer()
+        self.__optimizer__()
 
         return dout
 
 
-    def _optimizer(self, optimizer='sgd', loss=1, lr=0.01):
+    def __optimizer__(self, optimizer='sgd', loss=1, lr=0.01):
         self.diffParams['W'] = self.function['Affine'].dW
         self.diffParams['b'] = self.function['Affine'].dB
         # クラスのインスタンスを作成
-        class_def = _CallClass('optimizer', optimizer)
+        class_def = _CallClass('common.optimizer', optimizer)
         obj = class_def()
 
         obj.update(self.params, self.diffParams)

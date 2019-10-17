@@ -5,11 +5,6 @@ import numpy as np
 from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
 
 class csvIO:
-    #def csv_open(self, file_path, mode):
-        #"""Open csv file"""
-        #f = open(file_path, mode, encoding='utf_8', errors='', newline='')
-        #return f
-
     def twoD_array(self, x):
         """Convert 2D array"""
         array = [row for row in x]
@@ -43,8 +38,9 @@ class csvIO:
         return froat_array
 
     
-    def toD_Numpy(self, x):
+    def twoD_Numpy(self, x):
         """Convert array to numpy"""
+        x = self.twoD_FroatToStr(x, digit=0.01)
         return np.array(x)
 
     #--------------------------------------------------------------
