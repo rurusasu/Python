@@ -3,7 +3,7 @@
 import sys, os
 sys.path.append(os.getcwd())
 
-from common.squential_3 import*
+from common.squential import*
 from common.layers import*
 from common.csvIO import csvIO
 import matplotlib.pyplot as plt

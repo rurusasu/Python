@@ -68,11 +68,14 @@ class Loss:
 
 
 class Sequential:
+    counter  = 1
+
     def __init__(self):
         self.sequential = []
         self.Output = output()
-
         self.Output.history = {}
+
+        self.OutputBuff = []
         self.Output.history['loss']     = []
         self.Output.history['loss_ave'] = []
         #self.Output.history['val_loss'] = []
@@ -122,30 +125,34 @@ class Sequential:
         #レイヤの行列を計算する
         y = ICS
         for layers in self.sequential:
-            y = layers.unit(y, epsilon, reg_lambda)
+            y = layers.unit(y, Sequential.counter, epsilon, reg_lambda)
+            Sequential.counter += 1
 
+        Sequential.counter = 1
         # メインルーチン
         for i in range(epochs):
-            print('#######    学習%d回目    ########' % (i+1))
-
             batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
             TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
             TrainingT_batch = training_test[batch_mask]
 
             #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             #t_val   = t_val_data[batch_mask]
+            
+            print('#######    学習%d回目    ########' %Sequential.counter)
+            Sequential.counter += 1
 
             out_sum  = 0
             out_ave  = 0
             loss_sum = 0
             loss_ave = 0
             for j in range(batch_size):
-                y = self.Predict(TrainingI_batch[j])  # 学習を行う
+                #output = self.Predict(TrainingI_batch[j, :]) # 学習を行う
+                output = self.Predict(TrainingI_batch[j])
                 
-                out_sum += y
+                out_sum += output
                 #####     誤差を保存する     #####
                 loss = 0
-                loss = self.LastLayer.forward(y, TrainingT_batch[j])
+                loss = self.LastLayer.forward(output, TrainingT_batch[j])
                 loss_sum += loss
                 self.Output.history['loss'].append(loss)
 
@@ -205,7 +212,7 @@ class Sequential:
 
 #訓練データの読み込み
 data = np.loadtxt(
-    "./data/learn.csv", #読み込むファイル名(例"save_data.csv")
+    "save_data.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -213,7 +220,7 @@ data = np.loadtxt(
 
 #テストデータの読み込み
 test = np.loadtxt(
-    "./data/test.csv", #読み込むファイル名(例"save_data.csv")
+    "test_data.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -234,16 +241,16 @@ data_ = data_nom(data_)
 test_ = data_nom(test_)
 
 #訓練データのセット
-training_input = data_ #学習データをセット
-training_test = data_  #教師データをセット
+training_input = data_[:, 0:2] #学習データをセット
+training_test = data_[:, 2]   #教師データをセット
 
 #テストデータのセット
-x_test  = test_[:, 0:3] #入力データをセット
-t_test  = test_[:, 4:7]   #正解データをセット
+x_test  = test_[:, 0:2] #入力データをセット
+t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 3))
+module.add(InputLayer(input_shape = 2))
 #module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
 module.add(Dense(50, activation = 'relu'))

@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.getcwd())
 import numpy as np
 import matplotlib.pyplot as plt
-from common.sequential import Sequential
+from common.squential import Sequential
 from common.layers import InputLayer, Dense
 from common.functions import*
 
