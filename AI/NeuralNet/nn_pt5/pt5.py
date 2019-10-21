@@ -2,8 +2,8 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from nn_pt1.functions import *
-from nn_pt1.layers import *
+from nn_pt5.functions import *
+from nn_pt5.layers import *
 from collections import OrderedDict
 
 class output: pass
