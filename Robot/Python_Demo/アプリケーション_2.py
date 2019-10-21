@@ -144,64 +144,104 @@ def DetaMake_click():
     io.csv_write(testPath, t_array)
 
 
+#def NN_click()
 
 
 # ウインドウの作成
 win = tk.Tk()
 win.title('Dobot')      # タイトル
-win.geometry('500x250')  # サイズを指定
+win.geometry('500x400')  # サイズを指定
 
 
 #------------
+# Save
+#------------
+Sfile_x = 33
+Sfile_y = 50
+# テキストボックス用
 # ラベル
-#------------
-# テキストボックス用ラベル
 lbl = tk.Label(text='SaveFile')
-lbl.place(x=33, y=50)
+lbl.place(x=Sfile_x, y=Sfile_y)
+# tBox
+txt = tk.Entry(width=13)
+txt.place(x=Sfile_x-13, y=Sfile_y+20)
+txt.insert(tk.END, 'data.csv')  # テキストボックスに文字をセット
+# ボタン
+datagetBtn = tk.Button(win, text='DataGet', command=DetaGet_click, width=10)
+datagetBtn.place(x=Sfile_x-13, y=Sfile_y+40)
+
+#--------------------------------
+# DataConv
+#--------------------------------
+Dcon_x = 33
+Dcon_y = 140
 # データ変換部分用ラベル
 lbl_2 = tk.Label(text='DataConv')
-lbl_2.place(x=197, y=0)
-# 学習用データラベル
-lbl_3 = tk.Label(text='learn')
-lbl_3.place(x=170, y=20)
-# テスト用データラベル
-lbl_4 = tk.Label(text='test')
-lbl_4.place(x=170, y=60)
-# 小数点以下の桁数用ラベル
-lbl_5 = tk.Label(text='小数点以下の桁数')
-lbl_5.place(x=230, y=60)
+lbl_2.place(x=Dcon_x, y=Dcon_y)
 
+# 学習用データ
+# ラベル
+lbl_3 = tk.Label(text='learn')
+lbl_3.place(x=Dcon_x-13, y=Dcon_y+20)
+# tBox
+txt_2 = tk.Entry(width=13)
+txt_2.place(x=Dcon_x-13, y=Dcon_y+40)
+txt_2.insert(tk.END, 'learn.csv')
+
+# テスト用データ
+# ラベル
+lbl_4 = tk.Label(text='test')
+lbl_4.place(x=Dcon_x-13, y=Dcon_y+60)
+# tBox
+txt_3 = tk.Entry(width=13)
+txt_3.place(x=Dcon_x-13, y=Dcon_y+80)
+txt_3.insert(tk.END, 'test.csv')
+
+# 小数点以下の桁数
+# ラベル
+lbl_5 = tk.Label(text='小数点以下の桁数')
+lbl_5.place(x=Dcon_x+50, y=Dcon_y+60)
+# tBox
+txt_4 = tk.Entry(width=3)
+txt_4.place(x=Dcon_x+80, y=Dcon_y+80)
+txt_4.insert(tk.END, '2')
+
+# DataMake
+# ボタン
+datamakeBtn = tk.Button(win, text='DataMake', command=DetaMake_click, width=10)
+datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+100)
+
+
+#-----------------------
+# NuralNet
+#-----------------------
+nn_x = 200
+nn_y = 0
+txt_5 = tk.Label(text='NuralNet')
+txt_5.place(x=nn_x, y=nn_y)
+# 学習用データ
+# ラベル
+lbl_6 = tk.Label(text='learn')
+lbl_6.place(x=nn_x, y=nn_y+20)
+# tBox
+txt_6 = tk.Entry(width=13)
+txt_6.place(x=nn_x, y=nn_y+40)
+txt_6.insert(tk.END, 'learn.csv')
+
+# テスト用データ
+# ラベル
+lbl_7 = tk.Label(text='test')
+lbl_7.place(x=nn_x, y=nn_y+60)
+# tBox
+txt_7 = tk.Entry(width=13)
+txt_7.place(x=nn_x, y=nn_y+80)
+txt_7.insert(tk.END, 'test.csv')
 
 #------------
 # ボタン
 #------------
 connectBtn = tk.Button(win, text='connect', command=connect_click, width=10) # ボタンを作成
 connectBtn.place(x=20, y=10)
-
-datagetBtn = tk.Button(win, text='DataGet', command=DetaGet_click, width=10)
-datagetBtn.place(x=20, y=100)
-
-datamakeBtn = tk.Button(win, text='DataMake', command=DetaMake_click, width=10)
-datamakeBtn.place(x=170, y=100)
-
-#---------------------
-# テキストボックス
-#---------------------
-txt = tk.Entry(width=13)
-txt.place(x=20, y=70)
-txt.insert(tk.END, 'data.csv') # テキストボックスに文字をセット
-# 学習用データ用
-txt_2 = tk.Entry(width=13)
-txt_2.place(x=170, y=40)
-txt_2.insert(tk.END, 'learn.csv')
-# テスト用
-txt_3 = tk.Entry(width=13)
-txt_3.place(x=170, y=80)
-txt_3.insert(tk.END, 'test.csv')
-# 小数点以下の桁数
-txt_4 = tk.Entry(width=3)
-txt_4.place(x=260, y=80)
-txt_4.insert(tk.END, '2')
 
 
 win.mainloop()          # ウインドウを動かす
