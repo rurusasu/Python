@@ -1,5 +1,5 @@
 import sys, os
-sys.path.append(os.pardir)
+sys.path.append(os.getcwd())
 
 import numpy as np
 from common.functions import _CallClass, _CallFunction
@@ -48,11 +48,6 @@ class Sequential:
    #-------------------------------------------------
 
     def fit(self, x, t, batch_size, epochs):
-        #plot = Plot(0, 1)
-
-        IRS = x.shape[0]
-        ICS = t.shape[1]
-
         #ValidationData
         #x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
         #t_val_data = validation_data[1] # ValidationDataの列数を取得 返り値：整数
@@ -61,40 +56,24 @@ class Sequential:
         #ValidationCol_size = x_val_data.shape[1]
 
         #レイヤの行列を計算する
-        y = np.zeros((3, batch_size))  # (128, 3) , (3, 128)
+        #y = np.zeros((3, batch_size))  # (128, 3) , (3, 128)
+        y = np.zeros((batch_size, x.shape[1]))
         for layers in self.sequential:
             y = layers.fit(y)
 
         # メインルーチン
         for i in range(epochs):
             # 行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-            batch_mask = np.random.choice(IRS, batch_size, replace=False)
-            x_batch = x[batch_mask, 0:ICS]  # 全データからbatch_size分データを抽出
+            batch_mask = np.random.choice(x.shape[0], batch_size, replace=False)
+            x_batch = x[batch_mask]  # 全データからbatch_size分データを抽出
             t_batch = t[batch_mask]
 
             #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             #t_val   = t_val_data[batch_mask]
 
-            out_ave = 0
-            loss_ave = 0
-
-            y = self.Predict(x_batch)  # 学習を行う
-            loss = self.func['loss'].forward(y, t_batch)
+            loss = self.gradient(x, t)
             loss_ave = loss / batch_size
             self.history['loss_ave'].append(loss_ave)
-
-            ########################
-            #####     追加     #####
-            ########################
-            #逆伝播を行うためにレイヤを反転
-            self.sequential.reverse()
-
-            #逆伝搬および重みの更新
-            dout = self.func['loss'].backward(out_ave, loss_ave)
-            for layer in self.sequential:
-                dout = layer.backward(dout)
-
-            self.sequential.reverse()
             print('学習%d回目  --loss:%f' % (i+1, loss_ave))
 
         print('loss = %f' % self.history['loss_ave'][epochs-1])
@@ -109,3 +88,25 @@ class Sequential:
             x = layers.forward(x)
 
         return x
+    
+    def loss(self, x, t):
+        y = self.Predict(x)
+        return self.func['loss'].forward(y, t)
+
+    def gradient(self, x, t):
+        #forward
+        loss = self.loss(x, t)
+
+        # backward
+        #逆伝播を行うためにレイヤを反転
+        self.sequential.reverse()
+
+        #逆伝搬および重みの更新
+        dout = 1
+        dout = self.func['loss'].backward()
+        for layer in self.sequential:
+            dout = layer.backward(dout)
+
+        self.sequential.reverse()
+
+        return loss

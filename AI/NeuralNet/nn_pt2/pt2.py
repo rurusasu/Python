@@ -2,145 +2,107 @@ import sys, os
 sys.path.append(os.pardir)
 import numpy as np
 import matplotlib.pyplot as plt
-from nn_pt2.functions import *
-from nn_pt2.layers import *
+from common.functions import *
+from common.layers import *
 from collections import OrderedDict
-
-class output: pass
 
 
 class Plot:
     def __init__(self, x, y):
         #グラフの初期化
-        self.fig, (self.axL, self.axR) = plt.subplots(ncols=2, figsize=(10, 4))
+        self.fig, self.ax = plt.subplots(1, 1)
         self.x = []
         self.y = []
 
         self.x.append(x)
         self.y.append(y)
 
-        self.lines_L,  = self.axL.plot(self.x, self.y)
-        self.lines_R,  = self.axR.plot(self.x, self.y)
+        self.lines,  = self.ax.plot(self.x, self.y)
 
-    def grah_plot_L(self, x, y):
+    def grah_plot(self, x, y):
         self.x.append(x)
-        self.y.appensd(y)
-        self.lines_L.set_data(self.x, self.y)
-        self.axL.set_xlim(0, len(self.x))
-        self.axL.set_ylim(min(self.y), max(self.y))
+        self.y.append(y)
+        self.lines.set_data(self.x, self.y)
+        self.ax.set_xlim(0, len(self.x))
+        self.ax.set_ylim(min(self.y), max(self.y))
         plt.pause(.01)
 
-    def grah_plot_R(self, x):
-        loss = x
-        nb_epoch = len(loss)
-        #self.lines_R.set_data(range(nb_epoch), loss,  marker = '.', label = 'loss')
-        self.lines_R.set_data(range(nb_epoch), loss)
-        self.axR.set_xlim(0, nb_epoch)
-        self.axR.set_ylim(min(loss), max(loss))
-        self.axR.set_xlabel('epoch')
-        self.axR.set_ylabel('loss')
-        self.axR.grid(False)
-        plt.pause(.01)
+
+class Loss:
+   #-------------------------------------------------
+   # __init__:初期化を行う
+   #     引数
+   #     @self
+   #     @loss_function :誤差を計算する関数を指定
+   #-------------------------------------------------
+    def __init__(self, loss_function):
+        self.function = globals()[loss]()
+        self.loss = 0
+        self.loss_sum = []
+    
+   #-------------------------------------------------
+   # loss:誤差を計算する
+   #     引数
+   #     @self
+   #     @x             :NNからの出力
+   #     @t             :テストデータ
+   #     @sum           :誤差を記録するか選べる（0:記録させない, 1:記録させる）
+   #-------------------------------------------------
+    def loss(self, x, t, sum = 0):
+        self.loss = self.function(x, t)
+        if sum == 1:
+            self.loss_sum.append(loss)
+        return self.loss
+    
+   #-------------------------------------------------
+   # ave_loss:誤差を計算する
+   #     引数
+   #     @self
+   #     @batch_size    :バッチ数
+   #-------------------------------------------------
+    def ave_loss(self, batch_size):
+        batch_loss = sum(self.loss_sum)
+        return batch_loss / batch_size
 
 
 class Sequential:
-    """
-
-    ニューラルネットワークのフレーム
-
-
-    Attributes
-    ----------
-    sequential : dictionary
-        ニューラルネットの内部構造を格納
-
-    Output.history : tuple
-        返り値
-
-    Output.history['loss']
-        バッチ毎の誤差を記録
-
-    Output.history['loss_ave']
-        エポック毎の誤差を記録
-
-    Output.history['train_acc']
-        訓練データによる正解率
-    """
-
     def __init__(self):
         self.sequential = []
-        self.Output = output()
-        self.Output.history = {}
-
-        #self.OutputBuff = []
-        self.Output.history['loss']     = []
-        self.Output.history['loss_ave'] = []
-        #self.Output.history['val_loss'] = []
-        self.Output.history['train_acc'] = []
-        #self.Output.history['val_acc']  = []
+        self.history    = {}
+        self.history['loss']     = []
+        self.history['loss_ave'] = []
 
     def add(self, layer_name):
-        """
-
-        ニューラルネットに層を追加する関数
-
-        
-        Parameters
-        ----------
-        layer_name : int
-            層の結合型を指定
-        
-        
-        See Also
-        --------
-        Dense : 全結合層を実装する
-        """
-        self.sequential.append(layer_name) #リストにレイヤの名前を代入
+        #リストにレイヤの名前を代入
+        self.sequential.append(layer_name)
 
     def compile(self, loss):
-        """
-
-        誤差の計算、パラメータの更新方法、正解率を計算するかを指定する
+        self.LastLayer = globals()[loss]()
 
 
-        Parameters
-        ----------
-        loss : str
-            誤差計算の関数名
-        """
-        self.loss = Loss(loss)
+   #-------------------------------------------------
+   # fit:学習のメイン
+   #     引数
+   #     @self
+   #     @training_input:学習データ（入力）
+   #     @training_test :教師データ
+   #     @epochs        :エポック数
+   #     @epsilon=0.01  :学習率（初期値0.01）
+   #     変数
+   #     @TrainingI       :TrainingInputの略
+   #     @TrainigT        :TrainigTestの略
+   #     @IRS             :InputRowSizeの略(training_inputの行数 返り値：整数)
+   #     @ICS             :InputColSizeの略(training_inputの列数 返り値：整数)
+   #     @batch_size      :バッチ数
+   #     @TrainingI_batch :TrainingIからバッチ数個だけデータを抽出した行列
+   #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
+   #-------------------------------------------------
+    def fit(self, x, t, batch_size, epochs):
+        plot = Plot(0, 1)
 
-
-    def fit(self, training_input, training_test, batch_size, epochs, validation_input, validation_test, epsilon=0.01, reg_lambda=0.01): # タプルの可能性のある変数trainning_input, training_test, validation_data
-        """
-
-        ニューラルネットワークのメイン
+        IRS = x.shape[0]
+        ICS = t.shape[1]
         
-
-        Parameters
-        ----------
-        training_input : numpy.float64
-            訓練用のNN入力データ
-        
-        training_test : numpy.float64
-            訓練用のNNテストデータ
-
-        epochs : int
-            エポック数
-
-        epsilon : float
-            学習率（初期値0.01）
-
-        
-        Returns
-        -------
-        self.Output
-        """                  
-
-        IRS = training_input.shape[0]
-        ICS = training_input.shape[1]
-       
-        minibatch = 1
         #ValidationData
         #x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
         #t_val_data = validation_data[1] # ValidationDataの列数を取得 返り値：整数
@@ -148,74 +110,58 @@ class Sequential:
         #ValidationRow_size = x_val_data.shape[0]
         #ValidationCol_size = x_val_data.shape[1]
         
-       
 
         #レイヤの行列を計算する
-        y = ICS
+        y = np.zeros((3, batch_size))  # (128, 3) , (3, 128)
         for layers in self.sequential:
-            y = layers.unit(y) # unit(input_size, hidden_size, output_size)
+            y = layers.fit(y)
 
-
-        iter = int(IRS /batch_size) + 1 
-        Sequential.counter = 1
         # メインルーチン
         for i in range(epochs):
-            print('#######    学習%d回目    ########' %Sequential.counter)
-            Sequential.counter += 1
+            batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
+            x_batch = x[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
+            t_batch = t[batch_mask]
 
-            for j in range(iter):
-                batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-                TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
-                TrainingT_batch = training_test[batch_mask]
+            #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
+            #t_val   = t_val_data[batch_mask]
 
-                ValidationI_batch = validation_input[batch_mask, 0:validation_input.shape[1]]
-                ValidationT_batch = validation_test[batch_mask]
+           
+            out_ave  = 0
+            loss_ave = 0
+
+            y = self.Predict(x_batch) # 学習を行う
+            loss = self.LastLayer.forward(y, t_batch)
+            loss_ave = loss / batch_size
+            plot.grah_plot(i+1, loss_ave)
+            #self.Output.history['loss_ave'].append(loss_ave)
+            self.history['loss_ave'].append(loss_ave)
             
-
-
-                for k in range(batch_size):
-                    output = self.Predict(TrainingI_batch[k, :]) # 学習を行う
-
-                    #####     誤差を計算する     #####
-                    loss = sum(mean_squared_error(output, TrainingT_batch[k]))
-                    #self.Output.history['loss'].append(sum(loss))
-                    self.Output.history['loss'].append(sum(loss)/float(output.shape[0]))
-
-            BatchLoss = sum(self.Output.history['loss']) / (IRS)
-            #plot.grah_plot_L(i+1, BatchLoss)
-            self.Output.history['loss_ave'].append(BatchLoss)
-            self.Output.history['loss'] = []
-            
+            ########################
+            #####     追加     #####
+            ########################
             #逆伝播を行うためにレイヤを反転
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            BackSignal = sum(self.Output.history['loss']) / batch_size
+            dout = self.LastLayer.backward(out_ave, loss_ave)
             for layer in self.sequential:
-                BackSignal = layer.backward(BackSignal)
+                dout = layer.backward(dout)
             
             self.sequential.reverse()
+            print('学習%d回目' % (i+1))
         
-            # 正解率の計算
-            TrainAcc = self.accuracy(TrainingI_batch[0, :], TrainingT_batch)
-            self.Output.history['train_acc'].append(TrainAcc)
-            
-
-        print('loss = %f' %self.Output.history['loss_ave'][epochs-1])
-        print('train_acc = %f' %self.Output.history['train_acc'][epochs-1])
-
-        #plot.grah_plot_R(self.Output.history['loss_ave'])
-        return self.Output
+        print('loss = %f' % self.history['loss_ave'][epochs-1])
+        return self.history
 
 
     ########################################
     ########      内部関数       ###########
     ########################################
-    def Predict(self, data_set):
+    def Predict(self, x):
         for layers in self.sequential:
-            data_set = layers.forward(data_set)
+            x = layers.forward(x)
 
-        return data_set
+        return x
 
 
     def ValLoss(self, val_data, t_val):
@@ -234,77 +180,14 @@ class Sequential:
             y = y.reshape(-1, 1)
             t = t.reshape(-1, 1)
 
-        #accuracy = np.sum(y == t) / float(x.shape[0])
-        accuracy = np.sum(y - t) / float(x.shape[0])
-
+        accuracy = np.sum(y == t) / float(x.shape[0])
         return accuracy
-
-
-class InputData:
-    # 必要な変数：
-    # 読み込むファイル名
-    # データtype
-    # 区切り文字の指定
-    # 配列の最低次元
-    # 必要な機能：
-    # データの読み込み
-    # データに対する正規化
-    # データに対する標準化
-    """
-    def input_data(self, data_name, dtype, delimiter, data_dim, conv=None):
-        out = np.loadtxt(data_name, dtype=dtype, delimiter=delimiter, ndmin=data_dim)
-
-        if conv != None:
-            out = self.data_conv(out, conv)
-
-
-        return out
-
-    # データ変換
-    def data_conv(self, conv_data, conv):
-        out = self.input_data()
-        for i in conv:
-            out = 
-    """
-
-    #標準化
-    def standardization(self, data):
-        dim = data.ndim #受け取ったdataの次元を確認
-
-        if dim == 1 :   #dataが1次元(配列)のとき
-            return (data - data.mean()) / data.std()
-        else :                               #dataが2次元(行列)のとき
-            data_std = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
-            row = data.shape[0]              #dataの行数を取得
-            col = data.shape[1]              #dataの列数を取得
-        
-            for i in range(col):
-                data_std[:, i] = (data[:, i] - data[:, i].mean()) / data[:, i].std()
-
-
-    #正規化
-    def normalization(self, data):
-        dim = data.ndim #受け取ったdataの次元を確認
-
-        if dim == 1 :   #dataが1次元(配列)のとき
-            return data_1[:, 0] / max(abs(data_1[:, 0]))
-        else :                               #dataが2次元(行列)のとき
-            data_nom = np.empty_like(data)   #dataと同じ大きさの空の行列を作成
-            row = data.shape[0]              #dataの行数を取得
-            col = data.shape[1]              #dataの列数を取得
-        
-            for i in range(col):
-                data_nom[:, i] = data[:, i] / max(abs(data[:, i]))
-
-            return data_nom
-
-
 
 
 
 #訓練データの読み込み
 data = np.loadtxt(
-    "save_data.csv", #読み込むファイル名(例"save_data.csv")
+    "./data/learn.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -312,7 +195,7 @@ data = np.loadtxt(
 
 #テストデータの読み込み
 test = np.loadtxt(
-    "test_data.csv", #読み込むファイル名(例"save_data.csv")
+    "./data/test.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -333,42 +216,40 @@ data_ = data_nom(data_)
 test_ = data_nom(test_)
 
 #訓練データのセット
-training_input = data_[:, 0:2] #学習データをセット
-training_test = data_[:, 2]   #教師データをセット
+input = data_ #学習データをセット
+test = test_  #教師データをセット
 
 #テストデータのセット
-x_test  = test_[:, 0:2] #入力データをセット
-t_test  = test_[:, 2]   #正解データをセット
+#x_test  = test_ #入力データをセット
+#t_test  = test_ #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = (2, )))
-#module.add(Dense(50, activation = 'sigmoid'))
-#module.add(Dense(50, activation = 'sigmoid'))
+module.add(InputLayer(input_shape = 3))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(1,  activation = 'liner'))
-module.compile(loss = 'MeanSquaredError')
+module.add(Dense(3,  activation = 'liner'))
+module.compile(loss = 'mean_squared_error')
 
 #学習
-epochs = 5
-batch_size = 32
+epochs = 100
+batch_size = 128
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
 epsilon = 0.01    # gradient descentの学習率
 reg_lambda = 0.01 # regularizationの強さ 
 
-history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_input=x_test, validation_test=t_test, epsilon=epsilon, reg_lambda=reg_lambda)
+history = module.fit(input, test, batch_size=batch_size, epochs=epochs)
 
-
-loss      = history.history['loss_ave']
-train_acc = history.history['train_acc']
+#lossグラフ
+loss     = history['loss_ave']
+#val_loss = history.history['val_loss']
 
 nb_epoch = len(loss)
-plt.plot(range(nb_epoch), loss,  marker = '.', label = 'loss')
-plt.plot(range(nb_sepoch), train_acc,  marker = '.', label = 'train_acc')
-
-plt.grid(False)
+plt.plot(range(nb_epoch), loss,     marker = '.', label = 'loss')
+#plt.plot(range(nb_epoch), val_loss, marker = '.', label = 'val_loss')
+plt.legend(loc = 'best', fontsize = 10)
+plt.grid()
 plt.xlabel('epoch')
 plt.ylabel('loss')
 plt.show()

@@ -1,6 +1,6 @@
 #coding: utf-8
 import sys, os
-sys.path.append(os.pardir)
+sys.path.append(os.getcwd())
 import numpy as np
 from common.functions import _CallFunction, _CallClass
 from collections import OrderedDict
@@ -143,7 +143,7 @@ class mean_squared_error:
 
         return loss
 
-    def backward(self, y, t, dout=1):
+    def backward(self, dout=1):
         if dout == 1:
             batch_size = self.t.shape[0]
             dout = (self.y - self.t) / batch_size
