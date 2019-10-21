@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.pardir)
 
 import numpy as np
-from common.functions import *
+from common.functions import _CallClass, _CallFunction
 from common.layers import *
 from collections import OrderedDict
 
@@ -10,6 +10,10 @@ from collections import OrderedDict
 class Sequential:
     def __init__(self):
         self.sequential = []
+        self.func = {}
+        self.func['loss'] = None
+        self.func['optimizer'] = None
+
         self.history = {}
         self.history['loss'] = []
         self.history['loss_ave'] = []
@@ -18,8 +22,12 @@ class Sequential:
         #リストにレイヤの名前を代入
         self.sequential.append(layer_name)
 
-    def compile(self, loss):
-        self.LastLayer = globals()[loss]()
+    def compile(self, loss, optimizer='sgd'):
+        self.func['loss'] = _CallClass('common.layers', loss)
+        self.func['loss'] = self.func['loss']()
+        self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
+        self.func['optimizer'] = self.func['optimizer']()
+        #self.LastLayer = globals()[loss]()
 
    #-------------------------------------------------
    # fit:学習のメイン
@@ -71,10 +79,8 @@ class Sequential:
             loss_ave = 0
 
             y = self.Predict(x_batch)  # 学習を行う
-            loss = self.LastLayer.forward(y, t_batch)
+            loss = self.func['loss'].forward(y, t_batch)
             loss_ave = loss / batch_size
-            #plot.grah_plot(i+1, loss_ave)
-            #self.Output.history['loss_ave'].append(loss_ave)
             self.history['loss_ave'].append(loss_ave)
 
             ########################
@@ -84,12 +90,12 @@ class Sequential:
             self.sequential.reverse()
 
             #逆伝搬および重みの更新
-            dout = self.LastLayer.backward(out_ave, loss_ave)
+            dout = self.func['loss'].backward(out_ave, loss_ave)
             for layer in self.sequential:
                 dout = layer.backward(dout)
 
             self.sequential.reverse()
-            print('学習%d回目' % (i+1))
+            print('学習%d回目  --loss:%f' % (i+1, loss_ave))
 
         print('loss = %f' % self.history['loss_ave'][epochs-1])
         return self.history
