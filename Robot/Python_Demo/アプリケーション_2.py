@@ -9,7 +9,9 @@ import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
 from common.csvIO import csvIO
-from DobotFunction import*
+from nn import nn
+from common.DobotFunction import*
+
 import csv
 
 # Load Dll
@@ -33,6 +35,24 @@ CheckVal = [] # チェックボックスにチェックが入っているかを�
 def __filePath__(file_name):
     path = './data/' + str(file_name)
     return path
+
+
+def DataInput():
+    xPath = __filePath__(txt_6.get())
+    tPath = __filePath__(txt_7.get())
+
+    io = csvIO()
+    x = io.open_twoD_array(xPath)
+    t = io.open_twoD_array(tPath)
+
+    x = io.twoD_FroatToStr(x, digit=0.01)
+    t = io.twoD_FroatToStr(t, digit=0.01)
+    x = io.twoD_Numpy(x)
+    t = io.twoD_Numpy(t)
+    print('読み込みに成功')
+
+    return x, t
+
 
 
 #------------------------
@@ -144,7 +164,12 @@ def DetaMake_click():
     io.csv_write(testPath, t_array)
 
 
-#def NN_click()
+def NN_click():
+    batch_size = int(txt_8.get())
+    epochs = int(txt_9.get())
+    x, t = DataInput()
+
+    nn(x, t, batch_size, epochs)
 
 
 # ウインドウの作成
@@ -236,6 +261,28 @@ lbl_7.place(x=nn_x, y=nn_y+60)
 txt_7 = tk.Entry(width=13)
 txt_7.place(x=nn_x, y=nn_y+80)
 txt_7.insert(tk.END, 'test.csv')
+
+# バッチ
+# ラベル
+lbl_8 = tk.Label(text='batch')
+lbl_8.place(x=nn_x, y=nn_y+100)
+# tBox
+txt_8 = tk.Entry(width=5)
+txt_8.place(x=nn_x, y=nn_y+120)
+txt_8.insert(tk.END, '128')
+
+# エポック
+# ラベル
+lbl_9 = tk.Label(text='epoch')
+lbl_9.place(x=nn_x+40, y=nn_y+100)
+# tBox
+txt_9 = tk.Entry(width=5)
+txt_9.place(x=nn_x+40, y=nn_y+120)
+txt_9.insert(tk.END, '100')
+
+# ボタン
+nnBtn = tk.Button(win, text='NN', command=NN_click, width=10)
+nnBtn.place(x=nn_x, y=nn_y+140)
 
 #------------
 # ボタン

@@ -38,19 +38,17 @@ data_ = data_nom(data_)
 test_ = data_nom(test_)
 
 #訓練データのセット
-input = data_ #学習データをセット
-test = test_  #教師データをセット
+x = data_ #学習データをセット
+t = test_  #教師データをセット
 
-#テストデータのセット
-#x_test  = test_ #入力データをセット
-#t_test  = test_ #正解データをセット
+
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 3))
+module.add(InputLayer(input_shape = x.shape[1]))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(3,  activation = 'liner'))
+module.add(Dense(t.shape[1],  activation = 'liner'))
 module.compile(loss = 'mean_squared_error')
 
 #学習
@@ -61,7 +59,7 @@ batch_size = 128
 epsilon = 0.01    # gradient descentの学習率
 reg_lambda = 0.01 # regularizationの強さ 
 
-history = module.fit(input, test, batch_size=batch_size, epochs=epochs)
+history = module.fit(x, t, batch_size=batch_size, epochs=epochs)
 
 #lossグラフ
 loss     = history['loss_ave']
