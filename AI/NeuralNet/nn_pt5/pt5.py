@@ -68,19 +68,11 @@ class Loss:
 
 
 class Sequential:
-    counter  = 1
-
     def __init__(self):
         self.sequential = []
-        self.Output = output()
-        self.Output.history = {}
-
-        self.OutputBuff = []
-        self.Output.history['loss']     = []
-        self.Output.history['loss_ave'] = []
-        #self.Output.history['val_loss'] = []
-        #self.Output.history['acc']      = []
-        #self.Output.history['val_acc']  = []
+        self.history    = {}
+        self.history['loss']     = []
+        self.history['loss_ave'] = []
 
     def add(self, layer_name):
         #リストにレイヤの名前を代入
@@ -107,11 +99,11 @@ class Sequential:
    #     @TrainingI_batch :TrainingIからバッチ数個だけデータを抽出した行列
    #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
    #-------------------------------------------------
-    def fit(self, training_input, training_test, batch_size, epochs, validation_data, epsilon=0.01, reg_lambda=0.01):
+    def fit(self, x, t, batch_size, epochs):
         plot = Plot(0, 1)
 
-        IRS = training_input.shape[0]
-        ICS = training_input.shape[1]
+        IRS = x.shape[0]
+        ICS = t.shape[1]
         
         #ValidationData
         #x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
@@ -120,47 +112,31 @@ class Sequential:
         #ValidationRow_size = x_val_data.shape[0]
         #ValidationCol_size = x_val_data.shape[1]
         
-       
 
         #レイヤの行列を計算する
-        y = ICS
+        y = np.zeros((3, batch_size))  # (128, 3) , (3, 128)
         for layers in self.sequential:
-            y = layers.unit(y, Sequential.counter, epsilon, reg_lambda)
-            Sequential.counter += 1
+            y = layers.fit(y)
 
-        Sequential.counter = 1
         # メインルーチン
         for i in range(epochs):
             batch_mask = np.random.choice(IRS, batch_size, replace = False) #行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-            TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
-            TrainingT_batch = training_test[batch_mask]
+            x_batch = x[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
+            t_batch = t[batch_mask]
 
             #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             #t_val   = t_val_data[batch_mask]
-            
-            print('#######    学習%d回目    ########' %Sequential.counter)
-            Sequential.counter += 1
 
-            out_sum  = 0
+           
             out_ave  = 0
-            loss_sum = 0
             loss_ave = 0
-            for j in range(batch_size):
-                #output = self.Predict(TrainingI_batch[j, :]) # 学習を行う
-                output = self.Predict(TrainingI_batch[j])
-                
-                out_sum += output
-                #####     誤差を保存する     #####
-                loss = 0
-                loss = self.LastLayer.forward(output, TrainingT_batch[j])
-                loss_sum += loss
-                self.Output.history['loss'].append(loss)
 
-            loss_ave = loss_sum / batch_size
-            out_ave  = out_sum  / batch_size
+            y = self.Predict(x_batch) # 学習を行う
+            loss = self.LastLayer.forward(y, t_batch)
+            loss_ave = loss / batch_size
             plot.grah_plot(i+1, loss_ave)
-            self.Output.history['loss_ave'].append(loss_ave)
-
+            #self.Output.history['loss_ave'].append(loss_ave)
+            self.history['loss_ave'].append(loss_ave)
             
             ########################
             #####     追加     #####
@@ -174,19 +150,20 @@ class Sequential:
                 dout = layer.backward(dout)
             
             self.sequential.reverse()
+            print('学習%d回目' % (i+1))
         
-        print('loss = %f' %self.Output.history['loss'][epochs-1])
-        return self.Output
+        print('loss = %f' % self.history['loss_ave'][epochs-1])
+        return self.history
 
 
     ########################################
     ########      内部関数       ###########
     ########################################
-    def Predict(self, data_set):
+    def Predict(self, x):
         for layers in self.sequential:
-            data_set = layers.forward(data_set)
+            x = layers.forward(x)
 
-        return data_set
+        return x
 
 
     def ValLoss(self, val_data, t_val):
@@ -212,7 +189,7 @@ class Sequential:
 
 #訓練データの読み込み
 data = np.loadtxt(
-    "save_data.csv", #読み込むファイル名(例"save_data.csv")
+    "./data/learn.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -220,7 +197,7 @@ data = np.loadtxt(
 
 #テストデータの読み込み
 test = np.loadtxt(
-    "test_data.csv", #読み込むファイル名(例"save_data.csv")
+    "./data/test.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
@@ -241,35 +218,33 @@ data_ = data_nom(data_)
 test_ = data_nom(test_)
 
 #訓練データのセット
-training_input = data_[:, 0:2] #学習データをセット
-training_test = data_[:, 2]   #教師データをセット
+input = data_ #学習データをセット
+test = test_  #教師データをセット
 
 #テストデータのセット
-x_test  = test_[:, 0:2] #入力データをセット
-t_test  = test_[:, 2]   #正解データをセット
+#x_test  = test_ #入力データをセット
+#t_test  = test_ #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 2))
-#module.add(Dense(50, activation = 'sigmoid'))
-#module.add(Dense(50, activation = 'sigmoid'))
+module.add(InputLayer(input_shape = 3))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(1,  activation = 'liner'))
+module.add(Dense(3,  activation = 'liner'))
 module.compile(loss = 'mean_squared_error')
 
 #学習
-epochs = 20
+epochs = 100
 batch_size = 128
 
 # Gradient descent parameters (数値は一般的に使われる値を採用) 
 epsilon = 0.01    # gradient descentの学習率
 reg_lambda = 0.01 # regularizationの強さ 
 
-history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
+history = module.fit(input, test, batch_size=batch_size, epochs=epochs)
 
 #lossグラフ
-loss     = history.history['loss_ave']
+loss     = history['loss_ave']
 #val_loss = history.history['val_loss']
 
 nb_epoch = len(loss)
