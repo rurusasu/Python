@@ -7,7 +7,7 @@ import DobotDllType as dType
 #-----------------
 # Dobotの初期化
 #-----------------
-def initDobot():
+def initDobot(api):
     # Clean Command Queued
     dType.SetQueuedCmdClear(api)
 
@@ -91,10 +91,7 @@ def _Act(api, lastIndex):
     #キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
 
-
-def 
-
-
+"""
 #-----------------------------------
 # Dobotの動作用関数
 #-----------------------------------
@@ -144,7 +141,7 @@ def act_minusZ(api, x, y, z, r):
     lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode,
                                 x, y, z, r, isQueued=1)[0]
     _act(api, lastIndex)
-
+"""
 
 #----------------------------------
 # CsvFileへの書き込み関数
@@ -157,12 +154,15 @@ def csv_write(filename, data):
             # ファイルへの書き込みを行う
             if(_wirte(f, data) == None):
                 print('書き込みが完了しました。')
+            else:
+                print('csv_write ファイル書き込みに失敗しました。')
 
 
 def _wirte(f, data):
     """write content"""
 
     error = 1  # エラーチェック用変数
+    #data = iter(data)
     witer = csv.writer(f, lineterminator='\n')
     error = witer.writerows(data)
 

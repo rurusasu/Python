@@ -70,7 +70,7 @@ class Sequential:
             #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
             #t_val   = t_val_data[batch_mask]
 
-            loss = self.gradient(x, t)
+            loss = self.gradient(x_batch, t_batch)
             loss_ave = loss / batch_size
             self.history['loss_ave'].append(loss_ave)
             print('学習%d回目  --loss:%f' % (i+1, loss_ave))

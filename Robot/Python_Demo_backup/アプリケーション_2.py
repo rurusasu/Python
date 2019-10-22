@@ -8,7 +8,7 @@ from ctypes import * # cdllを呼ぶために必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
-from DobotFunction import*
+from DobotFunction import *
 import csv
 
 # Load Dll
@@ -55,7 +55,7 @@ def connect_click():
     dType.SetQueuedCmdStopExec(api)
 
     # Dobotの初期設定
-    initDobot()
+    initDobot(api)
    
 
 def DetaGet_click():
