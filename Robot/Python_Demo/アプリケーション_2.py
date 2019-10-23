@@ -124,20 +124,20 @@ def ValDataGet_click():
     y_roop = 100
     z_roop = 2
 
-    file_name = __filePath__(txt.get())
+    file_name = __filePath__(txt_10.get())
     initPOS = dType.GetPose(api)
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Operation(api, file_name, 'z', -i, initPOS)
+        Operation(api, file_name, 'z', -0.5*i, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, file_name, 'x')
+            Operation(api, file_name, 'x', 0.5)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -145,11 +145,11 @@ def ValDataGet_click():
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y')
+                    Operation(api, file_name, 'y', 0.5)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y', -1)
+                    Operation(api, file_name, 'y', -0.5)
 
     print('testデータ取得が終了しました。')
 
