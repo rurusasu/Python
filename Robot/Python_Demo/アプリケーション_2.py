@@ -155,10 +155,10 @@ def ValDataGet_click():
 
 
 def DetaMake_click():
-    inputPath = __filePath__(txt.get())
-    learnPath = __filePath__(txt_2.get())
-    testPath = __filePath__(txt_3.get())
-    digit = str(10^int(txt_4.get()))
+    inputPath = __filePath__(txtConv_1.get())
+    learnPath = __filePath__(txtConv_2.get())
+    testPath = __filePath__(txtConv_3.get())
+    digit = str(10**-int(txtConv_4.get()))
 
     io = csvIO()
     v = io.open_twoD_array(inputPath)
@@ -213,89 +213,75 @@ datagetBtn.place(x=Sfile_x-13, y=Sfile_y+40)
 
 
 #--------------------------------
-# 移動範囲
+# validationデータの取得
 #--------------------------------
-act_x = 20
-act_y = 140
-# x方向の移動範囲
-# ラベル
-lbl_x = tk.Label(text='x=')
-lbl_x.place(x=act_x, y=act_y)
-lbl_moji1 = tk.Label(text='から')
-lbl_moji1.place(x=act_x+50, y=act_y)
+Dcon_x = 33
+Dcon_y = 120
+# Validation用ラベル
+lbl_10 = tk.Label(text='Validation')
+lbl_10.place(x=Dcon_x, y=Dcon_y)
 # tBox
-txt_x1 = tk.Entry(width=4)
-txt_x1.place(x=act_x+20, y=act_y)
-txt_x2 = tk.Entry(width=4)
-txt_x2.place(x=act_x+75, y=act_y)
-
-# y方向の移動範囲
-act_y=act_y+25
-# ラベル
-lbl_y = tk.Label(text='y=')
-lbl_y.place(x=act_x, y=act_y)
-lbl_moji2 = tk.Label(text='から')
-lbl_moji2.place(x=act_x+50, y=act_y)
-# tBox
-txt_y1 = tk.Entry(width=4)
-txt_y1.place(x=act_x+20, y=act_y)
-txt_y2 = tk.Entry(width=4)
-txt_y2.place(x=act_x+75, y=act_y)
-
-# z方向の移動範囲
-act_y = act_y+25
-# ラベル
-lbl_z = tk.Label(text='z=')
-lbl_z.place(x=act_x, y=act_y)
-lbl_moji3 = tk.Label(text='から')
-lbl_moji3.place(x=act_x+50, y=act_y)
-# tBox
-txt_z1 = tk.Entry(width=4)
-txt_z1.place(x=act_x+20, y=act_y)
-txt_z2 = tk.Entry(width=4)
-txt_z2.place(x=act_x+75, y=act_y)
+txt_10 = tk.Entry(width=13)
+txt_10.place(x=Dcon_x-13, y=Dcon_y+20)
+txt_10.insert(tk.END, 'val.csv')
+# ボタン
+datamakeBtn = tk.Button(win, text='Validation',
+                        command=ValDataGet_click, width=10)
+datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+40)
 
 
 #--------------------------------
 # DataConv
 #--------------------------------
 Dcon_x = 33
-Dcon_y = 220
+Dcon_y = 190
 # データ変換部分用ラベル
-lbl_2 = tk.Label(text='DataConv')
-lbl_2.place(x=Dcon_x, y=Dcon_y)
+lblConv_1 = tk.Label(text='DataConv')
+lblConv_1.place(x=Dcon_x, y=Dcon_y)
+
+# 元データ
+# ラベル
+lblConv_2 = tk.Label(text='LowData')
+lblConv_2.place(x=Dcon_x-13, y=Dcon_y+20)
+# tBox
+txtConv_1 = tk.Entry(width=13)
+txtConv_1.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_1.insert(tk.END, 'data.csv')
 
 # 学習用データ
+Dcon_y = Dcon_y + 40
 # ラベル
-lbl_3 = tk.Label(text='learn')
-lbl_3.place(x=Dcon_x-13, y=Dcon_y+20)
+lblConv_3 = tk.Label(text='learn')
+lblConv_3.place(x=Dcon_x-13, y=Dcon_y+20)
 # tBox
-txt_2 = tk.Entry(width=13)
-txt_2.place(x=Dcon_x-13, y=Dcon_y+40)
-txt_2.insert(tk.END, 'learn.csv')
+txtConv_2 = tk.Entry(width=13)
+txtConv_2.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_2.insert(tk.END, 'learn.csv')
 
 # テスト用データ
+Dcon_y = Dcon_y + 40
 # ラベル
-lbl_4 = tk.Label(text='test')
-lbl_4.place(x=Dcon_x-13, y=Dcon_y+60)
+lblConv_4 = tk.Label(text='test')
+lblConv_4.place(x=Dcon_x-13, y=Dcon_y+20)
 # tBox
-txt_3 = tk.Entry(width=13)
-txt_3.place(x=Dcon_x-13, y=Dcon_y+80)
-txt_3.insert(tk.END, 'test.csv')
+txtConv_3 = tk.Entry(width=13)
+txtConv_3.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_3.insert(tk.END, 'test.csv')
 
 # 小数点以下の桁数
 # ラベル
-lbl_5 = tk.Label(text='小数点以下の桁数')
-lbl_5.place(x=Dcon_x+50, y=Dcon_y+60)
+lblConv_5 = tk.Label(text='小数点以下の桁数')
+lblConv_5.place(x=Dcon_x+50, y=Dcon_y+20)
 # tBox
-txt_4 = tk.Entry(width=3)
-txt_4.place(x=Dcon_x+80, y=Dcon_y+80)
-txt_4.insert(tk.END, '2')
+txtConv_4 = tk.Entry(width=3)
+txtConv_4.place(x=Dcon_x+80, y=Dcon_y+40)
+txtConv_4.insert(tk.END, '2')
 
 # DataMake
+Dcon_y = Dcon_y + 40
 # ボタン
 datamakeBtn = tk.Button(win, text='DataMake', command=DetaMake_click, width=10)
-datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+100)
+datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+20)
 
 
 #--------------------------------
@@ -347,21 +333,48 @@ nnBtn.place(x=nn_x, y=nn_y+140)
 
 
 #--------------------------------
-# validationデータの取得
+# 移動範囲
 #--------------------------------
-Dcon_x = 200
-Dcon_y = 170
-# Validation用ラベル
-lbl_10 = tk.Label(text='Validation')
-lbl_10.place(x=Dcon_x, y=Dcon_y)
+act_x = 300
+act_y = 140
+# x方向の移動範囲
+# ラベル
+lbl_x = tk.Label(text='x=')
+lbl_x.place(x=act_x, y=act_y)
+lbl_moji1 = tk.Label(text='から')
+lbl_moji1.place(x=act_x+50, y=act_y)
 # tBox
-txt_10 = tk.Entry(width=13)
-txt_10.place(x=Dcon_x-13, y=Dcon_y+20)
-txt_10.insert(tk.END, 'val.csv')
-# ボタン
-datamakeBtn = tk.Button(win, text='Validation',
-                        command=ValDataGet_click, width=10)
-datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+40)
+txt_x1 = tk.Entry(width=4)
+txt_x1.place(x=act_x+20, y=act_y)
+txt_x2 = tk.Entry(width=4)
+txt_x2.place(x=act_x+75, y=act_y)
+
+# y方向の移動範囲
+act_y = act_y+25
+# ラベル
+lbl_y = tk.Label(text='y=')
+lbl_y.place(x=act_x, y=act_y)
+lbl_moji2 = tk.Label(text='から')
+lbl_moji2.place(x=act_x+50, y=act_y)
+# tBox
+txt_y1 = tk.Entry(width=4)
+txt_y1.place(x=act_x+20, y=act_y)
+txt_y2 = tk.Entry(width=4)
+txt_y2.place(x=act_x+75, y=act_y)
+
+# z方向の移動範囲
+act_y = act_y+25
+# ラベル
+lbl_z = tk.Label(text='z=')
+lbl_z.place(x=act_x, y=act_y)
+lbl_moji3 = tk.Label(text='から')
+lbl_moji3.place(x=act_x+50, y=act_y)
+# tBox
+txt_z1 = tk.Entry(width=4)
+txt_z1.place(x=act_x+20, y=act_y)
+txt_z2 = tk.Entry(width=4)
+txt_z2.place(x=act_x+75, y=act_y)
+
 
 
 win.mainloop()          # ウインドウを動かす

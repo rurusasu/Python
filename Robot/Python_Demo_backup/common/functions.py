@@ -114,7 +114,8 @@ def data_std(data):
             #data_std[i, j] =(data[i, j] - data[i, j].mean()) / data[i, j].std() #対応する列を標準化
 
         for i in range(col):
-            data_std[:, i] = (data[:, i] - data[:, i].mean()) / data[:, i].std()
+            data_std[:, i] = (data[:, i] - data[:, i].mean()) 
+                                                        / data[:, i].std()
 
         return data_std
 

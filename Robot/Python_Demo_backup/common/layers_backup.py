@@ -180,18 +180,27 @@ class SoftmaxWithLoss:
 ####    新しくレイヤを追加    #####
 ###################################
 #入力レイヤ
-class Input:
+class InputLayer:
     def __init__(self, input_shape):
-        #self.units  = input_shape #ユニットの数
-        if (type(input_shape) == int):
-            self.units = input_shape
-        elif (type(input_shape) == tuple):
-            self.units = input_shape[0]
-        else:
-            print('error InputLayer!')
+        self.units  = input_shape #ユニットの数
+
 
     def fit(self, x):
-        return x
+        # 入力層の行数と入力データの行数が等しいとき
+        # もしくは入力層の行数と入力データの列数が等しいとき
+        if (x.shape[0] == self.units):
+            x = x.T
+            return x
+
+        elif(x.shape[1] == self.units):
+            #x = x.T
+            return x
+
+        # どちらとも等しくないとき
+        else:
+            print('InpuLayer fit \
+                    Data Input Error')
+            return None
 
     def forward(self, x):
         return x

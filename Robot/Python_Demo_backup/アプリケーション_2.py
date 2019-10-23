@@ -8,7 +8,10 @@ from ctypes import * # cdllを呼ぶために必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
-from DobotFunction import *
+from common.csvIO import csvIO
+from nn import nn
+from common.DobotFunction import*
+
 import csv
 
 # Load Dll
@@ -27,6 +30,29 @@ CON_STR = {
 hLabel   = [] # ラベルのハンドルを格納する
 hCheck   = [] # チェックボックスのハンドルを格納する
 CheckVal = [] # チェックボックスにチェックが入っているかを格納する
+
+
+def __filePath__(file_name):
+    path = './data/' + str(file_name)
+    return path
+
+
+def DataInput():
+    xPath = __filePath__(txt_6.get())
+    tPath = __filePath__(txt_7.get())
+
+    io = csvIO()
+    x = io.open_twoD_array(xPath)
+    t = io.open_twoD_array(tPath)
+
+    x = io.twoD_FroatToStr(x, digit=0.01)
+    t = io.twoD_FroatToStr(t, digit=0.01)
+    x = io.twoD_Numpy(x)
+    t = io.twoD_Numpy(t)
+    print('読み込みに成功')
+
+    return x, t
+
 
 
 #------------------------
@@ -59,98 +85,296 @@ def connect_click():
    
 
 def DetaGet_click():
-    """
-    x_roop1 = 4
-    x_roop2 = 20
+    x_roop = 100
     y_roop = 100
     z_roop = 2
-    counter_x = 150
-    counter_x_init = 150
-    counter_y = -201
-    counter_y_init = -201
-    counter_z = 101
-    """
-    x_roop1 = 4
-    x_roop2 = 2
-    y_roop = 2
-    z_roop = 2
-    counter_x = 150
-    counter_x_init = 150
-    counter_y = -201
-    counter_y_init = -201
-    counter_z = 101
 
+    file_name=__filePath__(txt.get())
+    initPOS = dType.GetPose(api)
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Operation(api, 'z', -1)
-
+        Operation(api, file_name, 'z', -i, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, 'y')
+            Operation(api, file_name, 'y')
 
             #-------------------------
             # 以下X軸方向の動作
             #-------------------------
             if j % 2 == 0:
-                for k in range(0, x_roop1 + 1):
-
+                for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(
-                        api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
-                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
-                    Operation(api, 'x')
-                    csv_write('data.csv', dType.GetPose(api))
+                    Operation(api, file_name, 'x')
             else:
-                for k in range(0, x_roop1 + 1):
-
+                for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    dType.SetPTPJointParams(
-                        api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1)
-                    dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
-                    Operation(api, 'x', -1)
-                    csv_write('data.csv', dType.GetPose(api))
-        counter_x = counter_x_init
-        counter_y = counter_y_init
+                    Operation(api, file_name, 'x', -1)
 
-    pose = dType.GetPose(api)
+    print('データ取得が終了しました。')
 
+
+def ValDataGet_click():
+    x_roop = 100
+    y_roop = 100
+    z_roop = 2
+
+    file_name = __filePath__(txt_10.get())
+    initPOS = dType.GetPose(api)
+    #-----------------------------
+    # 以下Z軸方向の動作
+    #-----------------------------
+    for i in range(0, z_roop):
+        print('第' + str(i + 1) + 'ステップ目')
+        Operation(api, file_name, 'z', -0.5*i, initPOS)
+
+        #-------------------------
+        # 以下Y軸方向の動作
+        #-------------------------
+        for j in range(0, y_roop):
+            Operation(api, file_name, 'x', 0.5)
+
+            #-------------------------
+            # 以下X軸方向の動作
+            #-------------------------
+            if j % 2 == 0:
+                for k in range(0, x_roop + 1):
+                    #Async Motion Params Setting
+                    Operation(api, file_name, 'y', 0.5)
+            else:
+                for k in range(0, x_roop + 1):
+                    #Async Motion Params Setting
+                    Operation(api, file_name, 'y', -0.5)
+
+    print('testデータ取得が終了しました。')
+
+
+def DetaMake_click():
+    inputPath = __filePath__(txtConv_1.get())
+    learnPath = __filePath__(txtConv_2.get())
+    testPath = __filePath__(txtConv_3.get())
+    digit = str(10**-int(txtConv_4.get()))
+
+    io = csvIO()
+    v = io.open_twoD_array(inputPath)
+    v = io.twoD_FroatToStr(v, digit=digit)
+    l_array = io.Get_AnytwoD_array(v, col_range_end=3)
+    t_array = io.Get_AnytwoD_array(v, col_range_first=4, col_range_end=7)
+
+    io.csv_write(learnPath, l_array)
+    io.csv_write(testPath, t_array)
+
+
+def NN_click():
+    batch_size = int(txt_8.get())
+    epochs = int(txt_9.get())
+    x, t = DataInput()
+
+    nn(x, t, batch_size, epochs)
 
 
 # ウインドウの作成
 win = tk.Tk()
 win.title('Dobot')      # タイトル
-win.geometry('500x250')  # サイズを指定
+win.geometry('500x400')  # サイズを指定
 
 
-#------------
-# ラベル
-#------------
-# テキストボックス用ラベル
-lbl = tk.Label(text='SaveFile')
-lbl.place(x=55, y=50)
-
-
-#------------
+#--------------------------------
+# connect
+#--------------------------------
+# connect用
 # ボタン
-#------------
-connectBtn = tk.Button(win, text='connect', command=connect_click, width=10) # ボタンを作成
+connectBtn = tk.Button(win, text='connect',
+                       command=connect_click, width=10)  # ボタンを作成
 connectBtn.place(x=20, y=10)
 
-datagetBtn = tk.Button(win, text='DataGet', command=DetaGet_click, width=10)
-datagetBtn.place(x=20, y=100)
 
-#---------------------
-# テキストボックス
-#---------------------
-txt = tk.Entry(width=20)
-txt.place(x=20, y=70)
-txt.insert(tk.END, 'data.csv') # テキストボックスに文字をセット
+#--------------------------------
+# Save
+#--------------------------------
+Sfile_x = 33
+Sfile_y = 50
+# テキストボックス用
+# ラベル
+lbl = tk.Label(text='SaveFile')
+lbl.place(x=Sfile_x, y=Sfile_y)
+# tBox
+txt = tk.Entry(width=13)
+txt.place(x=Sfile_x-13, y=Sfile_y+20)
+txt.insert(tk.END, 'data.csv')  # テキストボックスに文字をセット
+# ボタン
+datagetBtn = tk.Button(win, text='DataGet', command=DetaGet_click, width=10)
+datagetBtn.place(x=Sfile_x-13, y=Sfile_y+40)
+
+
+#--------------------------------
+# validationデータの取得
+#--------------------------------
+Dcon_x = 33
+Dcon_y = 120
+# Validation用ラベル
+lbl_10 = tk.Label(text='Validation')
+lbl_10.place(x=Dcon_x, y=Dcon_y)
+# tBox
+txt_10 = tk.Entry(width=13)
+txt_10.place(x=Dcon_x-13, y=Dcon_y+20)
+txt_10.insert(tk.END, 'val.csv')
+# ボタン
+datamakeBtn = tk.Button(win, text='Validation',
+                        command=ValDataGet_click, width=10)
+datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+40)
+
+
+#--------------------------------
+# DataConv
+#--------------------------------
+Dcon_x = 33
+Dcon_y = 190
+# データ変換部分用ラベル
+lblConv_1 = tk.Label(text='DataConv')
+lblConv_1.place(x=Dcon_x, y=Dcon_y)
+
+# 元データ
+# ラベル
+lblConv_2 = tk.Label(text='LowData')
+lblConv_2.place(x=Dcon_x-13, y=Dcon_y+20)
+# tBox
+txtConv_1 = tk.Entry(width=13)
+txtConv_1.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_1.insert(tk.END, 'data.csv')
+
+# 学習用データ
+Dcon_y = Dcon_y + 40
+# ラベル
+lblConv_3 = tk.Label(text='learn')
+lblConv_3.place(x=Dcon_x-13, y=Dcon_y+20)
+# tBox
+txtConv_2 = tk.Entry(width=13)
+txtConv_2.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_2.insert(tk.END, 'learn.csv')
+
+# テスト用データ
+Dcon_y = Dcon_y + 40
+# ラベル
+lblConv_4 = tk.Label(text='test')
+lblConv_4.place(x=Dcon_x-13, y=Dcon_y+20)
+# tBox
+txtConv_3 = tk.Entry(width=13)
+txtConv_3.place(x=Dcon_x-13, y=Dcon_y+40)
+txtConv_3.insert(tk.END, 'test.csv')
+
+# 小数点以下の桁数
+# ラベル
+lblConv_5 = tk.Label(text='小数点以下の桁数')
+lblConv_5.place(x=Dcon_x+50, y=Dcon_y+20)
+# tBox
+txtConv_4 = tk.Entry(width=3)
+txtConv_4.place(x=Dcon_x+80, y=Dcon_y+40)
+txtConv_4.insert(tk.END, '2')
+
+# DataMake
+Dcon_y = Dcon_y + 40
+# ボタン
+datamakeBtn = tk.Button(win, text='DataMake', command=DetaMake_click, width=10)
+datamakeBtn.place(x=Dcon_x-13, y=Dcon_y+20)
+
+
+#--------------------------------
+# NuralNet
+#--------------------------------
+nn_x = 200
+nn_y = 0
+txt_5 = tk.Label(text='NuralNet')
+txt_5.place(x=nn_x, y=nn_y)
+# 学習用データ
+# ラベル
+lbl_6 = tk.Label(text='learn')
+lbl_6.place(x=nn_x, y=nn_y+20)
+# tBox
+txt_6 = tk.Entry(width=13)
+txt_6.place(x=nn_x, y=nn_y+40)
+txt_6.insert(tk.END, 'learn.csv')
+
+# テスト用データ
+# ラベル
+lbl_7 = tk.Label(text='test')
+lbl_7.place(x=nn_x, y=nn_y+60)
+# tBox
+txt_7 = tk.Entry(width=13)
+txt_7.place(x=nn_x, y=nn_y+80)
+txt_7.insert(tk.END, 'test.csv')
+
+# バッチ
+# ラベル
+lbl_8 = tk.Label(text='batch')
+lbl_8.place(x=nn_x, y=nn_y+100)
+# tBox
+txt_8 = tk.Entry(width=5)
+txt_8.place(x=nn_x, y=nn_y+120)
+txt_8.insert(tk.END, '128')
+
+# エポック
+# ラベル
+lbl_9 = tk.Label(text='epoch')
+lbl_9.place(x=nn_x+40, y=nn_y+100)
+# tBox
+txt_9 = tk.Entry(width=5)
+txt_9.place(x=nn_x+40, y=nn_y+120)
+txt_9.insert(tk.END, '100')
+
+# ボタン
+nnBtn = tk.Button(win, text='NN', command=NN_click, width=10)
+nnBtn.place(x=nn_x, y=nn_y+140)
+
+
+#--------------------------------
+# 移動範囲
+#--------------------------------
+act_x = 300
+act_y = 140
+# x方向の移動範囲
+# ラベル
+lbl_x = tk.Label(text='x=')
+lbl_x.place(x=act_x, y=act_y)
+lbl_moji1 = tk.Label(text='から')
+lbl_moji1.place(x=act_x+50, y=act_y)
+# tBox
+txt_x1 = tk.Entry(width=4)
+txt_x1.place(x=act_x+20, y=act_y)
+txt_x2 = tk.Entry(width=4)
+txt_x2.place(x=act_x+75, y=act_y)
+
+# y方向の移動範囲
+act_y = act_y+25
+# ラベル
+lbl_y = tk.Label(text='y=')
+lbl_y.place(x=act_x, y=act_y)
+lbl_moji2 = tk.Label(text='から')
+lbl_moji2.place(x=act_x+50, y=act_y)
+# tBox
+txt_y1 = tk.Entry(width=4)
+txt_y1.place(x=act_x+20, y=act_y)
+txt_y2 = tk.Entry(width=4)
+txt_y2.place(x=act_x+75, y=act_y)
+
+# z方向の移動範囲
+act_y = act_y+25
+# ラベル
+lbl_z = tk.Label(text='z=')
+lbl_z.place(x=act_x, y=act_y)
+lbl_moji3 = tk.Label(text='から')
+lbl_moji3.place(x=act_x+50, y=act_y)
+# tBox
+txt_z1 = tk.Entry(width=4)
+txt_z1.place(x=act_x+20, y=act_y)
+txt_z2 = tk.Entry(width=4)
+txt_z2.place(x=act_x+75, y=act_y)
+
 
 
 win.mainloop()          # ウインドウを動かす
