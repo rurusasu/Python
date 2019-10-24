@@ -45,7 +45,7 @@ t = test_  #教師データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = x.shape[1]))
+module.add(Input(input_shape = x.shape[1]))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(t.shape[1],  activation = 'liner'))

@@ -111,10 +111,12 @@ def data_std(data):
         col = data.shape[1]  # dataの列数を取得
 
         #for i in range(row):
-            #data_std[i, j] =(data[i, j] - data[i, j].mean()) / data[i, j].std() #対応する列を標準化
+        #for j in range(col):
+        #data_std[i, j] =(data[i, j] - data[i, j].mean()) / data[i, j].std() #対応する列を標準化
 
         for i in range(col):
-            data_std[:, i] = (data[:, i] - data[:, i].mean()) / data[:, i].std()
+            data_std[:, i] = (data[:, i] - data[:, i].mean()
+                              ) / data[:, i].std()
 
         return data_std
 

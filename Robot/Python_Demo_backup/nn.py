@@ -5,13 +5,38 @@ import matplotlib.pyplot as plt
 sys.path.append(os.getcwd())
 from common.sequential import Sequential
 from common.layers import Input, Dense
+from common.functions import*
 
 
-def nn(x, t, batch_size, epochs):
+def nn(x, t, batch_size, epochs, feature):
+    """
+    簡単なニューラルネットワークのモデルを作成する関数
+
+    Parameters
+    ----------
+    x : ndarray
+        学習用データ
+    t : ndarray
+        教師データ
+    batch_size : int
+        バッチサイズ
+    eopchs : int
+        エポック数
+    feature : int
+        Feature Scalingの選択
+    """
+    # 標準化
+    if (feature == 0 or feature == 2):
+        x = data_std(x)
+        t = data_std(t)
+    if (feature == 1 or feature == 2):
+        x = data_nom(x)
+        t = data_nom(t)
+
     model = Sequential()
     model.add(Input(input_shape=x.shape[1]))
-    #model.add(Dense(50, activation='relu'))
-    #model.add(Dense(50, activation='relu'))
+    #model.add(Dense(50, activation='relu', weight_initializer='relu'))
+    #model.add(Dense(50, activation='relu', weight_initializer='relu'))
     model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
     model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
     model.add(Dense(t.shape[1],  activation='liner'))
@@ -31,19 +56,6 @@ def nn(x, t, batch_size, epochs):
 
 
 if __name__ == "__main__":
-    """
-    from common.csvIO import csvIO
-    io = csvIO() 
-    x = io.open_twoD_array('./data/learn.csv')
-    t = io.open_twoD_array('./data/test.csv')
-
-    x = io.twoD_FroatToStr(x, digit=0.01)
-    t = io.twoD_FroatToStr(t, digit=0.01)
-    x = io.twoD_Numpy(x)
-    t = io.twoD_Numpy(t)
-    print('x=', x)
-    print('t=', t)
-    """
     import numpy as np
     from common.functions import*
 
@@ -67,11 +79,9 @@ if __name__ == "__main__":
     #data_1 = data_copy(x)
     #test_1 = data_copy(t)
 
-    """
     #標準化
     x = data_std(x)
     t = data_std(t)
-    """
     
     #正規化
     data_ = data_nom(x)
@@ -86,5 +96,5 @@ if __name__ == "__main__":
     epochs=1000
     batch_size=128
 
-    nn(x, t, batch_size=batch_size, epochs=epochs)
+    nn(x, t, batch_size=batch_size, epochs=epochs, feature=2)
     

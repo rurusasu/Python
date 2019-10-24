@@ -9,7 +9,10 @@ from collections import OrderedDict
 
 class Sequential:
     def __init__(self):
-        self.sequential = []
+        #self.sequential = []
+        self.sequential = OrderedDict()
+        self.units = {}
+        self.i = 1
         self.func = {}
         self.func['loss'] = None
         self.func['optimizer'] = None
@@ -20,7 +23,10 @@ class Sequential:
 
     def add(self, layer_name):
         #リストにレイヤの名前を代入
-        self.sequential.append(layer_name)
+        #self.sequential.append(layer_name)
+        self.sequential[self.i] = layer_name
+        self.units[self.i] = self.sequential[self.i].units
+        self.i += 1
 
     def compile(self, loss, optimizer='sgd'):
         self.func['loss'] = _CallClass('common.layers', loss)
@@ -55,10 +61,24 @@ class Sequential:
         #ValidationRow_size = x_val_data.shape[0]
         #ValidationCol_size = x_val_data.shape[1]
 
+        # 入力層の行数と入力データの行数が等しいとき
+        # もしくは入力層の行数と入力データの列数が等しいとき
+        if (x.shape[0] == self.units[1]):
+            x = x.T
+            t = t.T
+        elif(x.shape[1] == self.units[1]):
+            pass
+        # どちらとも等しくないとき
+        else:
+            print('InpuLayer fit \
+                    Data Input Error')
+            return None
+
+
         #レイヤの行列を計算する
         y = np.zeros((batch_size, x.shape[1]))
-        for layers in self.sequential:
-            y = layers.fit(y)
+        for layer in self.sequential.values():
+            y = layer.fit(y)
 
         # メインルーチン
         for i in range(epochs):
@@ -82,8 +102,9 @@ class Sequential:
     ########      内部関数       ###########
     ########################################
     def Predict(self, x):
-        for layers in self.sequential:
-            x = layers.forward(x)
+        #for layers in self.sequential:
+        for layer in self.sequential.values():
+            x = layer.forward(x)
         return x
     
     def loss(self, x, t):
@@ -96,14 +117,13 @@ class Sequential:
 
         # backward
         #逆伝播を行うためにレイヤを反転
-        self.sequential.reverse()
-
+        layers = list(self.sequential.values())
+        layers.reverse()
         #逆伝搬および重みの更新
         dout = 1
         dout = self.func['loss'].backward()
-        for layer in self.sequential:
-            dout = layer.backward(dout)
-
-        self.sequential.reverse()
+        for layer in layers:
+           dout = layer.backward(dout)
+        del layers
 
         return loss

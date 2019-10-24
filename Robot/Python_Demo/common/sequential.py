@@ -18,8 +18,10 @@ class Sequential:
         self.func['optimizer'] = None
 
         self.history = {}
-        self.history['loss'] = []
+        #self.history['loss'] = []
         self.history['loss_ave'] = []
+        self.history['val_loss'] = []
+        self.history['train_acc'] = []
 
     def add(self, layer_name):
         #リストにレイヤの名前を代入
@@ -53,62 +55,83 @@ class Sequential:
    #     @TrainingT_batch :TrainingTからバッチ数個だけデータを抽出した行列
    #-------------------------------------------------
 
-    def fit(self, x, t, batch_size, epochs):
+    def fit(self, x, t, batch_size, epochs, validation=None):
         #ValidationData
+        #if (validation != None):
+            
         #x_val_data = validation_data[0] # ValidationDataの行数を取得 返り値：整数
         #t_val_data = validation_data[1] # ValidationDataの列数を取得 返り値：整数
 
         #ValidationRow_size = x_val_data.shape[0]
         #ValidationCol_size = x_val_data.shape[1]
-
-        # 入力層の行数と入力データの行数が等しいとき
-        # もしくは入力層の行数と入力データの列数が等しいとき
-        if (x.shape[0] == self.units[1]):
-            x = x.T
-            t = t.T
-        elif(x.shape[1] == self.units[1]):
-            pass
-        # どちらとも等しくないとき
+        """
+        x, t = self.__modeling__(x, t, self.units[1])
+        if (validation != None and type(validation) == tuple):
+            x_val, t_val = self.__modeling__(validation[0], validation[1])
         else:
-            print('InpuLayer fit \
-                    Data Input Error')
-            return None
-
-
+            print('No validation')
+        """
         #レイヤの行列を計算する
         y = np.zeros((batch_size, x.shape[1]))
         for layer in self.sequential.values():
             y = layer.fit(y)
 
+        loop = int(x.shape[0] / batch_size)  # 繰り返し回数
         # メインルーチン
         for i in range(epochs):
-            # 行数からbatch_sizeだけランダムに値を抽出 replace(重複)
-            batch_mask = np.random.choice(x.shape[0], batch_size, replace=False)
-            x_batch = x[batch_mask]  # 全データからbatch_size分データを抽出
-            t_batch = t[batch_mask]
-
-            #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
-            #t_val   = t_val_data[batch_mask]
-
-            loss = self.gradient(x_batch, t_batch)
-            loss_ave = loss / batch_size
+            loss_sum = 0
+            for j in range(loop):
+                # 行数からbatch_sizeだけランダムに値を抽出 replace(重複)
+                batch_mask = np.random.choice(
+                    x.shape[0], batch_size, replace=False)
+                x_batch = x[batch_mask]  # 全データからbatch_size分データを抽出
+                t_batch = t[batch_mask]
+                """
+                if (validation != None):
+                    x_val   = x_val[batch_mask]
+                    t_val   = t_val[batch_mask]
+                """
+                loss = self.gradient(x_batch, t_batch)
+                loss_sum += (loss / batch_size)
+            loss_ave = loss_sum / loop
             self.history['loss_ave'].append(loss_ave)
             print('学習%d回目  --loss:%f' % (i+1, loss_ave))
 
-        print('loss = %f' % self.history['loss_ave'][epochs-1])
+            if(validation != None):
+                val_loss = self.loss(validation[0], validation[1])
+                val_loss_ave = val_loss / validation[0].shape[0]
+                self.history['val_loss'].append(val_loss_ave)
+
+        print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))
         return self.history
+
 
     ########################################
     ########      内部関数       ###########
     ########################################
-    def Predict(self, x):
-        #for layers in self.sequential:
+    def __modeling__(self, x, t, size):
+        # 入力層の行数と入力データの行数が等しいとき
+        # もしくは入力層の行数と入力データの列数が等しいとき
+        if (x.shape[0] == size):
+            x = x.T
+            t = t.T
+            return x, t
+        elif(x.shape[1] == size):
+            return x, t
+        # どちらとも等しくないとき
+        else:
+            print('InpuLayer fit \
+                    Data Input Error')
+            return None, None
+
+
+    def predict(self, x):
         for layer in self.sequential.values():
             x = layer.forward(x)
         return x
     
     def loss(self, x, t):
-        y = self.Predict(x)
+        y = self.predict(x)
         return self.func['loss'].forward(y, t)
 
     def gradient(self, x, t):
@@ -119,11 +142,19 @@ class Sequential:
         #逆伝播を行うためにレイヤを反転
         layers = list(self.sequential.values())
         layers.reverse()
+
         #逆伝搬および重みの更新
         dout = 1
         dout = self.func['loss'].backward()
         for layer in layers:
-           dout = layer.backward(dout)
+            dout = layer.backward(dout)
         del layers
 
         return loss
+
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        
+        acc = np.sum(y == t) / float(x.shape[0])
+        return acc

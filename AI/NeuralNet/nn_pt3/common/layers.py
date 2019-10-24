@@ -180,7 +180,7 @@ class SoftmaxWithLoss:
 ####    新しくレイヤを追加    #####
 ###################################
 #入力レイヤ
-class InputLayer:
+class Input:
     def __init__(self, input_shape):
         self.units  = input_shape #ユニットの数
 

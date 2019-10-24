@@ -175,7 +175,7 @@ def NN_click():
     epochs = int(txt_9.get())
     x, t = DataInput()
 
-    nn(x, t, batch_size, epochs)
+    nn(x, t, batch_size, epochs, rdo_click())
 
 
 # ウインドウの作成
@@ -301,35 +301,54 @@ txt_6.place(x=nn_x, y=nn_y+40)
 txt_6.insert(tk.END, 'learn.csv')
 
 # テスト用データ
+nn_y = nn_y + 40
 # ラベル
 lbl_7 = tk.Label(text='test')
-lbl_7.place(x=nn_x, y=nn_y+60)
+lbl_7.place(x=nn_x, y=nn_y+20)
 # tBox
 txt_7 = tk.Entry(width=13)
-txt_7.place(x=nn_x, y=nn_y+80)
+txt_7.place(x=nn_x, y=nn_y+40)
 txt_7.insert(tk.END, 'test.csv')
 
 # バッチ
+nn_y += 40
 # ラベル
 lbl_8 = tk.Label(text='batch')
-lbl_8.place(x=nn_x, y=nn_y+100)
+lbl_8.place(x=nn_x, y=nn_y+20)
 # tBox
 txt_8 = tk.Entry(width=5)
-txt_8.place(x=nn_x, y=nn_y+120)
+txt_8.place(x=nn_x, y=nn_y+40)
 txt_8.insert(tk.END, '128')
 
 # エポック
 # ラベル
 lbl_9 = tk.Label(text='epoch')
-lbl_9.place(x=nn_x+40, y=nn_y+100)
+lbl_9.place(x=nn_x+40, y=nn_y+20)
 # tBox
 txt_9 = tk.Entry(width=5)
-txt_9.place(x=nn_x+40, y=nn_y+120)
+txt_9.place(x=nn_x+40, y=nn_y+40)
 txt_9.insert(tk.END, '100')
 
-# ボタン
+# Feature Scaling
+nn_y += 70
+# ラジオボタン
+rdo_var = tk.IntVar() # チェック有無変数
+rdo_var.set(2) # チェックの初期位置
+rdo_txt=['標準化', '正規化', '両方']
+for i in range(len(rdo_txt)):
+    #chk_bln[i] = tk.BooleanVar()
+    rdo = tk.Radiobutton(win, variable=rdo_var, value=i, text=rdo_txt[i])
+    rdo.place(x=nn_x, y=nn_y + (i*20))
+
+def rdo_click():
+    num = rdo_var.get()
+    return num
+
+
+# NuralNetの実行
+nn_y = nn_y + 40
 nnBtn = tk.Button(win, text='NN', command=NN_click, width=10)
-nnBtn.place(x=nn_x, y=nn_y+140)
+nnBtn.place(x=nn_x, y=nn_y+20)
 
 
 #--------------------------------
