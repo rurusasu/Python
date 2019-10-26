@@ -91,6 +91,26 @@ class liner:
         return delta
 
 
+# softmaxレイヤ
+"""
+class softmax:
+    def __init__(self):
+        self.l = None
+        #self.t = None
+        self.func = _CallFunction('common.functions', 'softmax')
+
+    def forward(self, x):
+        self.l = self.func(x)
+        return self.l
+    
+    def backward(self, dout):
+        if (dout.shape[0] == dout.shape[1]):
+            dout = self.l * (1 - self.l)
+        else:
+            for i in range(self.l.shape[0]):
+                for j in range(self.l.shape):
+"""
+
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
@@ -156,11 +176,15 @@ class SoftmaxWithLoss:
         self.loss = None #損失
         self.y = None    #softmaxの出力
         self.t = None    #教師データ
+        self.func = _CallFunction('common.functions', 'softmax')
+        self.loss = _CallFunction('common.functions', 'cross_entropy_error')
 
     def forward(self, x, t):
         self.t = t
-        self.y = softmax(x)
-        self.loss = cross_entropy_error(self.y, self.t)
+        #self.y = softmax(x)
+        self.y = self.func(x)
+        #self.loss = cross_entropy_error(self.y, self.t)
+        self.loss = self.loss(self.y, self.t)
 
         return self.loss
     
