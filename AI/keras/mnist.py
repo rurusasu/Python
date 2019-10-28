@@ -29,7 +29,7 @@ y_test  = keras.utils.to_categorical(y_test,  10)
 model = Sequential()
 model.add(InputLayer(input_shape = (784,)))
 #model.add(Dense(50, activation = 'relu'))
-#model.add(Dense(50, activation = 'relu'))
+model.add(Dense(50, activation = 'relu'))
 model.add(Dense(10, activation = 'softmax')) #Denseは全結合の意味
 #categorical_crossentropy : 交差エントロピー誤差
 model.compile(loss = 'categorical_crossentropy', optimizer = 'rmsprop', metrics = ['accuracy'])
@@ -41,13 +41,13 @@ history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verb
 
 #検証
 score = model.evaluate(x_test, y_test, verbose=1)
-print()
 print('Test loss : ', score[0])
 print('Test accuracy :', score[1])
 
 loss     = history.history['loss']
 val_loss      = history.history['val_loss']
 
+"""
 nb_epoch = len(loss)
 plt.plot(range(nb_epoch), loss,     marker = '.', label = 'loss')
 plt.plot(range(nb_epoch), val_loss, marker = '.', label='val_loss')
@@ -56,3 +56,4 @@ plt.grid(False)
 plt.xlabel('epoch')
 plt.ylabel('loss')
 plt.show()
+"""
