@@ -16,7 +16,17 @@ class Sequential:
         self.func = {}
         self.func['loss'] = None
         self.func['optimizer'] = None
-        self.func['evaluation'] = None
+
+        # 精度
+        self.metrics_func = {}
+        self.metrics_func['train']= None
+        self.metrics_func['val']  = None
+        self.metrics_func['test'] = None
+        
+        self.metrics_log = {}
+        self.metrics_log['train']= []
+        self.metrics_log['val']  = []
+        self.metrics_log['test'] = []
         
         self.history = {}
         #self.history['loss'] = []
@@ -31,11 +41,19 @@ class Sequential:
         self.units[self.i] = self.sequential[self.i].units
         self.i += 1
 
-    def compile(self, loss, optimizer='sgd'):
+    def compile(self, loss, optimizer='sgd', metrics=['accuracy']):
         self.func['loss'] = _CallClass('common.layers', loss)
         self.func['loss'] = self.func['loss']()
         self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
         self.func['optimizer'] = self.func['optimizer']()
+
+        func = []
+        for i in metrics:
+            func.append(_CallFunction('common.functions', i))
+        for key in self.metrics_func.keys():
+            self.metrics_func[key] = func
+            #self.metrics_log[i] = None
+            
         #self.LastLayer = globals()[loss]()
 
    #-------------------------------------------------
@@ -61,6 +79,14 @@ class Sequential:
         y = np.zeros((batch_size, x.shape[1]))
         for layer in self.sequential.values():
             y = layer.fit(y)
+        
+        # バリデーションが最初からセットされているとき
+        if validation != None:
+            x_val = validation[0]
+            t_val = validation[1]
+        else:
+            x_val, x = __sorting__(x, 100)
+            t_val, t = __sorting__(t, 100)
 
         loop = int(x.shape[0] / batch_size)  # 繰り返し回数
         # メインルーチン
@@ -86,17 +112,23 @@ class Sequential:
             # validation誤差の計算
             #---------------------------
             if(validation != None):
-                val_loss = self.loss(validation[0], validation[1])
-                val_loss_ave = val_loss / validation[0].shape[0]
+                val_loss = self.loss(x_val, t_val)
+                val_loss_ave = val_loss / x_val[0].shape[0]
                 self.history['val_loss'].append(val_loss_ave)
 
             #---------------------------
             # 正解率の計算
             #---------------------------
+            for metrics in self.metrics_func['train']:
+                log =[]
+                for func in metrics:
+                    log.append(func())
+                    self.metrics_log['train'] = func
+            """
             train_acc = self.accuracy(x, t, func='r2_score') # 要素ごとの評価を行う
             train_acc_ave = np.sum(train_acc) / train_acc.shape[0] # 全行での平均をとる
             self.history['train_acc'].append(train_acc_ave) # 平均の正解率を記録する
-
+            """
             print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % (i+1, loss_ave, val_loss_ave, train_acc_ave))
 
         print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))
@@ -149,10 +181,13 @@ class Sequential:
 
         return loss
 
-    def accuracy(self, x, t, func):
-        self.func['evaluation'] = _CallFunction('common.functions', func)
-        
+    def accuracy(self, x, t, metrics):
         y = self.predict(x)
-        acc = self.func['evaluation'](y, t)
 
+        acc = []
+        for metric in metrics:
+            acc.append(metric(y, t))
         return acc
+
+        #self.func['evaluation'] = _CallFunction('common.functions', func)
+        #acc = self.func['evaluation'](y, t)

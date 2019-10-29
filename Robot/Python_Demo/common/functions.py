@@ -186,19 +186,29 @@ def __data_nom__(data):
 
 
 # クロスバリエーション（データセットの分割）
-def train_test_splint(data, target, random_state=1):
+def train_test_splint(data, target, test_size, val_size=None, random_state=1):
+    x = data
+    t = target
     if (random_state != 0):
         seed = random.randint(1, 50) # 1~50の範囲でランダムなseed値を生成
-        data = __shuffle__(data, seed) # データのシャッフル
-        target = __shuffle__(target, seed) # ラベルのシャッフル
+        data = __shuffle__(x, seed) # データのシャッフル
+        target = __shuffle__(t, seed) # ラベルのシャッフル
     
-    # 学習用データ
-    lrn_In, tst_In, val_In = __sorting__(data)
-    # データラベル
-    lrn_lvl, tst_lvl, val_lvl = __sorting__(target)
+    assert type(test_size)==int and test_size <= x.shape[0], 'test_sizeがint型でないか、データ数をオーバーしています。'
+    # テスト
+    tst_data, x = __sorting__(x, test_size) # データ
+    tst_lvl, t  = __sorting__(t, test_size) # ラベル
+    if val_size != None:
+        assert type(val_size)==int and val_size <= x.shape[0], 'val_sizeがint型でないか、データ数をオーバーしています。'
+        val_data, lrn_data = __sorting__(x, val_size) # データ
+        val_lvl,  lrn_lvl  = __sorting__(t, val_size) # ラベル
 
-    return lrn_In, tst_In, lrn_lvl, tst_lvl, val_In, val_lvl
-
+    else:
+        val_data = None
+        val_lvl  = None
+        lrn_data = x
+        lrn_lvl  = t
+    return lrn_data, tst_data, lrn_lvl, tst_lvl, val_data, val_lvl
 
 def __shuffle__(x, seed=0):
     """
@@ -208,21 +218,13 @@ def __shuffle__(x, seed=0):
     rand_state.shuffle(x)
     return x
 
-def __sorting__(x, learn_percentage=0.6, test_percentage=0.2):
-    lrnMask = int(learn_percentage*x.shape[0])
-    tstMask = int(test_percentage*x.shape[0]) + lrnMask
-    assert tstMask <= x.shape[0], '必要データ数[{0}], 現在のデータ数[{1}]'.format(
-        tstMask, x.shape[0])
+def __sorting__(data, size):
+    assert size <= data.shape[0], '必要データ数[{0}], 現在のデータ数[{1}]'.format(size, data.shape[0])
 
-    # 入力
-    lrn = x[0:lrnMask]
-    tst = x[lrnMask:tstMask]
-    if (x.shape[0] - tstMask >= 100):
-        val = x[tstMask:x.shape[0]]
-        return lrn, tst, val
-    else:
-        val = None
-        return lrn, tst, val
+    y = data[0:size]
+    data = np.delete(data, obj=[0, size], axis=0)
+
+    return y, data
 
 
 def _Call(function_name):

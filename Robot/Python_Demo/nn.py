@@ -1,6 +1,5 @@
 # cording: utf-8
-import keras
-from keras.datasets import mnist
+
 import sys,os
 import matplotlib.pyplot as plt
 sys.path.append(os.getcwd())
@@ -36,7 +35,7 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None):
     #model.add(Dense(t.shape[1],  activation='softmax'))
     #model.compile(loss='cross_entropy_error')
     model.add(Dense(t.shape[1], activation = 'liner'))
-    model.compile(loss='mean_squared_error')
+    model.compile(loss='mean_squared_error', metrics = ['r2'])
 
 
     #history=model.fit(x, t, batch_size=batch_size, epochs=epochs, validation=validation)
@@ -60,6 +59,8 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None):
 
 
 if __name__ == "__main__":
+    import keras
+    from keras.datasets import mnist
     import numpy as np
     from common.functions import*
 
@@ -111,8 +112,7 @@ if __name__ == "__main__":
     x = Datafeature(x, 2) 
     t = Datafeature(t, 2)
     # クロスバリエーション
-    x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1)
-
+    x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1000, 100, random_state=1)
     """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
