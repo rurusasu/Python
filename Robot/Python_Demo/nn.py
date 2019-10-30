@@ -138,6 +138,7 @@ if __name__ == "__main__":
     callbacks = [
         visualize_cb,
     ]
+    
 
 
     epochs=100

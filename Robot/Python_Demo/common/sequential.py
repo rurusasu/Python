@@ -143,6 +143,7 @@ class Sequential:
             #---------------------------
             # 正解率の計算
             #---------------------------
+            logs = {}
             for key, List in self.logs.items():
                 metric = [x for x in self.metrics_func.keys() if x in key][0]
                 if 'train' in key:
@@ -153,13 +154,14 @@ class Sequential:
                     acc = self.accuracy(
                         x_val, t_val, self.metrics_func[metric])
                     List.append(acc)
+                logs[key] = acc
 
             #---------------------------
             # one_epoch_endコールバック
             #---------------------------
             if callbacks != None:
                 for call in callbacks:
-                    call.one_epoch_end(epoch, self.logs)
+                    call.one_epoch_end(epoch, logs)
             """
             if one_epoch_end != []:
                 for call in one_epoch_end:
