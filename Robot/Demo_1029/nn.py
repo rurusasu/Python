@@ -9,7 +9,7 @@ from common.functions import*
 from common.callbacks import LearningVisualizationCallback
 
 
-def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
+def nn(x, t, batch_size, epochs, feature=None, validation=None):
     """
     簡単なニューラルネットワークのモデルを作成する関数
 
@@ -38,9 +38,16 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
     model.add(Dense(t.shape[1], activation = 'liner'))
     model.compile(loss='mean_squared_error', metrics = ['r2', 'rsme'])
 
+    # 学習曲線を可視化するコールバック関数を用意
+    higher_better_metrics = ['r2']
+    visualize_cb = LearingVisualizationCallBack(higher_better_metrics)
+    callbacks = [
+        visualize_cb,
+    ]
+
     #history=model.fit(x, t, batch_size=batch_size, epochs=epochs, validation=validation)
     history = model.fit(x, t, batch_size=batch_size,
-                        epochs=epochs, validation=validation, callbacks=callbacks)
+                        epochs=epochs, validation=validation)
 
     # lossグラフ
     loss = history['loss_ave']
@@ -132,16 +139,9 @@ if __name__ == "__main__":
     t_test = keras.utils.to_categorical(t_test,  10)
     """
 
-    # 学習曲線を可視化するコールバックを用意する
-    higher_better_metrics = ['r2']
-    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
-    callbacks = [
-        visualize_cb,
-    ]
-
 
     epochs=100
     batch_size=128
 
-    nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val), callbacks=callbacks)
+    nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val))
     

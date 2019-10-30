@@ -26,7 +26,7 @@ class LearningVisualizationCallback:
         self._fig.canvas.draw()
         self._fig.show()
 
-    def one_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs=None):
         """各エポック毎に呼ばれるコールバック"""
 
         # 各メトリックのスコアを保存する
