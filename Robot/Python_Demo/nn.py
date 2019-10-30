@@ -139,8 +139,6 @@ if __name__ == "__main__":
         visualize_cb,
     ]
     
-
-
     epochs=100
     batch_size=128
 

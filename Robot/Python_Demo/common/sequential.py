@@ -144,16 +144,21 @@ class Sequential:
             # 正解率の計算
             #---------------------------
             logs = {}
+            # printで値を表示するためのリスト
+            prt_train_acc = []
+            prt_val_acc = []
             for key, List in self.logs.items():
                 metric = [x for x in self.metrics_func.keys() if x in key][0]
                 if 'train' in key:
                     acc = self.accuracy(
                         x_batch, t_batch, self.metrics_func[metric])
                     List.append(acc)
+                    prt_train_acc.append(acc)
                 if 'val' in key:
                     acc = self.accuracy(
                         x_val, t_val, self.metrics_func[metric])
                     List.append(acc)
+                    prt_val_acc.append(acc)
                 logs[key] = acc
 
             #---------------------------
@@ -162,19 +167,10 @@ class Sequential:
             if callbacks != None:
                 for call in callbacks:
                     call.one_epoch_end(epoch, logs)
-            """
-            if one_epoch_end != []:
-                for call in one_epoch_end:
-                    call(epochs, self.metrics_log)
-            """
-            """
-            train_acc = self.accuracy(x, t, func='r2_score') # 要素ごとの評価を行う
-            train_acc_ave = np.sum(train_acc) / train_acc.shape[0] # 全行での平均をとる
-            self.history['train_acc'].append(train_acc_ave) # 平均の正解率を記録する
-            """
+
             #print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % (i+1, self.history['loss_ave'][i], self.history['val_loss'][i], self.metrics_log['train'][i]))
-            #print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % \
-                            #(i+1, self.history['loss_ave'][i], self.history['val_loss'][i], np.min(self.log[0])))
+            print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f, --val_acc=%f' % \
+                            (epoch+1, self.history['loss_ave'][epoch], self.history['val_loss'][epoch], np.min(prt_train_acc), np.min(prt_val_acc)))
 
 
         print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))
