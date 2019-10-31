@@ -3,7 +3,7 @@ sys.path.append(os.getcwd())
 
 import numpy as np
 from common.functions import _CallClass, _CallFunction
-from common.functions import __sorting__
+from common.functions import __shuffle__, __sorting__
 from common.layers import *
 from collections import OrderedDict
 
@@ -113,6 +113,8 @@ class Sequential:
             x_val = validation[0]
             t_val = validation[1]
         else:
+            x = __shuffle__(x)
+            t = __shuffle__(t)
             x_val, x = __sorting__(x, 100)
             t_val, t = __sorting__(t, 100)
 
@@ -135,10 +137,9 @@ class Sequential:
             #---------------------------
             # validation誤差の計算
             #---------------------------
-            if(validation != None):
-                val_loss = self.loss(x_val, t_val)
-                val_loss_ave = val_loss / x_val[0].shape[0]
-                self.history['val_loss'].append(val_loss_ave)
+            val_loss = self.loss(x_val, t_val)
+            val_loss_ave = val_loss / x_val[0].shape[0]
+            self.history['val_loss'].append(val_loss_ave)
 
             #---------------------------
             # 正解率の計算
@@ -170,7 +171,7 @@ class Sequential:
 
             #print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % (i+1, self.history['loss_ave'][i], self.history['val_loss'][i], self.metrics_log['train'][i]))
             print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f, --val_acc=%f' % \
-                            (epoch+1, self.history['loss_ave'][epoch], self.history['val_loss'][epoch], np.min(prt_train_acc), np.min(prt_val_acc)))
+                    (epoch+1, self.history['loss_ave'][epoch], self.history['val_loss'][epoch], np.min(prt_train_acc), np.min(prt_val_acc)))
 
 
         print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))

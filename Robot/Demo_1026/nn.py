@@ -190,7 +190,6 @@ if __name__ == "__main__":
     t = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
     
-
     epochs=100
     batch_size=128
 

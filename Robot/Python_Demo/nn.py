@@ -105,32 +105,33 @@ if __name__ == "__main__":
     t = data_nom(t)
     #x_test = data_nom(x_val)
     #t_test = data_nom(t_val)
-    """
+    
     # 標準化と正規化
     x = Datafeature(x, 2) 
     t = Datafeature(t, 2)
     # クロスバリエーション
     x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1000, 100, random_state=1)
     """
+
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
 
     #データをfloat型に変換
-    x = x_train.astype('float32')
+    x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
 
     #0～255までの範囲のデータを0～1までの範囲に変更
-    x /= 255
+    x_train /= 255
     x_test /= 255
 
     #Mnistデータを加工する
-    x = x_train.reshape(60000, 784)  # 1次元配列に変換
+    x_train = x_train.reshape(60000, 784)  # 1次元配列に変換
     x_test = x_test.reshape(10000, 784)
 
     #正解データの加工
-    t = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
+    t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
-    """
+    
 
     # 学習曲線を可視化するコールバックを用意する
     higher_better_metrics = ['r2']
@@ -142,5 +143,7 @@ if __name__ == "__main__":
     epochs=100
     batch_size=128
 
-    nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val), callbacks=callbacks)
+    #nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val), callbacks=callbacks)
+    nn(x_train, t_train, batch_size=batch_size, epochs=epochs,
+       feature=2, callbacks=callbacks)
     
