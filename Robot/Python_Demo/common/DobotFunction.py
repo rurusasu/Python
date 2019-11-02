@@ -45,40 +45,6 @@ def initDobot(api):
 #-----------------------------------
 # Dobotの動作用_汎用関数
 #-----------------------------------
-def Operation(api, file_name, axis, volume=1, initPOS=None):
-    """
-    A function that sends a motion command in any direction
-
-    Parameters
-    ----------
-    api : CDLL
-    axis : str
-        移動方向
-    volume : int
-        移動量
-    """
-    axis_list = ['x', 'y', 'z', 'r']
-    if (initPOS != None):
-        pose = initPOS
-    else:
-        pose = dType.GetPose(api)
-
-    if (axis in axis_list):
-        if (axis == 'x'):
-            _OneAction(api, dType.PTPMode.PTPMOVLXYZMode, pose[0] + volume, pose[1], pose[2], pose[3])
-        elif (axis == 'y'):
-            _OneAction(api, dType.PTPMode.PTPMOVLXYZMode, pose[0], pose[1] + volume, pose[2], pose[3])
-        elif (axis == 'z'):
-            _OneAction(api, dType.PTPMode.PTPMOVLXYZMode, pose[0], pose[1], pose[2] + volume, pose[3])
-        else:
-            print('rは実装されていません。')
-    else:
-        print('移動軸に問題があります！')
-
-    # 座標をファイルへ書き込む
-    csv_write(file_name, dType.GetPose(api))
-
-
 # 1回動作指令を出す関数
 def _OneAction(api, mode, x, y, z, r):
     """One step operation"""

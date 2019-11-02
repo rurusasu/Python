@@ -4,153 +4,160 @@ import csv
 import numpy as np
 from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
 
-class csvIO:
-    def twoD_array(self, x):
-        """Convert 2D array"""
-        array = [row for row in x]
 
-        return array
+def twoD_array(x):
+    """Convert 2D array"""
+    array = [row for row in x]
 
-    def open_twoD_array(self, filename):
-        """Open csv file and Convert 2D array"""
+    return array
 
-        with open(filename, 'r', encoding='utf_8', errors='', newline='') as f:
-            x = csv.reader(f)
-            array = self.twoD_array(x)
+def open_twoD_array(filename):
+    """Open csv file and Convert 2D array"""
+
+    with open(filename, 'r', encoding='utf_8', errors='', newline='') as f:
+        x = csv.reader(f)
+        array = twoD_array(x)
     
-        return array
+    return array
 
 
-    #----------------------------------------------------------
-    # 取得した配列をデータ変換する関数群
-    #----------------------------------------------------------
-    def twoD_IntToStr(self, x):
-        array = self.twoD_array(x)
-        int_array = [[int(v) for v in row] for row in array]
+#----------------------------------------------------------
+# 取得した配列をデータ変換する関数群
+#----------------------------------------------------------
+def twoD_IntToStr(x):
+    array = twoD_array(x)
+    int_array = [[int(v) for v in row] for row in array]
 
-        return int_array
+    return int_array
 
 
-    def twoD_FroatToStr(self, x, digit):
-        array = self.twoD_array(x)
-        froat_array = [[self.__roundOff__(v, digit) for v in row] for row in array]
+def twoD_FroatToStr(x, digit):
+    array = twoD_array(x)
+    froat_array = [[__roundOff__(v, digit) for v in row] for row in array]
 
-        return froat_array
+    return froat_array
 
     
-    def twoD_Numpy(self, x):
+def twoD_Numpy(x):
         """Convert array to numpy"""
-        x = self.twoD_FroatToStr(x, digit=0.01)
+        x = twoD_FroatToStr(x, digit=0.01)
         return np.array(x)
 
-    #--------------------------------------------------------------
-    # 特定の配列を取得する関数群
-    #--------------------------------------------------------------
-    def GetOneRow(self, x, row_number):
-        """Get 1 row of values from 2D array"""
-        
-        return x[row_number]
+#--------------------------------------------------------------
+# 特定の配列を取得する関数群
+#--------------------------------------------------------------
+def GetOneRow(x, row_number):
+    """Get 1 row of values from 2D array"""
+    return x[row_number]
 
 
-    def GetMultiRow(self, x, row_range_bottom, row_range_top = 0):
-        """Get Multi row of values from 2D array"""
+def GetMultiRow(x, row_range_bottom, row_range_top = 0):
+    """Get Multi row of values from 2D array"""
 
-        row_list = []
-        if row_range_top >= row_range_bottom:
-            return
+    row_list = []
+    if row_range_top >= row_range_bottom:
+        return
 
-        for num in range(row_range_top, row_range_bottom):
-            row_list.append(self.GetOneRow(x, num))
-        
-        return row_list
-
-
-    def GetOneCol(self, x, col_number):
-        """Get 1 col of values from 2D array"""
-
-        array = [row[col_number] for row in x]
-
-        return array
+    for num in range(row_range_top, row_range_bottom):
+        row_list.append(GetOneRow(x, num))
+    return row_list
 
 
-    def GetMultiCol(self, x, col_range_end, col_range_first=0):
-        """Get Multi col of values from 2D array"""
+def GetOneCol(x, col_number):
+    """Get 1 col of values from 2D array"""
 
-        col_list = []
-        if col_range_first > col_range_end:
-            return
-        elif col_range_first == col_range_end:
-            return self.GetOneCol(x, col_range_first)
-        elif col_range_first < col_range_end:
-            for row in x:
-                col_list.append([row[j] for j in range(col_range_first, col_range_end)])
-            return col_list
+    array = [row[col_number] for row in x]
+    return array
 
 
-    def Get_AnytwoD_array(self, x, row_range_top=0, row_range_bottom=0, col_range_first=0, col_range_end=0):
-        """Get Any 2D array"""
+def GetMultiCol(x, col_range_end, col_range_first=0):
+    """Get Multi col of values from 2D array"""
 
-        # エラーチェック
-        if (row_range_top > row_range_bottom):
-            print('行のrange開始点が終了点を超えています。')
-            return
-        """
-        if (col_range_first> col_range_end):
-            print('列のrange開始点が終了点を超えています。')
-            return
-        """
+    col_list = []
+    if col_range_first > col_range_end:
+        return
+    elif col_range_first == col_range_end:
+        return GetOneCol(x, col_range_first)
+    elif col_range_first < col_range_end:
+        for row in x:
+            col_list.append([row[j] for j in range(col_range_first, col_range_end)])
+        return col_list
 
-        if (row_range_bottom == 0 and col_range_end == 0):  
-            matrix = self.twoD_array(x)  
-        elif (row_range_bottom != 0 and col_range_end == 0):
-            matrix = self.GetMultiRow(x, row_range_bottom, row_range_top)
-        elif (row_range_bottom == 0 and col_range_end != 0):
-            matrix = self.GetMultiCol(x, col_range_end, col_range_first)
-        else:
-            v_row = self.GetMultiRow(x, row_range_bottom=row_range_bottom, row_range_top=row_range_top)
-            matrix = self.GetMultiCol(v_row, col_range_end=col_range_end, col_range_first=col_range_first)
 
-        return matrix
+def Get_AnytwoD_array(x, row_range_top=0, row_range_bottom=0, col_range_first=0, col_range_end=0):
+    """Get Any 2D array"""
+
+    # エラーチェック
+    if (row_range_top > row_range_bottom):
+        print('行のrange開始点が終了点を超えています。')
+        return
+    """
+    if (col_range_first> col_range_end):
+        print('列のrange開始点が終了点を超えています。')
+        return
+    """
+
+    if (row_range_bottom == 0 and col_range_end == 0):  
+        matrix = twoD_array(x)  
+    elif (row_range_bottom != 0 and col_range_end == 0):
+        matrix = GetMultiRow(x, row_range_bottom, row_range_top)
+    elif (row_range_bottom == 0 and col_range_end != 0):
+        matrix = GetMultiCol(x, col_range_end, col_range_first)
+    else:
+        v_row = GetMultiRow(x, row_range_bottom=row_range_bottom, row_range_top=row_range_top)
+        matrix = GetMultiCol(v_row, col_range_end=col_range_end, col_range_first=col_range_first)
+
+    return matrix
 
 
     #--------------------------------------------------------------------------
     # 四捨五入を行う関数
     #--------------------------------------------------------------------------
-    def __roundOff__(self, x, digit):
-        """ある桁数(digit)で四捨五入を行う"""
-        y = Decimal(float(x)).quantize(Decimal(str(digit)), rounding=ROUND_HALF_UP)
+def __roundOff__(x, digit):
+    """ある桁数(digit)で四捨五入を行う"""
+    y = Decimal(float(x)).quantize(Decimal(str(digit)), rounding=ROUND_HALF_UP)
         
-        return float(y)
+    return float(y)
 
 
-    #--------------------------------------------------------------------------
-    # ファイルへの書き出しを行う関数
-    #--------------------------------------------------------------------------
+#--------------------------------------------------------------------------
+# ファイルへの書き出しを行う関数
+#--------------------------------------------------------------------------
+def csv_write(filename, data):
+    """Write Data to csv file"""
+    if (data == None):  # 書き込むデータが無いとき
+        return
+    with open(filename, 'w', encoding='utf_8', errors='', newline='') as f:
 
-    def csv_write(self, filename, data):
-        """Write Data to csv file"""
-        if (data == None):  # 書き込むデータが無いとき
-            return
-        with open(filename, 'w', encoding='utf_8', errors='', newline='') as f:
-
-            if(self.wirte_content(f, data) == None):
-                print('書き込みが完了しました。')
+        if(wirte_content(f, data) == None):
+            print('書き込みが完了しました。')
 
 
-    def wirte_content(self, f, data):
-        """write content"""
+def wirte_content(f, data):
+    """write content"""
 
-        error = 1  # エラーチェック用変数
-        witer = csv.writer(f, lineterminator='\n')
-        error = witer.writerows(data)
+    error = 1  # エラーチェック用変数
+    witer = csv.writer(f, lineterminator='\n')
+    error = witer.writerows(data)
 
-        return error  # エラーが無ければNoneを返す
+    return error  # エラーが無ければNoneを返す
+
+
+def dataConv(Org_FilePath, Out_FilePath, col_range_end, col_range_first=0, digit=None):
+    """csvIO内の関数を用いて、2次元配列から欲しい行を取り出す。"""
+    v = open_twoD_array(Org_FilePath)
+    if digit is not None and digit is str:
+        digit = str(10**-int(digit))
+        v = twoD_FroatToStr(v, digit=digit)
+    
+    array = GetMultiCol(v, col_range_first=col_range_first, col_range_end=col_range_end)
+    csv_write(Out_FilePath, array)
+    
+    
 
 
 
 if __name__ == '__main__':
-    io = csvIO()
-    
     # ファイルを開く
     #file = io.csv_open('./data.csv', 'r')
     #file_data = csv.reader(file)
