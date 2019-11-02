@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.getcwd())
 from common.sequential import Sequential
 from common.layers import Input, Dense
-from common.functions import*
+from common.functions import __shuffle__, __sorting__
 from common.callbacks import LearningVisualizationCallback
 
 
@@ -26,7 +26,24 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
     feature : int
         Feature Scalingの選択
     """       
-    
+    #-------------------------------
+    # DataFeature
+    #-------------------------------
+    if feature != None:
+        x = Datafeature(x, feature)
+        t = Datafeature(t, feature)
+
+
+    # バリデーションが最初からセットされているとき
+    if validation != None:
+        x_val = validation[0]
+        t_val = validation[1]
+    else:
+        x = __shuffle__(x)
+        t = __shuffle__(t)
+        x_val, x = __sorting__(x, 100)
+        t_val, t = __sorting__(t, 100)
+
     model = Sequential()
     model.add(Input(input_shape=x.shape[1]))
     model.add(Dense(50, activation='relu', weight_initializer='relu'))
@@ -40,7 +57,7 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
 
     #history=model.fit(x, t, batch_size=batch_size, epochs=epochs, validation=validation)
     history = model.fit(x, t, batch_size=batch_size,
-                        epochs=epochs, validation=validation, callbacks=callbacks)
+                        epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
 
     # lossグラフ
     loss = history['loss_ave']

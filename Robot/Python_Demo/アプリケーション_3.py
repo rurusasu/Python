@@ -7,11 +7,24 @@ sys.path.append(os.getcwd())
 import PySimpleGUI as sg
 from Dobot import*
 from common.csvIO import dataConv
+from nn import nn
 
 
 def __filePath__(file_name):
     path = './data/' + str(file_name)
     return path
+
+def dataLoad(filePath, dtype):
+    if filePath != str:
+        filePath = str(filePath)
+    x = np.loadtxt(
+            filePath, #読み込むファイル名(例"save_data.csv")
+            dtype=dtype,     #データのtype
+            delimiter=",",   #区切り文字の指定
+            ndmin=2          #配列の最低次元
+        )
+    return x
+
 
 # ----- The callback function ----- #
 def SaveOriginal_click(CON_STR, file_name):
@@ -93,23 +106,47 @@ def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
     #dataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
 
+def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None ):
+    orgLRN_Path = orgPath[0]
+    orgTrg_Path = orgPath[1]
+
+    # データの読み込み
+    #訓練データの読み込み
+    x = dataLoad(orgLRN_Path)
+    t = dataLoad(orgTrg_Path)
+
+    # Validationデータ
+    if valPath != None:
+        valRLN_Path = valPath[0]
+        valTrg_Path = valPath[1]
+
+        x_val = dataLoad(valLRN_Path)
+        t_val = dataLoad(valTrg_Path)
+
+        validation = (x_val, t_val)
+    else:
+        validation = None
+
+    nn(x, t, batch_size, epochs, feature, validation)
+
+
 # ----- Menu Definition ----- #
 menu_def = [['File', ['Open', 'Save', 'Exit', 'Properties']],
             ['Edit', []],
             ['Help'],]
 
 # ----- Column Definition ----- #
-saveOgn = [
+saveOrg = [
     [sg.Text('OriginalData')],
     [sg.Text('FileName'), 
-     sg.InputText('data.csv', size=(13, 1), key='-Original-')],
+     sg.InputText('data.csv', size=(13, 1), key='-orgSave-')],
     [sg.Button('SaveOriginal', key='-SaveOriginal-')],
 ]
 
 saveVal = [
     [sg.Text('ValidationData')],
     [sg.Text('FileName'),
-     sg.InputText('val.csv', size=(13, 1), key='-Validation-')],
+     sg.InputText('val.csv', size=(13, 1), key='-valSave-')],
     [sg.Button('SaveValidation', key='-SaveValidation-')],
 ]
 
@@ -124,8 +161,7 @@ dataConv = [
      sg.InputText('2', size=(5, 1), key='-Digit-')],
     [sg.Button('DataMake', key='-DataMake-')]]
 
-NeuralNet = [
-    #[sg.Text('NuralNet')],
+NetCreate = [
     [sg.Text('層の種類'), sg.Text('ユニット数')],
     [sg.InputCombo(('input', 'Dense'), size=(15, 1)), sg.InputText('50', size=(5, 1))],
     [sg.Text('重みの初期値')],
@@ -135,18 +171,41 @@ NeuralNet = [
     [sg.Text('損失関数')],
     [sg.InputCombo(('mean_squared_error'), size=(20, 1))],
     [sg.Text('評価関数')],
-    [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],
-]
+    [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],]
+
+
+NuralNet = [
+    [sg.Text('学習用データ')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-orgLRN-')],
+    [sg.Text('学習用ラベル')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-orgTrg-')],
+    [sg.Text('Validation用データ')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valRLN-')],
+    [sg.Text('Validation用ラベル')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valTrg-')],
+    [sg.Radio('標準化', 'RADIO1', size=(10, 1))],
+    [sg.Radio('正規化', 'RADIO1', size=(10, 1))],
+    [sg.Radio('両方', 'RADIO1', size=(10, 1))],
+    [sg.Text('Batch Size'), sg.Text('epochs')],
+    [sg.Input(size=(10, 1), key='-Batch-'), sg.Input(size=(10, 1), key='-epochs-')],
+    [sg.Button('Training', key='-TrainingRUN-')],
+    [sg.Text('テスト用データ')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstRLN-')],
+    [sg.Text('テスト用ラベル')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstTrg-')],
+    ]
+
 
 layout = [
     [sg.Text('Dobotを接続する')], 
     [sg.Button('Conect', key='-Connect-')],
-    [sg.Frame('Save', [
-        [sg.Column(saveOgn)],
-        [sg.Column(saveVal)],
+    [sg.Frame('Save', 
+        [[sg.Column(saveOrg)],
+         [sg.Column(saveVal)],
         ]),
-     sg.Frame('NuralNet', NeuralNet)],
-    [sg.Frame('DataConv', dataConv)],
+     sg.Frame('NetCreate', NetCreate)],
+    [sg.Frame('DataConv', dataConv),
+     sg.Frame('NuralNet', NuralNet),],
     [sg.Quit()],
 ]
 
@@ -167,12 +226,15 @@ while True:
         if CON_STR is None:
             print('Dobotに接続していません。')
         else:
-            SaveOriginal_click(CON_STR, values['-Original-'])
+            SaveOriginal_click(CON_STR, values['-orgSavel-'])
     elif event is '-SaveValidation-':
         if CON_STR is None:
             print('Dobotに接続していません。')
         else:
-            SaveValidation_click(CON_STR, values['-Validation-'])
+            SaveValidation_click(CON_STR, values['-valSave-'])
     elif event is '-DataMake-':
         DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
-    
+    # NuralNet
+    elif event is '-TrainingRUN-':
+        #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], 
+        print(event, values)

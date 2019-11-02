@@ -272,4 +272,4 @@ def _CallClass(mod_name, cls_name):
 if __name__ == "__main__":
     class_def = _CallClass('optimizer', 'sgd')
     obj = class_def()
-    obj.update()
+    #obj.update()
