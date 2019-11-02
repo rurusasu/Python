@@ -5,6 +5,7 @@ import os
 sys.path.append(os.getcwd())
 
 import PySimpleGUI as sg
+import numpy as np
 from Dobot import*
 from common.csvIO import dataConv
 from nn import nn
@@ -112,16 +113,16 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None ):
 
     # データの読み込み
     #訓練データの読み込み
-    x = dataLoad(orgLRN_Path)
-    t = dataLoad(orgTrg_Path)
+    x = dataLoad(orgLRN_Path, float)
+    t = dataLoad(orgTrg_Path, float)
 
     # Validationデータ
     if valPath != None:
         valRLN_Path = valPath[0]
         valTrg_Path = valPath[1]
 
-        x_val = dataLoad(valLRN_Path)
-        t_val = dataLoad(valTrg_Path)
+        x_val = dataLoad(valRLN_Path, float)
+        t_val = dataLoad(valTrg_Path, float)
 
         validation = (x_val, t_val)
     else:
