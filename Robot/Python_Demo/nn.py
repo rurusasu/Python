@@ -8,77 +8,92 @@ from common.layers import Input, Dense
 from common.functions import Datafeature, __shuffle__, __sorting__
 from common.callbacks import LearningVisualizationCallback
 
+class NeuralNet:
+    def __init__(self):
+        self.model = Sequential()
 
-def nn(x, t, batch_size, epochs, feature=None, validation=None):
-    """
-    簡単なニューラルネットワークのモデルを作成する関数
+    def netmake(self, inputValiable, loss):
+        self.model.add(Input(input_shape=x.shape[1]))
+        self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
+        self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
+        #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+        #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+        #model.add(Dense(t.shape[1],  activation='softmax'))
+        #model.compile(loss='cross_entropy_error')
+        self.model.add(Dense(t.shape[1], activation = 'liner'))
 
-    Parameters
-    ----------
-    x : ndarray
-        学習用データ
-    t : ndarray
-        教師データ
-    batch_size : int
-        バッチサイズ
-    eopchs : int
-        エポック数
-    feature : int
-        Feature Scalingの選択
-    """       
-    #-------------------------------
-    # DataFeature
-    #-------------------------------
-    if feature != None:
-        x = Datafeature(x, feature)
-        t = Datafeature(t, feature)
+        self.model.compile(loss=loss, metrics = ['r2', 'rsme'])
 
-    #-------------------------------
-    # Validation
-    #-------------------------------
-    if validation != None:    # バリデーションが最初からセットされているとき
-        x_val = validation[0]
-        t_val = validation[1]
-    else:
-        x = __shuffle__(x)
-        t = __shuffle__(t)
-        x_val, x = __sorting__(x, 100)
-        t_val, t = __sorting__(t, 100)
 
-    # 学習曲線を可視化するコールバックを用意する
-    higher_better_metrics = ['r2']
-    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
-    callbacks = [
-        visualize_cb,
-    ]
+    def nn(self, x, t, batch_size, epochs, feature=None, validation=None):
+        """
+        簡単なニューラルネットワークのモデルを作成する関数
 
-    model = Sequential()
-    model.add(Input(input_shape=x.shape[1]))
-    model.add(Dense(50, activation='relu', weight_initializer='relu'))
-    model.add(Dense(50, activation='relu', weight_initializer='relu'))
-    #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
-    #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
-    #model.add(Dense(t.shape[1],  activation='softmax'))
-    #model.compile(loss='cross_entropy_error')
-    model.add(Dense(t.shape[1], activation = 'liner'))
-    model.compile(loss='mean_squared_error', metrics = ['r2', 'rsme'])
+        Parameters
+        ----------
+        x : ndarray
+            学習用データ
+        t : ndarray
+            教師データ
+        batch_size : int
+            バッチサイズ
+        eopchs : int
+            エポック数
+        feature : int
+            Feature Scalingの選択
+        """       
+        #-------------------------------
+        # DataFeature
+        #-------------------------------
+        if feature != None:
+            x = Datafeature(x, feature)
+            t = Datafeature(t, feature)
 
-    #history=model.fit(x, t, batch_size=batch_size, epochs=epochs, validation=validation)
-    history = model.fit(x, t, batch_size=batch_size,
-                        epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
+        #-------------------------------
+        # Validation
+        #-------------------------------
+        if validation != None:    # バリデーションが最初からセットされているとき
+            x_val = validation[0]
+            t_val = validation[1]
+        else:
+            x = __shuffle__(x)
+            t = __shuffle__(t)
+            x_val, x = __sorting__(x, 100)
+            t_val, t = __sorting__(t, 100)
 
-    # lossグラフ
-    loss = history['loss_ave']
-    val_loss = history['val_loss']
+        # 学習曲線を可視化するコールバックを用意する
+        higher_better_metrics = ['r2']
+        visualize_cb = LearningVisualizationCallback(higher_better_metrics)
+        callbacks = [
+            visualize_cb,
+        ]
+        """
+        model = Sequential()
+        model.add(Input(input_shape=x.shape[1]))
+        model.add(Dense(50, activation='relu', weight_initializer='relu'))
+        model.add(Dense(50, activation='relu', weight_initializer='relu'))
+        #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+        #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+        #model.add(Dense(t.shape[1],  activation='softmax'))
+        #model.compile(loss='cross_entropy_error')
+        model.add(Dense(t.shape[1], activation = 'liner'))
+        model.compile(loss='mean_squared_error', metrics = ['r2', 'rsme'])
+        """
+        self.history = model.fit(x, t, batch_size=batch_size,
+                            epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
 
-    nb_epoch = len(loss)
-    plt.plot(range(nb_epoch), loss, marker = '.', label = 'loss')
-    plt.plot(range(nb_epoch), val_loss, marker='.', label='val_loss')
-    plt.legend(loc = 'best', fontsize = 10)
-    plt.grid()
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.show()
+        # lossグラフ
+        loss = history['loss_ave']
+        val_loss = history['val_loss']
+
+        nb_epoch = len(loss)
+        plt.plot(range(nb_epoch), loss, marker = '.', label = 'loss')
+        plt.plot(range(nb_epoch), val_loss, marker='.', label='val_loss')
+        plt.legend(loc = 'best', fontsize = 10)
+        plt.grid()
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.show()
 
 
 if __name__ == "__main__":

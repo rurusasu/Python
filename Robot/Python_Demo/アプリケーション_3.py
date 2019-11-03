@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 import numpy as np
 from Dobot import*
 from common.csvIO import dataConv
-from nn import nn
+from nn import NeuralNet
 
 
 def __filePath__(file_name):
@@ -106,6 +106,11 @@ def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
     #dataConv(org_FileName, lrn_FileName, col_range_end=3, digit=digit)
     #dataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
+def NetMake_click(loss):
+    # コンストラクタ
+    nn = NeuralNet()
+
+    nn.netmake(loss)
 
 def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None ):
     orgLRN_Path = orgPath[0]
@@ -137,7 +142,7 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None ):
     else:
         validation = None
 
-    nn(x, t, batch_size, epochs, feature, validation)
+    nn.nn(x, t, batch_size, epochs, feature, validation)
 
 
 # ----- Menu Definition ----- #
@@ -171,7 +176,7 @@ dataConv = [
      sg.InputText('2', size=(5, 1), key='-Digit-')],
     [sg.Button('DataMake', key='-DataMake-')]]
 
-NetCreate = [
+NetMake = [
     [sg.Text('層の種類'), sg.Text('ユニット数')],
     [sg.InputCombo(('input', 'Dense'), size=(15, 1)), sg.InputText('50', size=(5, 1))],
     [sg.Text('重みの初期値')],
@@ -179,9 +184,10 @@ NetCreate = [
     [sg.Text('活性化関数')],
     [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1))],
     [sg.Text('損失関数')],
-    [sg.InputCombo(('mean_squared_error'), size=(20, 1))],
+    [sg.InputCombo(('mean_squared_error',), size=(20, 1), key='-loss-')],
     [sg.Text('評価関数')],
-    [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],]
+    [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],
+    [sg.Button('NetMake', key='-NetMake-')]]
 
 
 NuralNet = [
@@ -205,7 +211,6 @@ NuralNet = [
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstTrg-')],
     ]
 
-
 layout = [
     [sg.Text('Dobotを接続する')], 
     [sg.Button('Conect', key='-Connect-')],
@@ -213,7 +218,7 @@ layout = [
         [[sg.Column(saveOrg)],
          [sg.Column(saveVal)],
         ]),
-     sg.Frame('NetCreate', NetCreate)],
+     sg.Frame('NetMake', NetMake)],
     [sg.Frame('DataConv', dataConv),
      sg.Frame('NuralNet', NuralNet),],
     [sg.Quit()],
@@ -244,7 +249,9 @@ while True:
             SaveValidation_click(CON_STR, values['-valSave-'])
     elif event is '-DataMake-':
         DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
-    # NuralNet
+    elif event is '-NetMake-':
+        NetMake_click(values['-loss-'])
+    # Trainig
     elif event is '-TrainingRUN-':
         #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], feature, 
         #----------------------------
