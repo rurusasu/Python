@@ -7,6 +7,8 @@ import os
 sys.path.append(os.getcwd())
 from nn import*
 
+# コンストラクタ
+nn = NeuralNet()
 
 def __filePath__(file_name):
     path = './data/' + str(file_name)
@@ -32,9 +34,16 @@ def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
     #dataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
 
+def NodeAdd_click(layer, Node, weight, bias, activation):
+    if layer is 'input':
+       
+    elif layer is 'Dense':
+
+
+
 def NetMake_click(loss):
     # コンストラクタ
-    nn = NeuralNet()
+    #nn = NeuralNet()
 
     nn.netmake(loss)
 
@@ -71,6 +80,9 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
     nn.nn(x, t, batch_size, epochs, feature, validation)
 
 
+def NetWorkTree():
+    treedata = sg.TreeData()
+
 # ----- Column Definition ----- #
 dataConv = [
     [sg.Text('OrigiData')],
@@ -91,6 +103,7 @@ NetMake = [
     [sg.InputCombo(('Xavier', 'He'), size=(15, 1))],
     [sg.Text('活性化関数')],
     [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1))],
+    [sg.Button('add', key='-NodeAdd-')],
     [sg.Text('損失関数')],
     [sg.InputCombo(('mean_squared_error',), size=(20, 1), key='-loss-')],
     [sg.Text('評価関数')],
@@ -140,6 +153,8 @@ while True:
         break
     if event is '-DataMake-':
         DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
+    elif event is '-NodeAdd-':
+
     elif event is '-NetMake-':
         NetMake_click(values['-loss-'])
     # Trainig

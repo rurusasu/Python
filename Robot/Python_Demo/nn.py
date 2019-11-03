@@ -12,6 +12,9 @@ class NeuralNet:
     def __init__(self):
         self.model = Sequential()
 
+    def LayerAdd(self, layerName):
+
+
     def netmake(self, inputValiable, loss):
         self.model.add(Input(input_shape=x.shape[1]))
         self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
