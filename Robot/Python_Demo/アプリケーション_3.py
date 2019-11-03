@@ -111,6 +111,15 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None ):
     orgLRN_Path = orgPath[0]
     orgTrg_Path = orgPath[1]
 
+    #---------------
+    # 型変換
+    #---------------
+    if batch_size != int:
+        batch_size = int(batch_size)
+    if epochs != int:
+        epochs = int(epochs)
+
+
     # データの読み込み
     #訓練データの読み込み
     x = dataLoad(orgLRN_Path, float)
@@ -184,11 +193,11 @@ NuralNet = [
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valRLN-')],
     [sg.Text('Validation用ラベル')],
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valTrg-')],
-    [sg.Radio('標準化', 'RADIO1', size=(10, 1))],
-    [sg.Radio('正規化', 'RADIO1', size=(10, 1))],
-    [sg.Radio('両方', 'RADIO1', size=(10, 1))],
+    [sg.Radio('標準化', 'feature', size=(10, 1), key='-feature_0-'),
+     sg.Radio('正規化', 'feature', size=(10, 1), key='-feature_1-'),
+     sg.Radio('両方', 'feature', size=(10, 1),  key='-feature_2-')],
     [sg.Text('Batch Size'), sg.Text('epochs')],
-    [sg.Input(size=(10, 1), key='-Batch-'), sg.Input(size=(10, 1), key='-epochs-')],
+    [sg.InputText('128', size=(10, 1), key='-Batch-'), sg.InputText('100', size=(10, 1), key='-epochs-')],
     [sg.Button('Training', key='-TrainingRUN-')],
     [sg.Text('テスト用データ')],
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstRLN-')],
@@ -237,5 +246,25 @@ while True:
         DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
     # NuralNet
     elif event is '-TrainingRUN-':
-        #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], 
-        print(event, values)
+        #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], feature, 
+        #----------------------------
+        # ラジオボタンの条件分岐
+        #----------------------------
+        if values['-feature_0-'] is True:
+            feature = 0
+        elif values['-feature_1-'] is True:
+            feature = 1
+        elif values['-feature_2-'] is True:
+            feature = 2
+        else:
+            feature = None
+        #----------------------------
+        # Validationの条件分岐
+        #----------------------------
+        if (values['-valRLN-'] != '' and values['-valTrg-'] != ''):
+            val = (values['-valRLN-'], values['-valTrg-'])
+        else:
+            val = None
+
+        Training_click((values['-orgLRN-'], values['-orgTrg-']), values['-Batch-'], values['-epochs-'], feature, val)
+        #print(event, values)

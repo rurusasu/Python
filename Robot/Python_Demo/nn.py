@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 sys.path.append(os.getcwd())
 from common.sequential import Sequential
 from common.layers import Input, Dense
-from common.functions import __shuffle__, __sorting__
+from common.functions import Datafeature, __shuffle__, __sorting__
 from common.callbacks import LearningVisualizationCallback
 
 
-def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
+def nn(x, t, batch_size, epochs, feature=None, validation=None):
     """
     簡単なニューラルネットワークのモデルを作成する関数
 
@@ -33,9 +33,10 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
         x = Datafeature(x, feature)
         t = Datafeature(t, feature)
 
-
-    # バリデーションが最初からセットされているとき
-    if validation != None:
+    #-------------------------------
+    # Validation
+    #-------------------------------
+    if validation != None:    # バリデーションが最初からセットされているとき
         x_val = validation[0]
         t_val = validation[1]
     else:
@@ -43,6 +44,13 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None, callbacks=None):
         t = __shuffle__(t)
         x_val, x = __sorting__(x, 100)
         t_val, t = __sorting__(t, 100)
+
+    # 学習曲線を可視化するコールバックを用意する
+    higher_better_metrics = ['r2']
+    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
+    callbacks = [
+        visualize_cb,
+    ]
 
     model = Sequential()
     model.add(Input(input_shape=x.shape[1]))
@@ -150,12 +158,7 @@ if __name__ == "__main__":
     t_test = keras.utils.to_categorical(t_test,  10)
     
 
-    # 学習曲線を可視化するコールバックを用意する
-    higher_better_metrics = ['r2']
-    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
-    callbacks = [
-        visualize_cb,
-    ]
+    
     
     epochs=100
     batch_size=128
