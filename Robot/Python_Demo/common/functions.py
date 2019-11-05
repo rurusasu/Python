@@ -92,7 +92,7 @@ def r2_score(y, t):
 
     return r2
 
-def rsme_score(y, t):
+def rmse_score(y, t):
     row = y.shape[0]
     rsme = np.empty((row, 1))
     for i in range(row):
@@ -174,22 +174,29 @@ def __data_std__(data):
 
 # 正規化
 def __data_nom__(data):
+    """
+    正規化：
+    特徴量の値を一定の範囲に収める変換
+    """
     dim = data.ndim  # 受け取ったdataの次元を確認
 
     if dim == 1:  # dataが1次元(配列)のとき
         return data[:, 0] / max(abs(data[:, 0]))
     else:  # dataが2次元(行列)のとき
         data_nom = np.empty_like(data)  # dataと同じ大きさの空の行列を作成
-        #row = data.shape[0]  # dataの行数を取得
+        row = data.shape[0]  # dataの行数を取得
         col = data.shape[1]  # dataの列数を取得
 
         #for i in range(row):
         #for j in range(col):
         #data_nom[i, j] = data[i, j] / max(abs(data[i, j])) #対応する列を正規化
+        #for i in range(row):
+            #data_nom[i, :] = (data[i, :]-min(abs(data[i, :]))) / (max(abs(data[i, :]))-min(abs(data[i, :]))) #対応する行を正規化
 
-        for i in range(col):
-            data_nom[:, i] = data[:, i] / max(abs(data[:, i]))
-
+        for i in range(row):
+            for j in range(col):
+                data_nom[i, j] = (data[i, j]-min(abs(data[:, j]))) / (max(abs(data[:, j]))-min(abs(data[:, j]))) #対応する列を正規化
+                print('%d行, %d列'%(i, j))
         return data_nom
 
 
