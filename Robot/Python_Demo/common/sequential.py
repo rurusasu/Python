@@ -20,35 +20,36 @@ class Sequential:
 
         # 精度
         self.metrics_func = {}
-        #self.metrics_func['train']= None
-        #self.metrics_func['val']  = None
-        #self.metrics_func['test'] = None
-        
-        #self.metrics_log = {}
-        #self.metrics_log['train']= []
-        #self.metrics_log['val']  = []
-        #self.metrics_log['test'] = []
         self.logs = OrderedDict()
 
         self.history = {}
-        #self.history['loss'] = []
         self.history['loss_ave'] = []
         self.history['val_loss'] = []
-        #self.history['train_acc'] = []
+
+
+    def printParams(self):
+        for num in range(len(self.sequential)):
+            print('レイヤ：' + str(self.sequential[num+1]) +
+                  'ユニット数：' + str(self.sequential[num+1].units))
+
 
     def add(self, layer_name):
         #リストにレイヤの名前を代入
-        #self.sequential.append(layer_name)
         self.sequential[self.i] = layer_name
         self.units[self.i] = self.sequential[self.i].units
         self.i += 1
 
-    def compile(self, loss, optimizer='sgd', metrics=['accuracy']):
+    def compile(self, loss, optimizer='sgd', lr=0.01, metrics=['r2', 'rsme']):
         self.func['loss'] = _CallClass('common.layers', loss)
         self.func['loss'] = self.func['loss']()
-        self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
-        self.func['optimizer'] = self.func['optimizer']()
-
+        #self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
+        #self.func['optimizer'] = self.func['optimizer']()
+        #----------------------------------------
+        #レイヤ内の設定
+        #----------------------------------------
+        y = np.zeros((1, self.units[1]))
+        for layer in self.sequential.values():
+            y = layer.compile(y, optimizer, lr)
         #----------------------------------------
         # 精度検証用の関数を設定
         #----------------------------------------
@@ -59,7 +60,6 @@ class Sequential:
             if str(metric).lower() in ('rsme'):
                 metric = 'rsme_score'
             self.metrics_func[metric] = _CallFunction('common.functions', metric)
-
             #--------------------------
             # 結果保存用の配列を設定
             #--------------------------
@@ -67,13 +67,6 @@ class Sequential:
                 name = str(i) + str(metric)
                 self.logs[name] = []
 
-        """
-        for key in self.metrics_func.keys():
-            self.metrics_func[key] = func
-        """
-            #self.metrics_log[i] = None
-            
-        #self.LastLayer = globals()[loss]()
 
    #-------------------------------------------------
    # fit:学習のメイン
@@ -101,15 +94,11 @@ class Sequential:
             for call in callbacks:
                 if ('one_epoch_end' in dir(call)):
                     one_epoch_end.append(call.one_epoch_end)
-        """  
-
-        #レイヤの行列を計算する
-        y = np.zeros((batch_size, x.shape[1]))
-        for layer in self.sequential.values():
-            y = layer.fit(y)
-        
-        # バリデーションが最初からセットされているとき
-        if validation != None:
+        """ 
+        #-------------------------------
+        # Validation
+        #-------------------------------
+        if validation != None:    # バリデーションが最初からセットされているとき
             x_val = validation[0]
             t_val = validation[1]
         else:
@@ -119,7 +108,9 @@ class Sequential:
             t_val, t = __sorting__(t, 100)
 
         loop = int(x.shape[0] / batch_size)  # 繰り返し回数
+        #---------------------------
         # メインルーチン
+        #---------------------------
         for epoch in range(epochs):
             loss_sum = 0
             for j in range(loop):
@@ -163,11 +154,12 @@ class Sequential:
                 logs[key] = acc
 
             #---------------------------
-            # one_epoch_endコールバック
+            # ten_epoch_endコールバック
             #---------------------------
-            if callbacks != None:
-                for call in callbacks:
-                    call.one_epoch_end(epoch, logs)
+            if epoch % 10 == 0:
+                if callbacks != None:
+                    for call in callbacks:
+                        call.one_epoch_end(epoch, logs)
 
             #print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % (i+1, self.history['loss_ave'][i], self.history['val_loss'][i], self.metrics_log['train'][i]))
             print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f, --val_acc=%f' % \
@@ -232,3 +224,116 @@ class Sequential:
 
         acc = np.sum(metric(y, t)) / y.shape[0]
         return acc
+
+if __name__ == '__main__':
+    import keras
+    import numpy as np
+    from keras.datasets import mnist
+    from functions import*
+    from callbacks import LearningVisualizationCallback
+    import matplotlib.pyplot as plt
+
+    
+    #訓練データの読み込み
+    x = np.loadtxt(
+        "./data/learn_1.csv",  # 読み込むファイル名(例"save_data.csv")
+        dtype=float,  # データのtype
+        delimiter=",",  # 区切り文字の指定
+        ndmin=2  # 配列の最低次元
+    )
+
+    #テストデータの読み込み
+    t = np.loadtxt(
+        "./data/test_1.csv",  # 読み込むファイル名(例"save_data.csv")
+        dtype=float,  # データのtype
+        delimiter=",",  # 区切り文字の指定
+        ndmin=2  # 配列の最低次元
+    )
+
+    x_val = np.loadtxt(
+        "./data/val_l.csv",  # 読み込むファイル名(例"save_data.csv")
+        dtype=float,  # データのtype
+        delimiter=",",  # 区切り文字の指定
+        ndmin=2  # 配列の最低次元
+    )
+
+    t_val = np.loadtxt(
+        "./data/val_t.csv",  # 読み込むファイル名(例"save_data.csv")
+        dtype=float,  # データのtype
+        delimiter=",",  # 区切り文字の指定
+        ndmin=2  # 配列の最低次元
+    )
+
+    feature = 2
+    #-------------------------------
+    # DataFeature
+    #-------------------------------
+    if feature != None:
+            x_train = Datafeature(x, feature)
+            t_train = Datafeature(t, feature)
+            x_val = Datafeature(x_val, feature)
+            t_val = Datafeature(t_val, feature)
+
+    # クロスバリエーション
+    #x_train, x_test, t_train, t_test, x_val, t_val = \
+        #train_test_splint(x, t, 1000, 100, random_state=1)
+    
+    """
+    #データを読み込む
+    (x_train, t_train), (x_test, t_test) = mnist.load_data()
+
+    #データをfloat型に変換
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+
+    #0～255までの範囲のデータを0～1までの範囲に変更
+    x_train /= 255
+    x_test /= 255
+
+    #Mnistデータを加工する
+    x_train = x_train.reshape(60000, 784)  # 1次元配列に変換
+    x_test = x_test.reshape(10000, 784)
+
+    #正解データの加工
+    t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
+    t_test = keras.utils.to_categorical(t_test,  10)
+    """
+
+
+    # 学習曲線を可視化するコールバックを用意する
+    higher_better_metrics = ['r2']
+    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
+    callbacks = [
+        visualize_cb,
+    ]
+
+    model = Sequential()
+    model.add(Input(input_shape=x_train.shape[1]))
+    model.add(Dense(50, activation='relu', weight_initializer='relu'))
+    model.add(Dense(50, activation='relu', weight_initializer='relu'))
+    #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+    #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
+    #model.add(Dense(t.shape[1],  activation='softmax'))
+    #model.compile(loss='cross_entropy_error')
+    model.add(Dense(t_train.shape[1], activation = 'liner'))
+    model.compile(loss='mean_squared_error',
+                  optimizer='nag', metrics=['r2', 'rsme'])
+    
+    epochs = 100
+    batch_size = 128
+
+    history = model.fit(x_train, t_train, batch_size=batch_size,
+                        epochs=epochs, validation=None, callbacks=callbacks)
+
+    # lossグラフ
+    loss = history['loss_ave']
+    val_loss = history['val_loss']
+
+    nb_epoch = len(loss)
+    plt.plot(range(nb_epoch), loss, marker='.', label='loss')
+    plt.plot(range(nb_epoch), val_loss, marker='.', label='val_loss')
+    plt.legend(loc='best', fontsize=10)
+    plt.grid()
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.show()

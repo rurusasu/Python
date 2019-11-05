@@ -1,14 +1,14 @@
 # cording: utf-8
 
+import sys, os
+sys.path.append(os.getcwd())
 import numpy as np
 import PySimpleGUI as sg
-import sys
-import os
-sys.path.append(os.getcwd())
-from nn import*
+from common.layers import Input, Dense
+from common.sequential import Sequential
+from common.functions import Datafeature
+from common.callbacks import LearningVisualizationCallback
 
-# コンストラクタ
-nn = NeuralNet()
 
 def __filePath__(file_name):
     path = './data/' + str(file_name)
@@ -34,18 +34,20 @@ def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
     #dataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
 
-def NodeAdd_click(layer, Node, weight, bias, activation):
-    if layer is 'input':
-       
-    elif layer is 'Dense':
+def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):
+    if Node != int:
+            Node = int(Node)
+
+    if layerName == 'input':
+        model.add(Input(input_shape=Node))
+    elif layerName == 'Dense':
+        model.add(Dense(Node, activation, weight, bias))
+    model.printParams()
 
 
-
-def NetMake_click(loss):
-    # コンストラクタ
-    #nn = NeuralNet()
-
-    nn.netmake(loss)
+def NetMake_click(loss, optimizer):
+    model.compile(loss, optimizer=optimizer)
+    print('コンパイル完了')
 
 
 def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
@@ -60,12 +62,15 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
     if epochs != int:
         epochs = int(epochs)
 
+    #---------------------
     # データの読み込み
-    #訓練データの読み込み
+    #---------------------
     x = dataLoad(orgLRN_Path, float)
     t = dataLoad(orgTrg_Path, float)
 
-    # Validationデータ
+    #-----------------------------
+    # Validationデータの読み込み
+    #-----------------------------
     if valPath != None:
         valRLN_Path = valPath[0]
         valTrg_Path = valPath[1]
@@ -77,11 +82,29 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
     else:
         validation = None
 
-    nn.nn(x, t, batch_size, epochs, feature, validation)
+    #-------------------------------
+    # DataFeature
+    #-------------------------------
+    if feature != None:
+            x = Datafeature(x, feature)
+            t = Datafeature(t, feature)
+            if validation != None:
+                x_val = Datafeature(x_val, feature)
+                t_val = Datafeature(t_val, feature)
+                validation = (x_val, t_val)
+
+    # 学習曲線を可視化するコールバックを用意する
+    higher_better_metrics = ['r2']
+    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
+    callbacks = [
+        visualize_cb,
+    ]
+
+    model.fit(x=x, t=t, batch_size=batch_size, epochs=epochs, validation=validation, callbacks=callbacks)
 
 
-def NetWorkTree():
-    treedata = sg.TreeData()
+#def NetWorkTree():
+
 
 # ----- Column Definition ----- #
 dataConv = [
@@ -97,15 +120,25 @@ dataConv = [
 
 NetMake = [
     [sg.Text('層の種類'), sg.Text('ユニット数')],
-    [sg.InputCombo(('input', 'Dense'), size=(15, 1)),
-     sg.InputText('50', size=(5, 1))],
+    [sg.InputCombo(('input', 'Dense'), size=(15, 1), key='-LayerName-'),
+     sg.InputText('50', size=(5, 1), key='-Node-')],
     [sg.Text('重みの初期値')],
-    [sg.InputCombo(('Xavier', 'He'), size=(15, 1))],
+    [sg.InputCombo(('He', 'Xavier',), size=(15, 1), key='-weightInit-')],
+    [sg.Text('閾値の初期値')],
+    [sg.InputCombo(('ZEROS',), size=(15, 1), key='-biasInit-')],
     [sg.Text('活性化関数')],
-    [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1))],
-    [sg.Button('add', key='-NodeAdd-')],
+    [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1), key='-activation-'),
+     sg.Button('add', key='-LayerAdd-')],
     [sg.Text('損失関数')],
     [sg.InputCombo(('mean_squared_error',), size=(20, 1), key='-loss-')],
+    [sg.Text('最適化')],
+    [sg.InputCombo(('sgd',
+                    'momentum_sgd',
+                    'nag',
+                    'ada_grad',
+                    'rmsprop',
+                    'ada_delta',
+                    'adam',), size=(20, 1), key='-optimizer-')],
     [sg.Text('評価関数')],
     [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],
     [sg.Button('NetMake', key='-NetMake-')]]
@@ -147,16 +180,24 @@ layout = [
 
 window = sg.Window('NeuralNet', layout, default_element_size=(40, 1))
 
+# コンストラクタ
+model = Sequential()
+
 while True:
     event, values = window.Read(timeout=10)
     if event is None or event == 'Quit':
         break
     if event is '-DataMake-':
         DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
-    elif event is '-NodeAdd-':
-
+    # Networkの層を追加する。
+    elif event is '-LayerAdd-':
+        LayerAdd_click(layerName = values['-LayerName-'], 
+                        Node = values['-Node-'], 
+                        weight = values['-weightInit-'],
+                        bias = values['-biasInit-'],
+                        activation = values['-activation-'])
     elif event is '-NetMake-':
-        NetMake_click(values['-loss-'])
+        NetMake_click(values['-loss-'], values['-optimizer-'])
     # Trainig
     elif event is '-TrainingRUN-':
         #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], feature, 

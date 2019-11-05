@@ -12,21 +12,29 @@ class NeuralNet:
     def __init__(self):
         self.model = Sequential()
 
-    def LayerAdd(self, layerName):
+    def LayerAdd(self, layerName, Node, weight=None, bias=None, activation=None):
+        if Node != int:
+            Node = int(Node)
+        
+        if layerName == 'input':
+            self.model.add(Input(input_shape=Node))
+        elif layerName == 'Dense':
+            self.model.add(Dense(Node, activation, weight, bias))
 
+        self.model.printParams()
 
-    def netmake(self, inputValiable, loss):
-        self.model.add(Input(input_shape=x.shape[1]))
-        self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
-        self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
+    def netmake(self, loss):
+        #self.model.add(Input(input_shape=x.shape[1]))
+        #self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
+        #self.model.add(Dense(50, activation='relu', weight_initializer='relu'))
         #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
         #model.add(Dense(50, activation='sigmoid', weight_initializer='sigmoid'))
         #model.add(Dense(t.shape[1],  activation='softmax'))
         #model.compile(loss='cross_entropy_error')
-        self.model.add(Dense(t.shape[1], activation = 'liner'))
+        #self.model.add(Dense(t.shape[1], activation = 'liner'))
 
         self.model.compile(loss=loss, metrics = ['r2', 'rsme'])
-
+        print('コンパイル完了')
 
     def nn(self, x, t, batch_size, epochs, feature=None, validation=None):
         """
@@ -82,7 +90,7 @@ class NeuralNet:
         model.add(Dense(t.shape[1], activation = 'liner'))
         model.compile(loss='mean_squared_error', metrics = ['r2', 'rsme'])
         """
-        self.history = model.fit(x, t, batch_size=batch_size,
+        history = self.model.fit(x, t, batch_size=batch_size,
                             epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
 
         # lossグラフ
@@ -105,9 +113,15 @@ if __name__ == "__main__":
     import numpy as np
     from common.functions import*
 
-    
+
+    model = NeuralNet()
+    model.LayerAdd(input, 3)
+    model.LayerAdd(Dense, 50, weight='He', bias='zeros', activation='relu')
+    model.LayerAdd(Dense, 50, weight='He', bias='zeros', activation='relu')
+    model.LayerAdd(Dense, 3, weight='He', bias='zeros', activation='liner')
+    model.netmake('mean_squared_error')
     #訓練データの読み込み
-    x = np.loadtxt(
+    x_train = np.loadtxt(
         "./data/learn_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
@@ -115,7 +129,7 @@ if __name__ == "__main__":
         )
 
     #テストデータの読み込み
-    t = np.loadtxt(
+    t_train = np.loadtxt(
         "./data/test_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
@@ -155,7 +169,7 @@ if __name__ == "__main__":
     # クロスバリエーション
     x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1000, 100, random_state=1)
     """
-
+    """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
 
@@ -174,7 +188,7 @@ if __name__ == "__main__":
     #正解データの加工
     t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
-    
+    """
 
     
     
@@ -182,6 +196,5 @@ if __name__ == "__main__":
     batch_size=128
 
     #nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val), callbacks=callbacks)
-    nn(x_train, t_train, batch_size=batch_size, epochs=epochs,
-       feature=2, callbacks=callbacks)
+    model.nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2)
     
