@@ -46,9 +46,11 @@ def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):
     model.printParams()
 
 
-def NetMake_click(loss, optimizer):
-    model.compile(loss, optimizer=optimizer)
+def NetMake_click(loss, optimizer, metrics):
+    metrics = [metrics]
+    model.compile(loss, optimizer=optimizer, metrics=metrics)
     print('コンパイル完了')
+
 
 
 def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
@@ -68,31 +70,30 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
     #---------------------
     x = dataLoad(orgLRN_Path, float)
     t = dataLoad(orgTrg_Path, float)
-
+    #-------------------------------
+    # DataFeature
+    #-------------------------------
+    if feature != None:
+        x = Datafeature(x, feature)
+        t = Datafeature(t, feature)
     #-----------------------------
     # Validationデータの読み込み
     #-----------------------------
     if valPath != None:
         valRLN_Path = valPath[0]
         valTrg_Path = valPath[1]
-
         x_val = dataLoad(valRLN_Path, float)
         t_val = dataLoad(valTrg_Path, float)
+        #-------------------------------
+        # DataFeature
+        #-------------------------------
+        if feature != None:
+            x_val = Datafeature(x_val, feature)
+            t_val = Datafeature(t_val, feature)
 
         validation = (x_val, t_val)
     else:
         validation = None
-
-    #-------------------------------
-    # DataFeature
-    #-------------------------------
-    if feature != None:
-            x = Datafeature(x, feature)
-            t = Datafeature(t, feature)
-            if validation != None:
-                x_val = Datafeature(x_val, feature)
-                t_val = Datafeature(t_val, feature)
-                validation = (x_val, t_val)
 
     # 学習曲線を可視化するコールバックを用意する
     higher_better_metrics = ['r2']
@@ -141,7 +142,7 @@ NetMake = [
                     'ada_delta',
                     'adam',), size=(20, 1), key='-optimizer-')],
     [sg.Text('評価関数')],
-    [sg.InputCombo(('r2', 'rmse'), size=(15, 1))],
+    [sg.InputCombo(('r2', 'rmse'), size=(15, 1), key='-metrics-')],
     [sg.Button('NetMake', key='-NetMake-')]]
 
 
@@ -198,7 +199,8 @@ while True:
                         bias = values['-biasInit-'],
                         activation = values['-activation-'])
     elif event is '-NetMake-':
-        NetMake_click(values['-loss-'], values['-optimizer-'])
+        NetMake_click(values['-loss-'], values['-optimizer-'], values['-metrics-'])
+        #NetMake_click(values['-loss-'])
     # Trainig
     elif event is '-TrainingRUN-':
         #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], feature, 

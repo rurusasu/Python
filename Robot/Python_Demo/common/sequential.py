@@ -39,7 +39,7 @@ class Sequential:
         self.units[self.i] = self.sequential[self.i].units
         self.i += 1
 
-    def compile(self, loss, optimizer='sgd', lr=0.01, metrics=['r2', 'rsme']):
+    def compile(self, loss, optimizer='sgd', lr=0.01, metrics=['r2', 'rmse']):
         self.func['loss'] = _CallClass('common.layers', loss)
         self.func['loss'] = self.func['loss']()
         #self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
@@ -57,8 +57,8 @@ class Sequential:
         for metric in metrics:
             if str(metric).lower() in ('r2'):
                 metric = 'r2_score'
-            if str(metric).lower() in ('rsme'):
-                metric = 'rsme_score'
+            if str(metric).lower() in ('rmse'):
+                metric = 'rmse_score'
             self.metrics_func[metric] = _CallFunction('common.functions', metric)
             #--------------------------
             # 結果保存用の配列を設定
@@ -142,24 +142,25 @@ class Sequential:
             for key, List in self.logs.items():
                 metric = [x for x in self.metrics_func.keys() if x in key][0]
                 if 'train' in key:
-                    acc = self.accuracy(
+                    acc_train = self.accuracy(
                         x_batch, t_batch, self.metrics_func[metric])
-                    List.append(acc)
-                    prt_train_acc.append(acc)
+                    List.append(acc_train)
+                    prt_train_acc.append(acc_train)
+                    logs[key] = acc_train
                 if 'val' in key:
-                    acc = self.accuracy(
+                    acc_val = self.accuracy(
                         x_val, t_val, self.metrics_func[metric])
-                    List.append(acc)
-                    prt_val_acc.append(acc)
-                logs[key] = acc
+                    List.append(acc_val)
+                    prt_val_acc.append(acc_val)
+                    logs[key] = acc_val
+                
 
             #---------------------------
-            # ten_epoch_endコールバック
+            # one_epoch_endコールバック
             #---------------------------
-            if epoch % 10 == 0:
-                if callbacks != None:
-                    for call in callbacks:
-                        call.one_epoch_end(epoch, logs)
+            if callbacks != None:
+                for call in callbacks:
+                    call.one_epoch_end(epoch, logs)
 
             #print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f' % (i+1, self.history['loss_ave'][i], self.history['val_loss'][i], self.metrics_log['train'][i]))
             print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f, --val_acc=%f' % \
@@ -235,7 +236,7 @@ if __name__ == '__main__':
 
     
     #訓練データの読み込み
-    x = np.loadtxt(
+    x_train = np.loadtxt(
         "./data/learn_1.csv",  # 読み込むファイル名(例"save_data.csv")
         dtype=float,  # データのtype
         delimiter=",",  # 区切り文字の指定
@@ -243,7 +244,7 @@ if __name__ == '__main__':
     )
 
     #テストデータの読み込み
-    t = np.loadtxt(
+    t_train = np.loadtxt(
         "./data/test_1.csv",  # 読み込むファイル名(例"save_data.csv")
         dtype=float,  # データのtype
         delimiter=",",  # 区切り文字の指定
@@ -263,21 +264,21 @@ if __name__ == '__main__':
         delimiter=",",  # 区切り文字の指定
         ndmin=2  # 配列の最低次元
     )
-
+    """
     feature = 2
     #-------------------------------
     # DataFeature
     #-------------------------------
     if feature != None:
-            x_train = Datafeature(x, feature)
-            t_train = Datafeature(t, feature)
+            x_train = Datafeature(x_train, feature)
+            t_train = Datafeature(t_train, feature)
             x_val = Datafeature(x_val, feature)
             t_val = Datafeature(t_val, feature)
 
     # クロスバリエーション
     #x_train, x_test, t_train, t_test, x_val, t_val = \
         #train_test_splint(x, t, 1000, 100, random_state=1)
-    
+    """
     """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
@@ -301,7 +302,7 @@ if __name__ == '__main__':
 
 
     # 学習曲線を可視化するコールバックを用意する
-    higher_better_metrics = ['r2']
+    higher_better_metrics = ['rmse']
     visualize_cb = LearningVisualizationCallback(higher_better_metrics)
     callbacks = [
         visualize_cb,
@@ -317,13 +318,13 @@ if __name__ == '__main__':
     #model.compile(loss='cross_entropy_error')
     model.add(Dense(t_train.shape[1], activation = 'liner'))
     model.compile(loss='mean_squared_error',
-                  optimizer='nag', metrics=['r2', 'rsme'])
+                  optimizer='sgd', metrics=['rmse'])
     
     epochs = 100
     batch_size = 128
 
     history = model.fit(x_train, t_train, batch_size=batch_size,
-                        epochs=epochs, validation=None, callbacks=callbacks)
+                        epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
 
     # lossグラフ
     loss = history['loss_ave']
