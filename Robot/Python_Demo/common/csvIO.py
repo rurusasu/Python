@@ -143,15 +143,15 @@ def wirte_content(f, data):
     return error  # エラーが無ければNoneを返す
 
 
-def dataConv(Org_FilePath, Out_FilePath, col_range_end, col_range_first=0, digit=None):
+def DataConv(Org_FileName, Out_FileName, col_range_end, col_range_first=0, digit=None):
     """csvIO内の関数を用いて、2次元配列から欲しい行を取り出す。"""
-    v = open_twoD_array(Org_FilePath)
-    if digit is not None and digit is str:
+    v = open_twoD_array(Org_FileName)
+    if digit != None and digit != str:
         digit = str(10**-int(digit))
         v = twoD_FroatToStr(v, digit=digit)
     
     array = GetMultiCol(v, col_range_first=col_range_first, col_range_end=col_range_end)
-    csv_write(Out_FilePath, array)
+    csv_write(Out_FileName, array)
     
     
 
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     
     # 2D arrayにデータを変換
     #v = io.twoD_array(file_data)
-    v = io.open_twoD_array('./data/data.csv')
+    v = open_twoD_array('./data/data.csv')
     # float型の変数に2D arrayのdata typeを変換
-    v = io.twoD_FroatToStr(v, 0.01)
+    v = twoD_FroatToStr(v, 0.01)
 
     # 2D arrayから行を取得する
     #data_row = io.GetOneRow(v, 1)
@@ -185,8 +185,8 @@ if __name__ == '__main__':
     #print(type(array))
 
     # 任意の2D arrayを取得する
-    array = io.Get_AnytwoD_array(v, col_range_end=3)
+    array = Get_AnytwoD_array(v, col_range_end=3)
     #print(array)
 
     # ファイルに書き込む
-    io.csv_write('./data/test.csv', array)
+    csv_write('./data/test.csv', array)

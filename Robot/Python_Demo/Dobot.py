@@ -5,7 +5,7 @@ import os
 sys.path.append(os.getcwd())
 
 import DobotDllType as dType
-from common.DobotFunction import initDobot, _OneAction, csv_write
+from common.DobotFunction import initDobot, _Act, csv_write
 from ctypes import *
 
 class Dobot:
@@ -62,14 +62,11 @@ class Dobot:
 
         if (axis in axis_list):
             if (axis == 'x'):
-                _OneAction(self.api, dType.PTPMode.PTPMOVLXYZMode,
-                        pose[0] + volume, pose[1], pose[2], pose[3])
+                self._OneAction(self.api, pose[0] + volume, pose[1], pose[2], pose[3])
             elif (axis == 'y'):
-                _OneAction(self.api, dType.PTPMode.PTPMOVLXYZMode,
-                        pose[0], pose[1] + volume, pose[2], pose[3])
+                self._OneAction(self.api, pose[0], pose[1] + volume, pose[2], pose[3])
             elif (axis == 'z'):
-                _OneAction(self.api, dType.PTPMode.PTPMOVLXYZMode,
-                        pose[0], pose[1], pose[2] + volume, pose[3])
+                self._OneAction(self.api, pose[0], pose[1], pose[2] + volume, pose[3])
             else:
                 print('rは実装されていません。')
         else:
@@ -77,6 +74,25 @@ class Dobot:
 
         # 座標をファイルへ書き込む
         csv_write(file_name, dType.GetPose(self.api))
+
+
+    # 1回動作指令を出す関数
+
+    def _OneAction(self, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+        """One step operation"""
+        if (x is None or y is None or z is None or r is None):
+            pose = dType.GetPose(self.api)
+            if x is None:
+                x=pose[0]
+            if y is None:
+                y=pose[1]
+            if z is None:
+                z=pose[2]
+            if r is None:
+                r=pose[3]
+        lastIndex = dType.SetPTPCmd(self.api, mode,
+                                    x, y, z, r, isQueued=1)[0]
+        _Act(self.api, lastIndex)
 
 
     def getpose(self):

@@ -87,6 +87,9 @@ def SaveValidation_click(CON_STR, file_name):
 
     print('testデータ取得が終了しました。')
 
+def DobotAct(CON_STR, x_pos, y_pos, z_pos):
+    CON_STR._OneAction(x_pos, y_pos, z_pos)
+
 
 # ----- Menu Definition ----- #
 menu_def = [['File', ['Open', 'Save', 'Exit', 'Properties']],
@@ -109,13 +112,22 @@ saveVal = [
 ]
 
 
+inputPoint = [
+    [sg.Text('X座標'), sg.Input(size=(5, 1), key='-x-')],
+    [sg.Text('Y座標'), sg.Input(size=(5, 1), key='-y-')],
+    [sg.Text('Z座標'), sg.Input(size=(5, 1), key='-z-')],
+    [sg.Button('ACT', key='-ACT-')]
+]
+
+
 layout = [
     [sg.Text('Dobotを接続する')], 
     [sg.Button('Conect', key='-Connect-')],
     [sg.Frame('Save', 
         [[sg.Column(saveOrg)],
          [sg.Column(saveVal)],
-        ])
+        ]),
+     sg.Frame('移動座標', inputPoint),
     ],
     [sg.Quit()],
 ]
@@ -143,3 +155,9 @@ while True:
             print('Dobotに接続していません。')
         else:
             SaveValidation_click(CON_STR, values['-valSave-'])
+    elif event is '-ACT-':
+        if CON_STR is None:
+            print('Dobotに接続していません。')
+        else:
+            DobotAct(CON_STR, values['-x-'], values['-y-'], values['-z-'])
+

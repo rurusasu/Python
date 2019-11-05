@@ -25,8 +25,19 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None):
         エポック数
     feature : int
         Feature Scalingの選択
-    """       
-    
+    """  
+    #---------------------
+    # Validation
+    #---------------------
+    x_val = validation[0]
+    t_val = validation[1]
+
+    # 標準化と正規化
+    x = Datafeature(x, feature)
+    t = Datafeature(t, feature)
+    x_val = Datafeature(x_val, feature)
+    t_val = Datafeature(t_val, feature)
+
     model = Sequential()
     model.add(Input(input_shape=x.shape[1]))
     model.add(Dense(50, activation='relu', weight_initializer='relu'))
@@ -40,14 +51,14 @@ def nn(x, t, batch_size, epochs, feature=None, validation=None):
 
     # 学習曲線を可視化するコールバック関数を用意
     higher_better_metrics = ['r2']
-    visualize_cb = LearingVisualizationCallBack(higher_better_metrics)
+    visualize_cb = LearningVisualizationCallback(higher_better_metrics)
     callbacks = [
         visualize_cb,
     ]
 
     #history=model.fit(x, t, batch_size=batch_size, epochs=epochs, validation=validation)
     history = model.fit(x, t, batch_size=batch_size,
-                        epochs=epochs, validation=validation)
+                        epochs=epochs, validation=(x_val, t_val))
 
     # lossグラフ
     loss = history['loss_ave']
@@ -71,7 +82,7 @@ if __name__ == "__main__":
 
     
     #訓練データの読み込み
-    x = np.loadtxt(
+    x_train = np.loadtxt(
         "./data/learn_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
@@ -79,13 +90,13 @@ if __name__ == "__main__":
         )
 
     #テストデータの読み込み
-    t = np.loadtxt(
+    t_train = np.loadtxt(
         "./data/test_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
         ndmin=2          #配列の最低次元
         )
-    """
+    
     x_val = np.loadtxt(
         "./data/val_l.csv",  # 読み込むファイル名(例"save_data.csv")
         dtype=float,  # データのtype
@@ -99,25 +110,14 @@ if __name__ == "__main__":
         delimiter=",",  # 区切り文字の指定
         ndmin=2  # 配列の最低次元
     )
-    """
-    """
-    #標準化
-    x = data_std(x)
-    t = data_std(t)
-    #x_val = data_std(x_val)
-    #t_val = data_std(t_val)
-
-    #正規化
-    x = data_nom(x)
-    t = data_nom(t)
-    #x_test = data_nom(x_val)
-    #t_test = data_nom(t_val)
+    
     """
     # 標準化と正規化
     x = Datafeature(x, 2) 
     t = Datafeature(t, 2)
     # クロスバリエーション
     x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1000, 100, random_state=1)
+    """
     """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()

@@ -8,6 +8,7 @@ from common.layers import Input, Dense
 from common.sequential import Sequential
 from common.functions import Datafeature
 from common.callbacks import LearningVisualizationCallback
+from common.csvIO import DataConv
 
 
 def __filePath__(file_name):
@@ -28,10 +29,10 @@ def dataLoad(filePath, dtype):
 
 # ----- The callback function ----- #
 def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
-    lrn_FileName = __filePath__(lrn_FileName)
-    tst_FileName = __filePath__(tst_FileName)
-    #dataConv(org_FileName, lrn_FileName, col_range_end=3, digit=digit)
-    #dataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
+    #lrn_FileName = __filePath__(lrn_FileName)
+    #tst_FileName = __filePath__(tst_FileName)
+    DataConv(org_FileName, lrn_FileName, col_range_end=3, digit=digit)
+    DataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
 
 def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):

@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     
     #訓練データの読み込み
-    x = np.loadtxt(
+    x_train = np.loadtxt(
         "./data/learn_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
@@ -97,13 +97,13 @@ if __name__ == "__main__":
         )
 
     #テストデータの読み込み
-    t = np.loadtxt(
+    t_train = np.loadtxt(
         "./data/test_1.csv", #読み込むファイル名(例"save_data.csv")
         dtype=float,     #データのtype
         delimiter=",",   #区切り文字の指定
         ndmin=2          #配列の最低次元
         )
-    """
+    
     x_val = np.loadtxt(
         "./data/val_l.csv",  # 読み込むファイル名(例"save_data.csv")
         dtype=float,  # データのtype
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         delimiter=",",  # 区切り文字の指定
         ndmin=2  # 配列の最低次元
     )
-    """
+    
     """
     #標準化
     x = data_std(x)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # クロスバリエーション
     x_train, x_test, t_train, t_test, x_val, t_val = train_test_splint(x, t, 1000, 100, random_state=1)
     """
-
+    """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     #正解データの加工
     t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
-    
+    """
 
     
     
@@ -164,6 +164,5 @@ if __name__ == "__main__":
     batch_size=128
 
     #nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val), callbacks=callbacks)
-    nn(x_train, t_train, batch_size=batch_size, epochs=epochs,
-       feature=2, callbacks=callbacks)
+    nn(x_train, t_train, batch_size=batch_size, epochs=epochs, feature=2, validation=(x_val, t_val))
     
