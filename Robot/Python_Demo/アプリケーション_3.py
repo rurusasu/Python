@@ -1,13 +1,11 @@
 # cording: utf-8
 
-import sys
-import os
+import sys, os
 sys.path.append(os.getcwd())
 
 import PySimpleGUI as sg
 import numpy as np
 from Dobot import*
-from common.csvIO import dataConv
 
 
 def __filePath__(file_name):
@@ -137,13 +135,12 @@ window = sg.Window('Dobot', layout, default_element_size=(40, 1))
 # ボタンを押したときのイベントとボタンが返す値を代入
 #event, values = window.Read()
 
-CON_STR = None
+CON_STR = Dobot()
 while True:
     event, values = window.Read(timeout=10)
-    if event is None or event == 'Quit':
+    if event is 'Quit':
         break
     if event is '-Connect-':
-        CON_STR = Dobot()
         CON_STR.connect()
     elif event is '-SaveOriginal-':
         if CON_STR is None:

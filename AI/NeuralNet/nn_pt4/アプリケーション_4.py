@@ -33,8 +33,8 @@ def DataMake_click(importDirPath, outputDirPath, org_FileName, lrn_FileName, tst
     org_FileName = __filePath__(importDirPath, org_FileName)
     lrn_FileName = __filePath__(outputDirPath, lrn_FileName)
     tst_FileName = __filePath__(outputDirPath, tst_FileName)
-    DataConv(org_FileName, lrn_FileName, col_range_end=3, digit=digit)
-    DataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
+    DataConv(org_FileName, lrn_FileName, col_range_end=2, digit=digit)
+    DataConv(org_FileName, tst_FileName, col_range_first=3, col_range_end=3, digit=digit)
 
 
 def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):
@@ -113,9 +113,9 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
 # ----- Column Definition ----- #
 Dir = [
     [sg.Text('Import Dir')],
-    [sg.Input(size=(30, 1)), sg.FilesBrowse(key='-importDirPath-')],
+    [sg.Input(size=(30, 1)), sg.FolderBrowse(key='-importDirPath-')],
     [sg.Text('Output Dir')],
-    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-outputDirPath-')],
+    [sg.Input(size=(30, 1)), sg.FolderBrowse(key='-outputDirPath-')],
     [sg.Button('DataMake', key='-DataMake-')],
 ]
 
