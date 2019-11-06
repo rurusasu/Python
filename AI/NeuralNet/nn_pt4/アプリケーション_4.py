@@ -11,8 +11,8 @@ from common.callbacks import LearningVisualizationCallback
 from common.csvIO import DataConv
 
 
-def __filePath__(file_name):
-    path = './data/' + str(file_name)
+def __filePath__(dir_name, file_name):
+    path = str(dir_name) + '/' + str(file_name)
     return path
 
 def dataLoad(filePath, dtype):
@@ -29,9 +29,10 @@ def dataLoad(filePath, dtype):
 
 # ----- The callback function ----- #
 
-def DataMake_click(org_FileName, lrn_FileName, tst_FileName, digit):
-    #lrn_FileName = __filePath__(lrn_FileName)
-    #tst_FileName = __filePath__(tst_FileName)
+def DataMake_click(importDirPath, outputDirPath, org_FileName, lrn_FileName, tst_FileName, digit):
+    org_FileName = __filePath__(importDirPath, org_FileName)
+    lrn_FileName = __filePath__(outputDirPath, lrn_FileName)
+    tst_FileName = __filePath__(outputDirPath, tst_FileName)
     DataConv(org_FileName, lrn_FileName, col_range_end=3, digit=digit)
     DataConv(org_FileName, tst_FileName, col_range_first=4, col_range_end=7, digit=digit)
 
@@ -110,16 +111,28 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
 
 
 # ----- Column Definition ----- #
-dataConv = [
+Dir = [
+    [sg.Text('Import Dir')],
+    [sg.Input(size=(30, 1)), sg.FilesBrowse(key='-importDirPath-')],
+    [sg.Text('Output Dir')],
+    [sg.Input(size=(30, 1)), sg.FileBrowse(key='-outputDirPath-')],
+    [sg.Button('DataMake', key='-DataMake-')],
+]
+
+convfunc = [
     [sg.Text('OrigiData')],
-    [sg.InputText('data.csv', size=(13, 1)), sg.FileBrowse(key='-orgData-')],
+    [sg.InputText('data.csv', size=(13, 1), key='-orgDataFileName-')],
     [sg.Text('LearnData')],
-    [sg.InputText('learn.csv', size=(13, 1), key='-lrnData-')],
+    [sg.InputText('learn.csv', size=(13, 1), key='-lrnDataFileName-')],
     [sg.Text('TestData'),
      sg.Text('小数点以下の桁数')],
-    [sg.InputText('test.csv', size=(13, 1), key='-tstData-'),
+    [sg.InputText('test.csv', size=(13, 1), key='-tstDataFileName-'),
      sg.InputText('2', size=(5, 1), key='-Digit-')],
-    [sg.Button('DataMake', key='-DataMake-')]]
+]
+
+dataConv = [
+    [sg.Column(Dir), sg.Column(convfunc)],
+    ]
 
 NetMake = [
     [sg.Text('層の種類'), sg.Text('ユニット数')],
@@ -177,7 +190,7 @@ NuralNet = [
 layout = [
     [sg.Frame('NetMake', NetMake),
      sg.Frame('NuralNet', NuralNet), ],
-    [sg.Frame('DataConv', dataConv), ],
+    [sg.Frame('DataConv', dataConv)],
     [sg.Quit()],
 ]
 
@@ -190,9 +203,19 @@ while True:
     event, values = window.Read(timeout=10)
     if event is None or event == 'Quit':
         break
+    #---------------------------------
+    # DataMake_click
+    #---------------------------------
     if event is '-DataMake-':
-        DataMake_click(values['-orgData-'], values['-lrnData-'], values['-tstData-'], values['-Digit-'])
+        DataMake_click(importDirPath=values['-importDirPath-'], 
+                        outputDirPath=values['-outputDirPath-'], 
+                        org_FileName=values['-orgDataFileName-'], 
+                        lrn_FileName=values['-lrnDataFileName-'], 
+                        tst_FileName=values['-tstDataFileName-'], 
+                        digit=values['-Digit-'])
+    #---------------------------------
     # Networkの層を追加する。
+    #---------------------------------
     elif event is '-LayerAdd-':
         LayerAdd_click(layerName = values['-LayerName-'], 
                         Node = values['-Node-'], 
@@ -202,9 +225,10 @@ while True:
     elif event is '-NetMake-':
         NetMake_click(values['-loss-'], values['-optimizer-'], values['-metrics-'])
         #NetMake_click(values['-loss-'])
-    # Trainig
+    #----------------------------
+    # Trainig_click
+    #----------------------------
     elif event is '-TrainingRUN-':
-        #Training_click((values['-orgLRN-'], values['-orgTrg-']), values['Batch'], values['epochs'], feature, 
         #----------------------------
         # ラジオボタンの条件分岐
         #----------------------------
