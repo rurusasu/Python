@@ -70,23 +70,25 @@ def GetOneCol(x, col_number):
     return array
 
 
-def GetMultiCol(x, col_range_end, col_range_first=0):
+def GetMultiCol(data, range_first=0, range_end=None):
     """Get Multi col of values from 2D array"""
 
-    col_list = []
-    if col_range_first > col_range_end:
-        return
-    elif col_range_first == col_range_end:
-        return GetOneCol(x, col_range_first)
-    elif col_range_first < col_range_end:
-        for row in x:
-            col_list.append([row[j] for j in range(col_range_first, col_range_end)])
-        return col_list
+    array = np.array(data)
+    if (range_end is None or range_end is 0):
+        array = array[:, range_first:]
+    elif (range_first is range_end):
+        array = array[:, range_first]
+    elif (range_first < range_end):
+        array = array[:, [range_first, range_end+1]]
+    else:
+        assert range_end > range_first, 'GetMultiColError 行の抽出範囲が不正です。'
+    return array
 
 
-def Get_AnytwoD_array(x, row_range_top=0, row_range_bottom=0, col_range_first=0, col_range_end=0):
+def Get_AnytwoD_array(data, row_range_top=0, row_range_bottom=0, col_range_first=0, col_range_end=0):
     """Get Any 2D array"""
 
+    matrix = np.array(data)
     # エラーチェック
     if (row_range_top > row_range_bottom):
         print('行のrange開始点が終了点を超えています。')
@@ -96,18 +98,34 @@ def Get_AnytwoD_array(x, row_range_top=0, row_range_bottom=0, col_range_first=0,
         print('列のrange開始点が終了点を超えています。')
         return
     """
-
-    if (row_range_bottom == 0 and col_range_end == 0):  
-        matrix = twoD_array(x)  
-    elif (row_range_bottom != 0 and col_range_end == 0):
-        matrix = GetMultiRow(x, row_range_bottom, row_range_top)
-    elif (row_range_bottom == 0 and col_range_end != 0):
-        matrix = GetMultiCol(x, col_range_end, col_range_first)
-    else:
-        v_row = GetMultiRow(x, row_range_bottom=row_range_bottom, row_range_top=row_range_top)
-        matrix = GetMultiCol(v_row, col_range_end=col_range_end, col_range_first=col_range_first)
-
-    return matrix
+    if (row_range_top, row_range_bottom, col_range_first, col_range_end is 0):
+        return matrix
+    elif (row_range_top, row_range_bottom, col_range_first is 0): # ある列まで全行抽出
+        return matrix[:, :col_range_end]
+    elif (row_range_top, col_range_first, col_range_end is 0): # ある行まで全列抽出
+        return matrix[:row_range_bottom, col_range_first:col_range_end]
+    elif (row_range_top, row_range_bottom is 0): # 列の大きさを指定して抽出
+        assert (col_range_first < col_range_end), \
+            'Get_AnytwoD_array Error 列の抽出範囲が不正です。'
+        return matrix[:, col_range_first:col_range_end]
+    elif (col_range_first, col_range_end is 0): # 行の大きさを指定して抽出
+        assert (row_range_top < row_range_bottom), \
+            'Get_AnytwoD_array Error 行の抽出範囲が不正です。'
+        return matrix[row_range_top:row_range_bottom, :]
+    elif (row_range_top is 0 and row_range_top < row_range_bottom): # 行の終わりと列の大きさを指定して抽出
+        assert (col_range_first < col_range_end), \
+            'Get_AnytwoD_array Error 列の抽出範囲が不正です。'
+        return matrix[:row_range_bottom, col_range_first:col_range_end]
+    elif (col_range_first is 0 and col_range_first < col_range_end): # 行の大きさと列の終わりをして抽出
+        assert (row_range_top < row_range_bottom), \
+            'Get_AnytwoD_array Error 行の抽出範囲が不正です。'
+        return matrix[row_range_top:row_range_bottom, :col_range_end]
+    elif (row_range_top, col_range_first is 0): # 行と列の終わりを指定して抽出
+        return matrix[:row_range_bottom, :col_range_end]
+    else: # 任意の部分を抽出
+        assert (row_range_top < row_range_bottom and col_range_first < col_range_end), \
+            'Get_AnytwoD_array Error 配列の抽出範囲が不正です。'
+        return matrix[row_range_top:row_range_bottom, col_range_first:col_range_end]
 
 
     #--------------------------------------------------------------------------
@@ -143,6 +161,10 @@ def wirte_content(f, data):
     return error  # エラーが無ければNoneを返す
 
 
+def csv_npWrite(filePath, data):
+    np.savetxt(filePath, data, delimiter=',')
+
+
 def DataConv(Org_FileName, Out_FileName, col_range_end, col_range_first=0, digit=None):
     """csvIO内の関数を用いて、2次元配列から欲しい行を取り出す。"""
     v = open_twoD_array(Org_FileName)
@@ -150,8 +172,8 @@ def DataConv(Org_FileName, Out_FileName, col_range_end, col_range_first=0, digit
         digit = str(10**-int(digit))
         v = twoD_FroatToStr(v, digit=digit)
     
-    array = GetMultiCol(v, col_range_first=col_range_first, col_range_end=col_range_end)
-    csv_write(Out_FileName, array)
+    array = GetMultiCol(v, range_first=col_range_first, range_end=col_range_end)
+    csv_npWrite(Out_FileName, array)
     
     
 

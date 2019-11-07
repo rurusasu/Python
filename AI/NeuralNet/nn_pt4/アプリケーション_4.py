@@ -28,18 +28,18 @@ def dataLoad(filePath, dtype):
 
 
 # ----- The callback function ----- #
-
 def DataMake_click(importDirPath, outputDirPath, org_FileName, lrn_FileName, tst_FileName, digit):
+    """ Originalデータを学習用データと正解ラベルに分ける関数 """
     org_FileName = __filePath__(importDirPath, org_FileName)
     lrn_FileName = __filePath__(outputDirPath, lrn_FileName)
     tst_FileName = __filePath__(outputDirPath, tst_FileName)
-    DataConv(org_FileName, lrn_FileName, col_range_end=2, digit=digit)
-    DataConv(org_FileName, tst_FileName, col_range_first=3, col_range_end=3, digit=digit)
+    DataConv(org_FileName, lrn_FileName, col_range_end=1, digit=digit)
+    DataConv(org_FileName, tst_FileName, col_range_first=2, col_range_end=2, digit=digit)
 
 
 def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):
-    if Node != int:
-            Node = int(Node)
+    """ NetWorkにレイヤを追加していく関数 """
+    Node = int(Node)
 
     if layerName == 'input':
         model.add(Input(input_shape=Node))
@@ -49,6 +49,10 @@ def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):
 
 
 def NetMake_click(loss, optimizer, metrics):
+    """ 
+    NetWorkに損失関数、評価関数、最適化アルゴリズムをセットし、
+    モデルを構築する関数
+    """
     metrics = [metrics]
     model.compile(loss, optimizer=optimizer, metrics=metrics)
     print('コンパイル完了')
@@ -105,6 +109,10 @@ def Training_click(orgPath, batch_size, epochs, feature=None, valPath=None):
     ]
 
     model.fit(x=x, t=t, batch_size=batch_size, epochs=epochs, validation=validation, callbacks=callbacks)
+
+
+def Test_click(tstDataPath):
+    model.score()
 
 
 #def NetWorkTree():
@@ -184,6 +192,7 @@ NuralNet = [
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstRLN-')],
     [sg.Text('テスト用ラベル')],
     [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstTrg-')],
+    [sg.Button('Test', key='-TestRUN-')],
 ]
 
 
@@ -249,5 +258,5 @@ while True:
             val = None
 
         Training_click((values['-orgLRN-'], values['-orgTrg-']), values['-Batch-'], values['-epochs-'], feature, val)
-        #print(event, values)
 
+    elif event is '-TestRUN-':
