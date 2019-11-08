@@ -8,7 +8,7 @@ from ctypes import * # cdllを呼ぶために必要
 import tkinter as tk
 from tkinter import messagebox as mbox
 from tkinter import Checkbutton as cbutton
-from common.csvIO import csvIO
+from common.csvIO import*
 from nn import nn
 from common.DobotFunction import*
 
