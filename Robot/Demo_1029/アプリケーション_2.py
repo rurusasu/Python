@@ -235,13 +235,13 @@ def ValDataGet_click():
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Operation(api, file_name, 'z', -0.5*i, initPOS)
+        Operation(api, file_name, 'z', -0.3*i, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, file_name, 'x', 0.5)
+            Operation(api, file_name, 'x', 0.3)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -249,11 +249,11 @@ def ValDataGet_click():
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y', 0.5)
+                    Operation(api, file_name, 'y', 0.3)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y', -0.5)
+                    Operation(api, file_name, 'y', -0.3)
 
     print('testデータ取得が終了しました。')
 

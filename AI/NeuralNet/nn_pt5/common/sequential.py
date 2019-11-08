@@ -6,6 +6,7 @@ from common.functions import _CallClass, _CallFunction
 from common.functions import __shuffle__, __sorting__
 from common.layers import *
 from collections import OrderedDict
+import matplotlib.pyplot as plt
 
 
 class Sequential:
@@ -177,6 +178,15 @@ class Sequential:
             print('学習%d回目  --loss:%f, --val=%f, --train_acc=%f, --val_acc=%f' % \
                     (epoch+1, self.history['loss_ave'][epoch], self.history['val_loss'][epoch], np.min(prt_train_acc), np.min(prt_val_acc)))
 
+        
+        nb_epoch = len(self.history['loss_ave'])
+        plt.plot(range(nb_epoch), self.history['loss_ave'], marker='.', label='loss')
+        plt.plot(range(nb_epoch), self.history['val_loss'], marker='.', label='val_loss')
+        plt.legend(loc='best', fontsize=10)
+        plt.grid()
+        plt.xlabel('epoch')
+        plt.ylabel('loss')
+        plt.show()
 
         print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))
         return self.history
@@ -267,7 +277,7 @@ if __name__ == '__main__':
     from keras.datasets import mnist
     from functions import*
     from callbacks import LearningVisualizationCallback
-    import matplotlib.pyplot as plt
+    
 
     
     #訓練データの読み込み
