@@ -78,7 +78,7 @@ class Sequential:
         self.OutputBuff = []
         self.Output.history['loss']     = []
         self.Output.history['loss_ave'] = []
-        #self.Output.history['val_loss'] = []
+        self.Output.history['val_loss'] = []
         #self.Output.history['acc']      = []
         #self.Output.history['val_acc']  = []
 
@@ -135,8 +135,8 @@ class Sequential:
             TrainingI_batch = training_input[batch_mask, 0:ICS] #全データからbatch_size分データを抽出
             TrainingT_batch = training_test[batch_mask]
 
-            #x_val   = x_val_data[batch_mask, 0:ValidationCol_size]
-            #t_val   = t_val_data[batch_mask]
+            x_val   = validation_data[0]
+            t_val   = validation_data[1]
             
             print('#######    学習%d回目    ########' %Sequential.counter)
             Sequential.counter += 1
@@ -155,6 +155,11 @@ class Sequential:
                 loss = self.LastLayer.forward(output, TrainingT_batch[j])
                 loss_sum += loss
                 self.Output.history['loss'].append(loss)
+
+                if batch_size % 5 == 0:
+                    output = self.Predict(x_val)
+                    self.Output.history['val_loss'] = self.LastLayer.forward(output, t_val)/ t_val.shape[0]
+
 
             loss_ave = loss_sum / batch_size
             out_ave  = out_sum  / batch_size
@@ -212,50 +217,70 @@ class Sequential:
 
 #訓練データの読み込み
 data = np.loadtxt(
-    "save_data.csv", #読み込むファイル名(例"save_data.csv")
+    "./data/learn_1.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
     )
 
-#テストデータの読み込み
-test = np.loadtxt(
-    "test_data.csv", #読み込むファイル名(例"save_data.csv")
+#ラベルの読み込み
+label = np.loadtxt(
+    "./data/test_1.csv", #読み込むファイル名(例"save_data.csv")
     dtype=float,     #データのtype
     delimiter=",",   #区切り文字の指定
     ndmin=2          #配列の最低次元
     )
 
+#valデータの読み込み
+val_x = np.loadtxt(
+    "./data/val_l.csv", #読み込むファイル名(例"save_data.csv")
+    dtype=float,     #データのtype
+    delimiter=",",   #区切り文字の指定
+    ndmin=2          #配列の最低次元
+    )
+
+# valラベルの読み込み
+val_t = np.loadtxt(
+    "./data/val_t.csv", #読み込むファイル名(例"save_data.csv")
+    dtype=float,     #データのtype
+    delimiter=",",   #区切り文字の指定
+    ndmin=2          #配列の最低次元
+    )
 
 
 #読み込んだデータを学習用にコピーする
-data_1 = data_copy(data)
-test_1 = data_copy(test)
+#data_1 = data_copy(data)
+#test_1 = data_copy(label)
 
 #標準化
-data_ = data_std(data_1)
-test_ = data_std(test_1)
+data = data_std(data)
+label = data_std(label)
+val_x = data_std(val_x)
+val_t = data_std(val_t)
 
 #正規化
-data_ = data_nom(data_)
-test_ = data_nom(test_)
+data = data_nom(data)
+label = data_nom(label)
+val_x = data_nom(val_x)
+val_t = data_nom(val_t)
 
-#訓練データのセット
-training_input = data_[:, 0:2] #学習データをセット
-training_test = data_[:, 2]   #教師データをセット
+
+#valデータのセット
+training_input = data #学習データをセット
+training_test = label #教師データをセット
 
 #テストデータのセット
-x_test  = test_[:, 0:2] #入力データをセット
-t_test  = test_[:, 2]   #正解データをセット
+#x_test  = test_[:, 0:2] #入力データをセット
+#t_test  = test_[:, 2]   #正解データをセット
 
 
 module = Sequential()
-module.add(InputLayer(input_shape = 2))
+module.add(InputLayer(input_shape = 3))
 #module.add(Dense(50, activation = 'sigmoid'))
 #module.add(Dense(50, activation = 'sigmoid'))
 module.add(Dense(50, activation = 'relu'))
 module.add(Dense(50, activation = 'relu'))
-module.add(Dense(1,  activation = 'liner'))
+module.add(Dense(3,  activation = 'liner'))
 module.compile(loss = 'mean_squared_error')
 
 #学習
@@ -266,15 +291,15 @@ batch_size = 128
 epsilon = 0.01    # gradient descentの学習率
 reg_lambda = 0.01 # regularizationの強さ 
 
-history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_data = (x_test, t_test), epsilon=epsilon, reg_lambda=reg_lambda)
+history = module.fit(training_input, training_test, batch_size=batch_size, epochs=epochs, validation_data = (val_x, val_t), epsilon=epsilon, reg_lambda=reg_lambda)
 
 #lossグラフ
 loss     = history.history['loss_ave']
-#val_loss = history.history['val_loss']
+val_loss = history.history['val_loss']
 
 nb_epoch = len(loss)
 plt.plot(range(nb_epoch), loss,     marker = '.', label = 'loss')
-#plt.plot(range(nb_epoch), val_loss, marker = '.', label = 'val_loss')
+plt.plot(range(nb_epoch), val_loss, marker = '.', label = 'val_loss')
 plt.legend(loc = 'best', fontsize = 10)
 plt.grid()
 plt.xlabel('epoch')

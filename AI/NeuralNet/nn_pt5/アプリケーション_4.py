@@ -33,8 +33,8 @@ def DataMake_click(importDirPath, outputDirPath, org_FileName, lrn_FileName, tst
     org_FileName = __filePath__(importDirPath, org_FileName)
     lrn_FileName = __filePath__(outputDirPath, lrn_FileName)
     tst_FileName = __filePath__(outputDirPath, tst_FileName)
-    DataConv(org_FileName, lrn_FileName, col_range_end=1, digit=digit)
-    DataConv(org_FileName, tst_FileName, col_range_first=2, col_range_end=2, digit=digit)
+    DataConv(org_FileName, lrn_FileName, col_range_end=2, digit=digit)
+    DataConv(org_FileName, tst_FileName, col_range_first=3, digit=digit)
 
 
 def LayerAdd_click(layerName, Node, weight=None, bias=None, activation=None):

@@ -318,7 +318,7 @@ if __name__ == '__main__':
     #model.compile(loss='cross_entropy_error')
     model.add(Dense(t_train.shape[1], activation = 'liner'))
     model.compile(loss='mean_squared_error',
-                  optimizer='sgd', metrics=['rmse'])
+                  optimizer='sgd', metrics=['r2', 'rmse'])
     
     epochs = 100
     batch_size = 128
