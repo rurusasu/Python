@@ -9,6 +9,27 @@ import DobotDllType as dType
 #-----------------
 # Dobotの初期化
 #-----------------
+def connect(api, CON_STR):
+        # Dobot Connect
+        # ConectDobot(const char* pointName, int baudrate)
+        state = dType.ConnectDobot(api, "", 115200)[0]
+        if (state != CON_STR[dType.DobotConnect.DobotConnect_NoError]):
+            print('Dobot Connect', 'Dobotに接続できませんでした。')
+            return
+
+        #Clean Command Queued
+        dType.SetQueuedCmdClear(api)
+
+        #Async Motion Params Setting
+        dType.SetHOMEParams(api, 150, -200, 100, 0, isQueued=1)
+
+        #Async Home
+        dType.SetHOMECmd(api, temp=0, isQueued=1)
+
+        initDobot(api)
+
+
+
 def initDobot(api):
     # Clean Command Queued
     dType.SetQueuedCmdClear(api)
@@ -45,12 +66,56 @@ def initDobot(api):
 #-----------------------------------
 # Dobotの動作用_汎用関数
 #-----------------------------------
+def Operation(api, file_name, axis, volume=1, initPOS=None):
+        """
+        A function that sends a motion command in any direction
+
+        Parameters
+        ----------
+        api : CDLL
+        axis : str
+            移動方向
+        volume : int
+            移動量
+        """
+        axis_list = ['x', 'y', 'z', 'r']
+        if (initPOS != None):
+            pose = initPOS
+        else:
+            pose = dType.GetPose(self.api)
+
+        if (axis in axis_list):
+            if (axis == 'x'):
+                self._OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3])
+            elif (axis == 'y'):
+                self._OneAction(api, pose[0], pose[1] + volume, pose[2], pose[3])
+            elif (axis == 'z'):
+                self._OneAction(api, pose[0], pose[1], pose[2] + volume, pose[3])
+            else:
+                print('rは実装されていません。')
+        else:
+            print('移動軸に問題があります！')
+
+        # 座標をファイルへ書き込む
+        csv_write(file_name, dType.GetPose(self.api))
+
+
 # 1回動作指令を出す関数
-def _OneAction(api, mode, x, y, z, r):
-    """One step operation"""
-    lastIndex = dType.SetPTPCmd(api, mode,
-                                x, y, z, r, isQueued=1)[0]
-    _Act(api, lastIndex)
+def _OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+        """One step operation"""
+        if (x is None or y is None or z is None or r is None):
+            pose = dType.GetPose(api)
+            if x is None:
+                x=pose[0]
+            if y is None:
+                y=pose[1]
+            if z is None:
+                z=pose[2]
+            if r is None:
+                r=pose[3]
+        lastIndex = dType.SetPTPCmd(api, mode,
+                                    x, y, z, r, isQueued=1)[0]
+        _Act(api, lastIndex)
 
 
 def _Act(api, lastIndex):
