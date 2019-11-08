@@ -11,7 +11,7 @@ from ctypes import *
 class Dobot:
     def __init__(self):
         # Load Dll
-        self. api = cdll.LoadLibrary('DobotDll.dll')
+        self.api = cdll.LoadLibrary('DobotDll.dll')
         
         self.CON_STR = {
             dType.DobotConnect.DobotConnect_NoError:  'DobotConnect_NoError',

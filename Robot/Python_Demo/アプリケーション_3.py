@@ -5,7 +5,13 @@ sys.path.append(os.getcwd())
 
 import PySimpleGUI as sg
 import numpy as np
-from Dobot import*
+from Dobot_2 import Dobot
+
+import DobotDllType as dType
+from common.DobotFunction import initDobot, _Act, csv_write
+from ctypes import cdll
+
+api = cdll.LoadLibrary('DobotDll.dll')
 
 
 def __filePath__(file_name):
@@ -135,7 +141,7 @@ window = sg.Window('Dobot', layout, default_element_size=(40, 1))
 # ボタンを押したときのイベントとボタンが返す値を代入
 #event, values = window.Read()
 
-CON_STR = Dobot()
+CON_STR = Dobot(api)
 while True:
     event, values = window.Read(timeout=10)
     if event is 'Quit':
