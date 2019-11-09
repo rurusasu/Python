@@ -179,15 +179,16 @@ class Sequential:
                     (epoch+1, self.history['loss_ave'][epoch], self.history['val_loss'][epoch], np.min(prt_train_acc), np.min(prt_val_acc)))
 
         
-        nb_epoch = len(self.history['loss_ave'])
+        nb_epoch = epochs
         plt.plot(range(nb_epoch), self.history['loss_ave'], marker='.', label='loss')
         plt.plot(range(nb_epoch), self.history['val_loss'], marker='.', label='val_loss')
         plt.legend(loc='best', fontsize=10)
         plt.grid()
         plt.xlabel('epoch')
         plt.ylabel('loss')
+        # 再描画する
+        plt.pause(0.001)
         plt.show()
-
         print('loss=%f, val=%f' % (self.history['loss_ave'][epochs-1], self.history['val_loss'][epochs-1]))
         return self.history
 
@@ -279,7 +280,7 @@ if __name__ == '__main__':
     from callbacks import LearningVisualizationCallback
     
 
-    
+    """
     #訓練データの読み込み
     x_train = np.loadtxt(
         "./data/learn_1.csv",  # 読み込むファイル名(例"save_data.csv")
@@ -310,7 +311,7 @@ if __name__ == '__main__':
         ndmin=2  # 配列の最低次元
     )
     
-    feature = 1
+    feature = None
     #-------------------------------
     # DataFeature
     #-------------------------------
@@ -323,8 +324,8 @@ if __name__ == '__main__':
     # クロスバリエーション
     #x_train, x_test, t_train, t_test, x_val, t_val = \
         #train_test_splint(x_train, t_train, 1000, 100, random_state=1)
-    
     """
+    
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
 
@@ -343,7 +344,7 @@ if __name__ == '__main__':
     #正解データの加工
     t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
-    """
+    
 
 
     # 学習曲線を可視化するコールバックを用意する
@@ -365,23 +366,14 @@ if __name__ == '__main__':
     model.compile(loss='mean_squared_error',
                   optimizer='sgd', metrics=['r2'])
     
-    epochs = 100
+    epochs = 10
     batch_size = 128
 
     history = model.fit(x_train, t_train, batch_size=batch_size,
-                        epochs=epochs, validation=(x_val, t_val), callbacks=callbacks)
+                        epochs=epochs, validation=None, callbacks=callbacks)
 
     #score = model.evaluate(x_test, t_test)
 
     # lossグラフ
     loss = history['loss_ave']
     val_loss = history['val_loss']
-
-    nb_epoch = len(loss)
-    plt.plot(range(nb_epoch), loss, marker='.', label='loss')
-    plt.plot(range(nb_epoch), val_loss, marker='.', label='val_loss')
-    plt.legend(loc='best', fontsize=10)
-    plt.grid()
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.show()
