@@ -49,8 +49,8 @@ def Connect_click():
 
 
 def SaveOriginal_click(CON_STR, file_name):
-    x_roop = 100
-    y_roop = 100
+    x_roop = 10
+    y_roop = 20
     z_roop = 1
 
     file_name = __filePath__(file_name)
@@ -62,13 +62,13 @@ def SaveOriginal_click(CON_STR, file_name):
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Operation(api, file_name, 'z', -i, initPOS)
+        #Operation(api, file_name, 'z', -i*10, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, file_name, 'y')
+            Operation(api, file_name, 'y', 10)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -76,11 +76,11 @@ def SaveOriginal_click(CON_STR, file_name):
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'x')
+                    Operation(api, file_name, 'x', 10)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'x', -1)
+                    Operation(api, file_name, 'x', -10)
 
     print('データ取得が終了しました。')
 
