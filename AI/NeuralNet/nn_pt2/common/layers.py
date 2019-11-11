@@ -1,6 +1,6 @@
 #coding: utf-8
 import sys, os
-sys.path.append(os.pardir)
+sys.path.append(os.getcwd())
 import numpy as np
 from common.functions import _CallFunction, _CallClass
 from collections import OrderedDict
@@ -15,6 +15,8 @@ class MulLayer:
         self.x = x
         self.y = y
         out = x * y
+        
+        return out
 
     def backward(self, dout):
         dx = dout * self.y #xとyをひっくり返す
@@ -91,18 +93,42 @@ class liner:
         return delta
 
 
+# softmaxレイヤ
+"""
+class softmax:
+    def __init__(self):
+        self.l = None
+        #self.t = None
+        self.func = _CallFunction('common.functions', 'softmax')
+
+    def forward(self, x):
+        self.l = self.func(x)
+        return self.l
+    
+    def backward(self, dout):
+        if (dout.shape[0] == dout.shape[1]):
+            dout = self.l * (1 - self.l)
+        else:
+            for i in range(self.l.shape[0]):
+                for j in range(self.l.shape):
+"""
+
 #Affineレイヤ
 #アフィン変換を行うレイヤ(重み付き信号の総和を計算する)
 class affine:
-    def __init__(self, W, b, lr):
+    def __init__(self, W, b, optimizer, lr):
         # パラメータの設定
-        self.W = W
-        self.B = b
-        self.dW = None # 重みの微分
-        self.dB = None # バイアスの微分
-        self.lr = lr   # gradient descentの学習率
+        #self.W = W
+        #self.B = b
+        #self.dW = None # 重みの微分
+        #self.dB = None # バイアスの微分
+        #self.lr = lr   # gradient descentの学習率
+        self.params={'W':W, 'B':b}
+        self.diffparams = {'W': None, 'B': None}
         self.x = None
         self.original_x_shape = None
+        self.optimizer = _CallClass('common.optimizer', optimizer)
+        self.optimizer = self.optimizer(lr)
 
 
     def forward(self, x):
@@ -111,17 +137,22 @@ class affine:
         x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
         
-        out = self.x.dot(self.W) + self.B
+        #out = self.x.dot(self.W) + self.B
+        out = self.x.dot(self.params['W']) + self.params['B']
 
         return out
 
     def backward(self, dout):
-        dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.x.T, dout)
-        self.dB = np.sum(dout, axis = 0)
-
-        self.W -= self.lr * self.dW
-        self.B -= self.lr * self.dB
+        #dx = np.dot(dout, self.W.T)
+        #self.dW = np.dot(self.x.T, dout)
+        #self.dB = np.sum(dout, axis = 0)
+        #self.W -= self.lr * self.dW
+        #self.B -= self.lr * self.dB
+        dx = np.dot(dout, self.params['W'].T)
+        self.diffparams['W'] = np.dot(self.x.T, dout)
+        self.diffparams['B'] = np.sum(dout, axis = 0)
+        #self.optimizer(self.lr)
+        self.optimizer.update(self.params, self.diffparams)
 
         dx = dx.reshape(self.original_x_shape) #逆伝播を入力信号の形に戻す
         return dx
@@ -131,7 +162,6 @@ class affine:
 #2乗和誤差レイヤ
 class mean_squared_error:
     def __init__(self):
-        #self.loss = None #損失
         self.y = None  # linerの出力
         self.t = None  # 教師データ
         self.func = _CallFunction('common.functions', 'mean_squared_error')
@@ -143,7 +173,7 @@ class mean_squared_error:
 
         return loss
 
-    def backward(self, y, t, dout=1):
+    def backward(self, dout=1):
         if dout == 1:
             batch_size = self.t.shape[0]
             dout = (self.y - self.t) / batch_size
@@ -156,11 +186,15 @@ class SoftmaxWithLoss:
         self.loss = None #損失
         self.y = None    #softmaxの出力
         self.t = None    #教師データ
+        self.func = _CallFunction('common.functions', 'softmax')
+        self.loss = _CallFunction('common.functions', 'cross_entropy_error')
 
     def forward(self, x, t):
         self.t = t
-        self.y = softmax(x)
-        self.loss = cross_entropy_error(self.y, self.t)
+        #self.y = softmax(x)
+        self.y = self.func(x)
+        #self.loss = cross_entropy_error(self.y, self.t)
+        self.loss = self.loss(self.y, self.t)
 
         return self.loss
     
@@ -180,14 +214,17 @@ class SoftmaxWithLoss:
 ####    新しくレイヤを追加    #####
 ###################################
 #入力レイヤ
-class InputLayer:
+class Input:
     def __init__(self, input_shape):
         self.units  = input_shape #ユニットの数
 
-
-    def fit(self, x):
+    def compile(self, x, optimizer, lr):
         # 入力層の行数と入力データの行数が等しいとき
         # もしくは入力層の行数と入力データの列数が等しいとき
+        assert x.shape[1] == self.units, '入力配列と入力層のNode数が一致しません。'
+        
+        return x
+        """
         if (x.shape[0] == self.units):
             x = x.T
             return x
@@ -201,6 +238,7 @@ class InputLayer:
             print('InpuLayer fit \
                     Data Input Error')
             return None
+        """
 
     def forward(self, x):
         return x
@@ -211,7 +249,7 @@ class InputLayer:
 
 #全結合レイヤ
 class Dense:
-    def __init__(self,  units, activation, weight_initializer='he', bias_initializer='zeros'):
+    def __init__(self, units, activation, weight_initializer='he', bias_initializer='zeros'):
         if (units != None and type(units) == int):
             self.units = units
         # 損失関数名
@@ -224,6 +262,8 @@ class Dense:
         self.params = {}
         self.params['W'] = None  # 重み
         self.params['b'] = None  # 閾値
+        self.params['dW'] = None
+        self.params['db'] = None
         # 内部レイヤ
         self.func = OrderedDict()  # 関数の辞書
         self.func['Affine'] = None
@@ -231,15 +271,15 @@ class Dense:
         self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
   
 
-    def fit(self, x):
+    def compile(self, x, optimizer, lr=0.01):
         #初期値を設定
         self.params['W'] = self.__InitWeight__(
             x.shape[1], self.units, 50, self.initializer['W'])
         self.params['b'] = self.__InitBias__(self.units, self.initializer['b'])
 
         #レイヤの設定
-        self.__SetFunc__(
-            self.params['W'], self.params['b'], self.activation, lr=0.01)
+        self.__SetFunc__(self.params['W'], self.params['b'], 
+                                self.activation, optimizer, lr)
 
         x = self.forward(x)
 
@@ -275,11 +315,13 @@ class Dense:
         row : 重みの行数
         bias_initializer : biasを指定
         """
+        if bias_initializer.lower() in 'zeros':
+            bias_initializer = 'zeros'
         method = _CallFunction('common.bias', bias_initializer)
         return method(row)
 
 
-    def __SetFunc__(self, weight, bias, activation, lr):
+    def __SetFunc__(self, weight, bias, activation, optimizer, lr):
         """
         ユニット内部関数をセットする
 
@@ -289,8 +331,7 @@ class Dense:
             学習率
         """
         #レイヤの設定
-        self.func['Affine'] = globals()['affine'](
-            self.params['W'], self.params['b'], lr)  # アフィン変換を行うレイヤをセット
+        self.func['Affine'] = globals()['affine'](self.params['W'], self.params['b'], optimizer, lr)  # アフィン変換を行うレイヤをセット
         self.func['Activation'] = globals()[self.activation]()
 
 
@@ -309,6 +350,14 @@ class Dense:
         del revDense
 
         return dout
+
+
+    def __optimizer__(self, optimizer_Path):
+        self.params['dW'] = self.func['Affine'].dW
+        self.params['db'] = self.func['Affine'].dB
+
+
+
 
 
 class BatchNormalization:
