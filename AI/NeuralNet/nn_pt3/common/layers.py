@@ -265,11 +265,12 @@ class Dense:
         self.params['dW'] = None
         self.params['db'] = None
         # 内部レイヤ
-        self.func = OrderedDict()  # 関数の辞書
-        self.func['Affine'] = None
-        self.func['Activation'] = None
+        #self.func = OrderedDict()  # 関数の辞書
+        #self.func['Affine'] = None
+        self.func = {}
+        self.func['Activation'] = globals()[activation]()
         self.func['optimizer'] = None
-        self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
+        #self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
         self.original_x_shape = None  # 元の形を記憶させる
   
 
@@ -280,9 +281,9 @@ class Dense:
         self.params['b'] = \
             self.__InitBias__(self.units, self.initializer['b'])
 
+        #self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
         #レイヤの設定
-        self.__SetFunc__(self.params['W'], self.params['b'], 
-                                self.activation, optimizer, lr)
+        #self.__SetFunc__(self.params['W'], self.params['b'],  self.activation, optimizer, lr)
 
         x = self.forward(x)
 
@@ -334,23 +335,18 @@ class Dense:
         """
         #レイヤの設定
         #self.func['Affine'] = globals()['affine'](self.params['W'], self.params['b'], optimizer, lr)  # アフィン変換を行うレイヤをセット
-        self.func['Activation'] = globals()[self.activation]()
-        self.func['optimizer'] = _CallClass('common.optimizer', optimizer)
+        #self.func['Activation'] = globals()[self.activation]()
+        
 
 
     def forward(self, x):
-        #for layer in self.func.values():
-            #x = layer.forward(x)
         #テンソル対応
         self.original_x_shape = x.shape # 元の形を記憶させる
         x = x.reshape(x.shape[0], -1)   #奥行き方向の幅を固定しつつ、行列の大きさを変更
         self.x = x
-        
-        #out = self.x.dot(self.W) + self.B
-        out = x.dot(self.params['W']) + self.params['B']
+        out = x.dot(self.params['W']) + self.params['b']
 
-        out = self.func['Activation'].foward(out)
-        #return out
+        out = self.func['Activation'].forward(out)
         
         return out
 

@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 import numpy as np
 
 import DobotDllType as dType
-from common.DobotFunction import initDobot, Operation, _OneAction
+from common.DobotFunction import initDobot, Coordinate_Operation, Coordinate_OneAction
 from ctypes import cdll
 
 api = cdll.LoadLibrary('DobotDll.dll')
@@ -68,7 +68,7 @@ def SaveOriginal_click(CON_STR, file_name):
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, file_name, 'y', 10)
+            Coordinate_Operation(api, file_name, 'y', 10)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -76,13 +76,14 @@ def SaveOriginal_click(CON_STR, file_name):
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'x', 10)
+                    Coordinate_Operation(api, file_name, 'x', 10)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'x', -10)
+                    Coordinate_Operation(api, file_name, 'x', -10)
 
     print('データ取得が終了しました。')
+
 
 def SaveValidation_click(CON_STR, file_name):
     x_roop = 100
@@ -98,13 +99,13 @@ def SaveValidation_click(CON_STR, file_name):
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Operation(api, file_name, 'z', -0.5*i, initPOS)
+        Coordinate_Operation(api, file_name, 'z', -0.5*i, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Operation(api, file_name, 'x', 0.5)
+            Coordinate_Operation(api, file_name, 'x', 0.5)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -112,16 +113,16 @@ def SaveValidation_click(CON_STR, file_name):
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y', 0.5)
+                    Coordinate_Operation(api, file_name, 'y', 0.5)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Operation(api, file_name, 'y', -0.5)
+                    Coordinate_Operation(api, file_name, 'y', -0.5)
 
     print('testデータ取得が終了しました。')
 
 def DobotAct(x_pos, y_pos, z_pos):
-    _OneAction(api, x=x_pos, y=y_pos, z=z_pos)
+    Coordinate_OneAction(api, x=x_pos, y=y_pos, z=z_pos)
 
 
 # ----- Menu Definition ----- #

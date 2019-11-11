@@ -746,6 +746,21 @@ def GetUserParams(api):
     return [param.params1,param.params2,param.params3,param.params4,param.params5,param.params6,param.params7,param.params8]
 
 def SetHOMEParams(api,  x,  y,  z,  r,  isQueued=0):
+    """
+    初期の位置決めを行う関数
+
+    Parameters
+    ----------
+    api
+    x : int
+        x座標
+    y : int
+        y座標
+    z: int
+        z座標
+    r : int
+        手先の回転角度
+    """
     param = HOMEParams()
     param.x = x
     param.y = y
@@ -1046,6 +1061,9 @@ def GetJOGCommonParams(api):
     return [param.velocityRatio, param.accelerationRatio]
 
 def SetJOGCmd(api, isJoint, cmd, isQueued=0):
+    """
+    JOGモードでDobotに動作指令を出すコマンド
+    """
     cmdParam = JOGCmd()
     cmdParam.isJoint = isJoint
     cmdParam.cmd = cmd

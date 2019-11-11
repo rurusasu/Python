@@ -66,7 +66,8 @@ def initDobot(api):
 #-----------------------------------
 # Dobotの動作用_汎用関数
 #-----------------------------------
-def Operation(api, file_name, axis, volume=1, initPOS=None):
+# 直交座標系での動作
+def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None):
         """
         A function that sends a motion command in any direction
 
@@ -86,11 +87,11 @@ def Operation(api, file_name, axis, volume=1, initPOS=None):
 
         if (axis in axis_list):
             if (axis == 'x'):
-                _OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3])
+                Coordinate_OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3])
             elif (axis == 'y'):
-                _OneAction(api, pose[0], pose[1] + volume, pose[2], pose[3])
+                Coordinate_OneAction(api, pose[0], pose[1] + volume, pose[2], pose[3])
             elif (axis == 'z'):
-                _OneAction(api, pose[0], pose[1], pose[2] + volume, pose[3])
+                Coordinate_OneAction(api, pose[0], pose[1], pose[2] + volume, pose[3])
             else:
                 print('rは実装されていません。')
         else:
@@ -100,8 +101,8 @@ def Operation(api, file_name, axis, volume=1, initPOS=None):
         csv_write(file_name, dType.GetPose(api))
 
 
-# 1回動作指令を出す関数
-def _OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+# 直交座標系で1回動作指令を出す関数
+def Coordinate_OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """One step operation"""
         if (x is None or y is None or z is None or r is None):
             pose = dType.GetPose(api)
@@ -118,6 +119,11 @@ def _OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXY
         _Act(api, lastIndex)
 
 
+
+
+
+
+
 def _Act(api, lastIndex):
     """Function to execute command"""
     #キューに入っているコマンドを実行
@@ -129,6 +135,9 @@ def _Act(api, lastIndex):
 
     #キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
+
+
+
 
 
 #----------------------------------
