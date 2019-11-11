@@ -56,7 +56,7 @@ class Sequential:
         y = np.zeros((1, self.units[1]))
         for layer in self.sequential.values():
             #y = layer.compile(y, optimizer, lr)
-
+            self.params['W' + str(idx)] = layer.compile. 
         #----------------------------------------
         # 精度検証用の関数を設定
         #----------------------------------------
