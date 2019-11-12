@@ -218,12 +218,12 @@ class Input:
     def __init__(self, input_shape):
         self.units  = input_shape #ユニットの数
 
-    def compile(self, x, optimizer, lr):
+    def compile(self, x):
         # 入力層の行数と入力データの行数が等しいとき
         # もしくは入力層の行数と入力データの列数が等しいとき
         assert x.shape[1] == self.units, '入力配列と入力層のNode数が一致しません。'
         
-        return x
+        return 'input', x, None
         """
         if (x.shape[0] == self.units):
             x = x.T
@@ -274,7 +274,7 @@ class Dense:
         self.original_x_shape = None  # 元の形を記憶させる
   
 
-    def compile(self, x, optimizer, lr=0.01):
+    def compile(self, x):
         #初期値を設定
         self.params['W'] = \
             self.__InitWeight__(x.shape[1], self.units, 50, self.initializer['W'])
@@ -287,7 +287,7 @@ class Dense:
 
         x = self.forward(x)
 
-        return x
+        return 'Dense', x, self.params
 
     def __InitWeight__(self, row, col, n, weight_initializer='he'):
         """

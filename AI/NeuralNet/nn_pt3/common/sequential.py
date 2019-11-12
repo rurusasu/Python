@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 class Sequential:
     def __init__(self):
         self.sequential = OrderedDict()
+        self.Dense = OrderedDict()
         self.grads = OrderedDict()
         self.units = {}
+        self.params = {}
         # sequrntial内で使う関数
         self.func = {}
         self.func['loss'] = None
@@ -53,10 +55,18 @@ class Sequential:
         #----------------------------------------
         #レイヤ内の設定
         #----------------------------------------
+        idx = 1
         y = np.zeros((1, self.units[1]))
         for layer in self.sequential.values():
             #y = layer.compile(y, optimizer, lr)
-            self.params['W' + str(idx)] = layer.compile. 
+            key, y, params = layer.compile(y)
+            if key is 'input':
+                pass
+            if key is 'Dense':
+                self.Dense[key + str(idx)] = layer
+                self.params['W' + str(idx)] = params['W']
+                self.params['b' + str(idx)] = params['b']
+                idx += 1
         #----------------------------------------
         # 精度検証用の関数を設定
         #----------------------------------------
@@ -132,9 +142,12 @@ class Sequential:
                     x.shape[0], batch_size, replace=False)
                 x_batch = x[batch_mask]  # 全データからbatch_size分データを抽出
                 t_batch = t[batch_mask]
-
+                
+                grads = self.gradient(x_batch, t_batch)
+                self.func['optimizer'].update(self.params, grads)
                 #loss = self.gradient(x_batch, t_batch) # 誤差の計算
                 loss_sum += (self.history['loss'] / batch_size)
+
             loss_ave = loss_sum / loop                 # 誤差の平均値の計算
             self.history['loss_ave'].append(loss_ave)  # 誤差の保存
             
@@ -243,7 +256,8 @@ class Sequential:
 
 
     def predict(self, x):
-        for layer in self.sequential.values():
+        #for layer in self.sequential.values():
+        for layer in self.Dense.values():
             x = layer.forward(x)
         return x
     
@@ -252,22 +266,33 @@ class Sequential:
         return self.func['loss'].forward(y, t)
 
     def gradient(self, x, t):
+        """
+        関数の勾配を求める。
+        """
         #forward
         self.history['loss'] = 0
         self.history['loss'] = self.loss(x, t)
 
         # backward
         #逆伝播を行うためにレイヤを反転
-        layers = list(self.sequential.values())
+        #layers = list(self.sequential.values())
+        layers = list(self.Dense.values())
         layers.reverse()
 
         #逆伝搬および重みの更新
+        
         dout = 1
         dout = self.func['loss'].backward()
         for layer in layers:
             dout = layer.backward(dout)
-            self.grads['W'] = self.func['optimizer'].update(layer.params['W'], layer.params['dW'])
         del layers
+
+        grads = {}
+        idx = 1
+        for layer in self.Dense.values():
+            grads['W' + str(idx)] = layer.params['dW']
+            grads['b' + str(idx)] = layer.params['db']
+            idx += 1
 
         return grads
 
