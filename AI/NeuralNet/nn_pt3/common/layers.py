@@ -253,7 +253,7 @@ class Dense:
         if (units != None and type(units) == int):
             self.units = units
         # 損失関数名
-        self.activation = activation  # 活性化関数名
+        self.activation = globals()[activation]()  # 活性化関数名
         # 重みとバイアスの初期化関数名
         self.initializer = {}
         self.initializer['W'] = weight_initializer
@@ -267,10 +267,11 @@ class Dense:
         # 内部レイヤ
         #self.func = OrderedDict()  # 関数の辞書
         #self.func['Affine'] = None
-        self.func = {}
-        self.func['Activation'] = globals()[activation]()
-        self.func['optimizer'] = None
+        #self.func = {}
+        #self.func['Activation'] = globals()[activation]()
+        #self.func['optimizer'] = None
         #self.RevDense = None               #関数の辞書の反転(逆伝播で使用)
+        #self.activation
         self.original_x_shape = None  # 元の形を記憶させる
   
 
@@ -346,8 +347,8 @@ class Dense:
         self.x = x
         out = x.dot(self.params['W']) + self.params['b']
 
-        out = self.func['Activation'].forward(out)
-        
+        #out = self.func['Activation'].forward(out)
+        out = self.activation.forward(out)
         return out
 
 
@@ -358,7 +359,8 @@ class Dense:
         #    dout = revLayer.backward(dout)
         #del revDense
 
-        dout = self.func['Activation'].backward(dout)
+        #dout = self.func['Activation'].backward(dout)
+        dout = self.activation.backward(dout)
 
         dx = np.dot(dout, self.params['W'].T)
         self.params['dW'] = np.dot(self.x.T, dout)
@@ -371,13 +373,6 @@ class Dense:
 
 
         #return dout
-
-
-    def __optimizer__(self, optimizer_Path):
-        self.params['dW'] = self.func['Affine'].dW
-        self.params['db'] = self.func['Affine'].dB
-
-
 
 
 
