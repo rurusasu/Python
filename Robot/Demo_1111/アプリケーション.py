@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 import numpy as np
 
 import DobotDllType as dType
-from common.DobotFunction import initDobot, Operation, _OneAction
+from common.DobotFunction import initDobot, Operation, OneAction
 from ctypes import cdll
 
 api = cdll.LoadLibrary('DobotDll.dll')
@@ -153,15 +153,16 @@ inputPoint = [
 ]
 
 
+
+
+
 layout = [
     [sg.Text('Dobotを接続する')], 
     [sg.Button('Conect', key='-Connect-')],
     [sg.Frame('Save', 
         [[sg.Column(saveOrg)],
-         [sg.Column(saveVal)],
-        ]),
-     sg.Frame('移動座標', inputPoint),
-    ],
+         [sg.Column(saveVal)],])],
+    [sg.Frame('移動座標', inputPoint)],
     [sg.Quit()],
 ]
 
