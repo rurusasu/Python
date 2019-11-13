@@ -49,7 +49,12 @@ class Sequential:
         if layer_name.name in 'input':
             self.inputLayer = [layer_name, layer_name.units]
         elif layer_name.name in 'Dense_':
-            self.sequential[layer_name.name + str(self.i)] = [layer_name, layer_name.units]
+            self.sequential[layer_name.name + str(self.i)] = [
+                layer_name, 
+                layer_name.units,
+                layer_name.activation,
+                layer_name.initializer
+                ]
             self.i += 1
         else:
             print('実装されていないレイヤ名です。')
@@ -349,7 +354,15 @@ class Sequential:
         for key, val in params.items():
             self.params[key] = val
 
-        #for i, layer_idx in enumerate()
+    def load_model(self, file_name='model.pkl'):
+        with open(file_name, 'rb') as f:
+            model = pickle.load(f)
+        for key, val in model.items():
+            val[0] = _CallClass('common.layers', key)
+            initializer= val[3]
+            val[0] = val[0](val[1], val[2], initializer['W'], initializer['b'])
+            self.sequential[key] = val[0]
+
 
 if __name__ == '__main__':
     import keras

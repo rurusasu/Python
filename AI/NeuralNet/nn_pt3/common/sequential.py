@@ -49,7 +49,7 @@ class Sequential:
         if layer_name.name in 'input':
             self.inputLayer = [layer_name, layer_name.units]
         elif layer_name.name in 'Dense_':
-            self.sequential[layer_name.name + str(self.i)] = layer_name
+            self.sequential[layer_name.name + str(self.i)] = [layer_name, layer_name.units]
             self.i += 1
         else:
             print('実装されていないレイヤ名です。')
@@ -72,11 +72,11 @@ class Sequential:
         for key, layer in self.sequential.items():
             #y = layer.compile(y, optimizer, lr)
             #key, y, params = layer.compile(y)
-            y = layer.compile(y)
+            y = layer[0].compile(y)
             if 'Dense' in key:
                 #self.Dense[key + str(idx)] = layer
-                self.params['W' + str(idx)] = layer.params['W']
-                self.params['b' + str(idx)] = layer.params['b']
+                self.params['W' + str(idx)] = layer[0].params['W']
+                self.params['b' + str(idx)] = layer[0].params['b']
                 idx += 1
         #----------------------------------------
         # 精度検証用の関数を設定
@@ -222,6 +222,7 @@ class Sequential:
 
     def evaluate(self, x, t):
         #self.score['loss'] = []
+
         logs={}
         for i in range(x.shape[0]):
             y = x[i, :].reshape((1, -1))
@@ -243,6 +244,14 @@ class Sequential:
                         call.one_epoch_end(logs)
         
         return self.score
+
+
+    def flow(self, x):
+        x = np.array(x)
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
+        return self.predict(x)
+
 
     ########################################
     ########      内部関数       ###########
@@ -269,7 +278,7 @@ class Sequential:
     def predict(self, x):
         #for layer in self.sequential.values():
         for layer in self.sequential.values():
-            x = layer.forward(x)
+            x = layer[0].forward(x)
         return x
     
     def loss(self, x, t):
@@ -288,20 +297,21 @@ class Sequential:
         #逆伝播を行うためにレイヤを反転
         #layers = list(self.sequential.values())
         layers = list(self.sequential.values())
+        #layers = layers[0]
         layers.reverse()
 
         #逆伝搬および重みの更新
         dout = 1
         dout = self.func['loss'].backward()
         for layer in layers:
-            dout = layer.backward(dout)
+            dout = layer[0].backward(dout)
         del layers
 
         grads = {}
         idx = 1
         for layer in self.sequential.values():
-            grads['W' + str(idx)] = layer.params['dW']
-            grads['b' + str(idx)] = layer.params['db']
+            grads['W' + str(idx)] = layer[0].params['dW']
+            grads['b' + str(idx)] = layer[0].params['db']
             idx += 1
 
         return grads
@@ -312,7 +322,7 @@ class Sequential:
         acc = np.sum(metric(y, t)) / y.shape[0]
         return acc
     
-    def save_params(self, file_name='params'):
+    def save_params(self, file_name='params.pkl'):
         """
         パラメータをセーブするための関数
         """
@@ -322,13 +332,15 @@ class Sequential:
         with open(file_name, 'wb') as f:
             pickle.dump(params, f)
 
-    def save_model(self, file_name='model'):
+    def save_model(self, file_name='model.pkl'):
         """
         ニューラルネットのモデルをセーブする関数
         """
         model = {}
-        for key in self.sequential.keys():
-            model
+        for key, val in self.sequential.items():
+            model[key] = val
+        with open(file_name, 'wb') as f:
+            pickle.dump(model, f)
 
 
     def load_params(self, file_name='params.pkl'):
@@ -347,7 +359,6 @@ if __name__ == '__main__':
     from callbacks import LearningVisualizationCallback
     
 
-    """
     #訓練データの読み込み
     x_train = np.loadtxt(
         "./data/learn_1.csv",  # 読み込むファイル名(例"save_data.csv")
@@ -391,8 +402,8 @@ if __name__ == '__main__':
     # クロスバリエーション
     #x_train, x_test, t_train, t_test, x_val, t_val = \
         #train_test_splint(x_train, t_train, 1000, 100, random_state=1)
-    """
     
+    """
     #データを読み込む
     (x_train, t_train), (x_test, t_test) = mnist.load_data()
 
@@ -411,7 +422,7 @@ if __name__ == '__main__':
     #正解データの加工
     t_train = keras.utils.to_categorical(t_train, 10)  # one_hot_labelに変換
     t_test = keras.utils.to_categorical(t_test,  10)
-    
+    """
 
 
     # 学習曲線を可視化するコールバックを用意する
@@ -441,6 +452,7 @@ if __name__ == '__main__':
 
     #score = model.evaluate(x_test, t_test)
 
-    # lossグラフ
-    loss = history['loss_ave']
-    val_loss = history['val_loss']
+    output = model.flow([-50, 0, 3])
+
+    model.save_params()
+    model.save_model()
