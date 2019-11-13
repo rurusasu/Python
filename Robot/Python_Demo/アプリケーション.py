@@ -9,6 +9,7 @@ import numpy as np
 import DobotDllType as dType
 from common.DobotFunction import initDobot, Coordinate_Operation, Coordinate_OneAction
 from ctypes import cdll
+from NuralNet_API import NuralNetApp
 
 api = cdll.LoadLibrary('DobotDll.dll')
 
@@ -154,15 +155,19 @@ inputPoint = [
 ]
 
 
+printAngle = [
+    [sg.]
+]
+
+
 layout = [
     [sg.Text('Dobotを接続する')], 
     [sg.Button('Conect', key='-Connect-')],
     [sg.Frame('Save', 
         [[sg.Column(saveOrg)],
-         [sg.Column(saveVal)],
-        ]),
-     sg.Frame('移動座標', inputPoint),
+         [sg.Column(saveVal)],]),
     ],
+    [sg.Frame('移動座標', inputPoint)],
     [sg.Quit()],
 ]
 
@@ -172,7 +177,9 @@ window = sg.Window('Dobot', layout, default_element_size=(40, 1))
 #event, values = window.Read()
 
 #CON_STR = Dobot()
+#NuralNet = NuralNetApp()
 while True:
+    NuralNet = NuralNetApp()
     event, values = window.Read(timeout=10)
     if event is 'Quit':
         break
