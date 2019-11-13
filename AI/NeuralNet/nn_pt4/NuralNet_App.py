@@ -10,6 +10,10 @@ from common.functions import Datafeature
 from common.callbacks import LearningVisualizationCallback
 from common.csvIO import DataConv
 
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.ticker import *
+
 
 def __filePath__(dir_name, file_name):
     path = str(dir_name) + '/' + str(file_name)
@@ -131,6 +135,40 @@ class NuralNet_APP:
             t = Datafeature(t, feature)
         self.model.evaluate(x, t)
 
+
+    def FlowChart(self):
+        xmin = -8
+        xmax = 8
+        ymin = 0
+        ymax = 25
+        dh = 0.7 # 行ごとの高さ
+        A=[]
+        B=[]
+        for i in range(0, int(ymax//dh)+1):
+            s = '{0:.1f}'.format(dh*i)
+            A += [float(s)]
+            B += [i]
+        
+        fig = plt.figure()
+        ax1 = plt.subplot(111)
+        ax1 = plt.gca()
+        ax1.set_xlim([xmin, xmax])
+        ax1.set_ylim([ymax, ymin])
+        aspect = (abs(ymax-ymin))/(abs(xmax-xmin))*abs(ax1.get_xlim()
+                                                     [1] - ax1.get_xlim()[0]) / abs(ax1.get_ylim()[1] - ax1.get_ylim()[0])
+        
+        ax1.set_aspect(aspect)
+
+        ax1.tick_params(labelsize=6)
+        ax1.xaxis.set_major_locator(MultipleLocator(1))
+        ax1.yaxis.set_major_locator(MultipleLocator(dh))
+        plt.yticks(A, B)
+        plt.grid(which='both', lw=0.3, color='#cccccc', linestyle='-')
+
+        # Store texts in list
+        a = []
+        for key in self.model.sequential.keys():
+            a = a+[key]
 
     def main(self):
         # ----- Column Definition ----- #
