@@ -25,11 +25,21 @@ def __filePath__(file_name):
 
 # ----- The callback function ----- #
 def Connect_click():
+    """
+    Dobotを接続する関数
+
+    Returns
+    -------
+    0 : int
+        Dobotが接続されていない場合
+    1 : int
+        Dobotが接続された場合
+    """
     # Dobot Connect
     state = dType.ConnectDobot(api, "", 115200)[0] # ConectDobot(const char* pointName, int baudrate)
     if (state != dType.DobotConnect.DobotConnect_NoError):
         print('Dobotに接続できませんでした。')
-    
+        return 0
     #Clean Command Queued
     dType.SetQueuedCmdClear(api)
 
@@ -47,9 +57,9 @@ def Connect_click():
 
     # Dobotの初期設定
     initDobot(api)
+    return 1
 
-
-def SaveOriginal_click(CON_STR, file_name):
+def SaveOriginal_click(file_name):
     x_roop = 10
     y_roop = 20
     z_roop = 1
@@ -57,7 +67,7 @@ def SaveOriginal_click(CON_STR, file_name):
     file_name = __filePath__(file_name)
     print(file_name + 'にデータを保存します。')
 
-    initPOS = dType.GetPose(api)
+    #initPOS = dType.GetPose(api)
     #-----------------------------
     # 以下Z軸方向の動作
     #-----------------------------
@@ -69,7 +79,7 @@ def SaveOriginal_click(CON_STR, file_name):
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Coordinate_Operation(api, file_name, 'y', 10)
+            Operation(api, 'y', 10, file_name)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -77,16 +87,16 @@ def SaveOriginal_click(CON_STR, file_name):
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Coordinate_Operation(api, file_name, 'x', 10)
+                    Operation(api, 'x', 10, file_name)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Coordinate_Operation(api, file_name, 'x', -10)
+                    Operation(api, 'x', -10, file_name)
 
     print('データ取得が終了しました。')
 
 
-def SaveValidation_click(CON_STR, file_name):
+def SaveValidation_click(file_name):
     x_roop = 100
     y_roop = 100
     z_roop = 2
@@ -100,13 +110,13 @@ def SaveValidation_click(CON_STR, file_name):
     #-----------------------------
     for i in range(0, z_roop):
         print('第' + str(i + 1) + 'ステップ目')
-        Coordinate_Operation(api, file_name, 'z', -0.5*i, initPOS)
+        Operation(api, 'z', -0.5*i, file_name, initPOS)
 
         #-------------------------
         # 以下Y軸方向の動作
         #-------------------------
         for j in range(0, y_roop):
-            Coordinate_Operation(api, file_name, 'x', 0.5)
+            Operation(api, 'x', 0.5, file_name)
 
             #-------------------------
             # 以下X軸方向の動作
@@ -114,16 +124,21 @@ def SaveValidation_click(CON_STR, file_name):
             if j % 2 == 0:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Coordinate_Operation(api, file_name, 'y', 0.5)
+                    Operation(api, 'y', 0.5, file_name)
             else:
                 for k in range(0, x_roop + 1):
                     #Async Motion Params Setting
-                    Coordinate_Operation(api, file_name, 'y', -0.5)
+                    Operation(api, 'y', -0.5, file_name)
 
     print('testデータ取得が終了しました。')
 
 def DobotAct(x_pos, y_pos, z_pos):
-    Coordinate_OneAction(api, x=x_pos, y=y_pos, z=z_pos)
+    OneAction(api, x=x_pos, y=y_pos, z=z_pos)
+
+
+def ACT_JOGMode_click(J1_Angle, J2_Angle, J3_Angle, J4_Angle):
+    Operation(api, 'z', J1_Angle, mode=dType.PTPMode.PTPMOVLANGLEMode)
+
 
 
 # ----- Menu Definition ----- #
@@ -155,9 +170,13 @@ inputPoint = [
 ]
 
 
-#printAngle = [
-#    [sg.]
-#]
+printAngle = [
+    [sg.Text('J1'), sg.Input(size=(5, 1), key='-J1-')],
+    [sg.Text('J2'), sg.Input(size=(5, 1), key='-J2-')],
+    [sg.Text('J3'), sg.Input(size=(5, 1), key='-J3-')],
+    [sg.Text('J4'), sg.Input(size=(5, 1), key='-J4-')],
+    [sg.Button('ACT', key='-JOGAct-')]
+]
 
 
 layout = [
@@ -166,6 +185,8 @@ layout = [
     [sg.Frame('Save', 
         [[sg.Column(saveOrg)],
          [sg.Column(saveVal)],]),
+     sg.Frame('Angle', 
+        [[sg.Column(printAngle)],]),
     ],
     [sg.Frame('移動座標', inputPoint)],
     [sg.Quit()],
@@ -178,27 +199,42 @@ window = sg.Window('Dobot', layout, default_element_size=(40, 1))
 
 #CON_STR = Dobot()
 #NuralNet = NuralNetApp()
+# Dobotの接続確認用変数
+connect_Check = 0 # 0:DisConnect, 1:Connect
 while True:
-    NuralNet = NuralNetApp()
+    #NuralNet = NuralNetApp()
     event, values = window.Read(timeout=10)
     if event is 'Quit':
         break
-    if event is '-Connect-':
-        Connect_click()
-
+    elif event is '-Connect-':
+        connect_Check = Connect_click()
+        continue
     elif event is '-SaveOriginal-':
-        if CON_STR is None:
-            print('Dobotに接続していません。')
-        else:
-            SaveOriginal_click(CON_STR, values['-orgSave-'])
+        # 接続の確認
+        if connect_Check is 0: 
+            print ('Dobotが接続されていません。')
+            continue
+        # 動作
+        SaveOriginal_click(values['-orgSave-'])
     elif event is '-SaveValidation-':
-        if CON_STR is None:
-            print('Dobotに接続していません。')
-        else:
-            SaveValidation_click(CON_STR, values['-valSave-'])
+        # 接続の確認
+        if connect_Check is 0:
+            print('Dobotが接続されていません。')
+            continue
+        # 動作
+        SaveValidation_click(values['-valSave-'])
     elif event is '-ACT-':
-        if CON_STR is None:
-            print('Dobotに接続していません。')
-        else:
-            DobotAct(values['-x-'], values['-y-'], values['-z-'])
-
+        # 接続の確認
+        if connect_Check is 0:
+            print('Dobotが接続されていません。')
+            continue
+        # 動作
+        DobotAct(values['-x-'], values['-y-'], values['-z-'])
+    elif event is '-JOGAct-':
+        # 接続の確認
+        if connect_Check is 0:
+            print('Dobotが接続されていません。')
+            continue
+        # 動作
+        ACT_JOGMode_click(values['-J1-'], values['-J2-'],
+                            values['-J3-'], values['-J4-'])

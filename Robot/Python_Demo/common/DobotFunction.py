@@ -67,7 +67,7 @@ def initDobot(api):
 # Dobotの動作用_汎用関数
 #-----------------------------------
 # Dobotの動作
-def Operation(api, file_name, axis, volume=1, initPOS=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+def Operation(api, axis, volume=1, file_name=None, initPOS=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """
         A function that sends a motion command in any direction
 
@@ -94,42 +94,63 @@ def Operation(api, file_name, axis, volume=1, initPOS=None, mode=dType.PTPMode.P
              9  | PTPJUMPMOVLXYZMode,
         """
         axis_list = ['x', 'y', 'z', 'r']
+        axis_list = ['x', 'y', 'z', 'r']
         if (initPOS != None):
             pose = initPOS
         else:
             pose = dType.GetPose(api)
 
-        if (axis in axis_list):
-            if (axis == 'x'):
-                Coordinate_OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3])
-            elif (axis == 'y'):
-                Coordinate_OneAction(api, pose[0], pose[1] + volume, pose[2], pose[3])
-            elif (axis == 'z'):
-                Coordinate_OneAction(api, pose[0], pose[1], pose[2] + volume, pose[3])
+        if mode is 1 or mode is 2:
+            if (axis == axis_list[0]):
+                OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3])
+            elif (axis == axis_list[1]):
+                OneAction(api, pose[0], pose[1] + volume, pose[2], pose[3])
+            elif (axis == axis_list[2]):
+                OneAction(api, pose[0], pose[1], pose[2] + volume, pose[3])
             else:
                 print('rは実装されていません。')
+        elif mode is 4 or mode is 5:
+            OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3], mode)
         else:
-            print('移動軸に問題があります！')
+            print('選択したmodeに問題があります！')
 
-        # 座標をファイルへ書き込む
-        csv_write(file_name, dType.GetPose(api))
+        if file_name is None:
+            return
+        else:
+            # 座標をファイルへ書き込む
+            csv_write(file_name, dType.GetPose(api))
 
 
 # 1回動作指令を出す関数
 def OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """One step operation"""
-        if (x is None or y is None or z is None or r is None):
-            pose = dType.GetPose(api)
-            if x is None:
-                x=pose[0]
-            if y is None:
-                y=pose[1]
-            if z is None:
-                z=pose[2]
-            if r is None:
-                r=pose[3]
-        lastIndex = dType.SetPTPCmd(api, mode,
-                                    x, y, z, r, isQueued=1)[0]
+        if mode is 1 or mode is 2:
+            if (x is None or y is None or z is None or r is None):
+                pose = dType.GetPose(api)
+                if x is None:
+                    x=pose[0]
+                if y is None:
+                    y=pose[1]
+                if z is None:
+                    z=pose[2]
+                if r is None:
+                    r=pose[3]
+            lastIndex = dType.SetPTPCmd(api, mode,
+                                        x, y, z, r, isQueued=1)[0]
+        elif mode is 4 or mode is 5:
+            if (x is None or y is None or z is None or r is None):
+                pose = dType.GetPose(api)
+                if x is None:
+                    x = pose[4]
+                if y is None:
+                    y = pose[5]
+                if z is None:
+                    z = pose[6]
+                if r is None:
+                    r = pose[7]
+            lastIndex = dType.SetPTPCmd(api, mode,
+                                        x, y, z, r, isQueued=1)[0]
+        
         _Act(api, lastIndex)
 
 
