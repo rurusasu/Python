@@ -66,8 +66,8 @@ def initDobot(api):
 #-----------------------------------
 # Dobotの動作用_汎用関数
 #-----------------------------------
-# 直交座標系での動作
-def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None):
+# Dobotの動作
+def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """
         A function that sends a motion command in any direction
 
@@ -78,6 +78,20 @@ def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None):
             移動方向
         volume : int
             移動量
+        initPos : dict
+            動作前の位置
+        mode : int
+            int | mode
+             0  | PTPJUMPXYZMode,
+             1  | PTPMOVJXYZMode,
+             2  | PTPMOVLXYZMode,
+             3  | PTPJUMPANGLEMode,
+             4  | PTPMOVJANGLEMode,
+             5  | PTPMOVLANGLEMode,
+             6  | PTPMOVJANGLEINCMode,
+             7  | PTPMOVLXYZINCMode,
+             8  | PTPMOVJXYZINCMode,
+             9  | PTPJUMPMOVLXYZMode,
         """
         axis_list = ['x', 'y', 'z', 'r']
         if (initPOS != None):
@@ -101,7 +115,7 @@ def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None):
         csv_write(file_name, dType.GetPose(api))
 
 
-# 直交座標系で1回動作指令を出す関数
+# 1回動作指令を出す関数
 def Coordinate_OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """One step operation"""
         if (x is None or y is None or z is None or r is None):
@@ -117,11 +131,6 @@ def Coordinate_OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode
         lastIndex = dType.SetPTPCmd(api, mode,
                                     x, y, z, r, isQueued=1)[0]
         _Act(api, lastIndex)
-
-
-
-
-
 
 
 def _Act(api, lastIndex):

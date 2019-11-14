@@ -177,6 +177,13 @@ class NuralNet_APP:
         llw = 0.5
         fsize = 5  # fontsize
         title = 'model'
+
+        # Draw title
+        xs = 0
+        ys = iis*dh-1.0*dh
+        plt.text(xs, ys, title, rotation=0, ha='center',
+                 va='center', fontsize=fsize, fontweight='bold')
+        
         for key in self.model.sequential.keys():
             a = a+[key]
             # Store coordinats of texts in list
@@ -193,12 +200,13 @@ class NuralNet_APP:
 
             # Draw box
             poly = Polygon(
-                [(xs, ys), (xe, ys), (xe, ye), (xs, ye)],
+                [(xs, ys), (xe, ys), (xe, ye), (xs, ye)], # 左回りでプロット
                 facecolor = '#dddddd', 
                 edgecolor = '#000000',
                 lw = llw
             )
             ax1.add_patch(poly)
+            
             # Draw text
             if ax[i] == 0:
                 plt.text(ax[i], ay[i], a[i], rotation=0, 
@@ -214,11 +222,7 @@ class NuralNet_APP:
             plt.plot(lx, ly, 'k-', lw=0.5)
             i += 1
 
-        # Draw title
-        xs = 0
-        ys = iis*dh-1.0*dh
-        plt.text(xs, ys, title, rotation=0, ha='center', 
-                 va='center', fontsize=fsize, fontweight='bold')
+        
 
 
 
