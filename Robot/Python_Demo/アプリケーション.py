@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 import numpy as np
 
 import DobotDllType as dType
-from common.DobotFunction import initDobot, Coordinate_Operation, Coordinate_OneAction
+from common.DobotFunction import initDobot, Operation, OneAction
 from ctypes import cdll
 from NuralNet_API import NuralNetApp
 
@@ -155,9 +155,9 @@ inputPoint = [
 ]
 
 
-printAngle = [
-    [sg.]
-]
+#printAngle = [
+#    [sg.]
+#]
 
 
 layout = [

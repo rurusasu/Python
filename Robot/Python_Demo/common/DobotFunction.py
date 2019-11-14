@@ -67,7 +67,7 @@ def initDobot(api):
 # Dobotの動作用_汎用関数
 #-----------------------------------
 # Dobotの動作
-def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+def Operation(api, file_name, axis, volume=1, initPOS=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """
         A function that sends a motion command in any direction
 
@@ -116,7 +116,7 @@ def Coordinate_Operation(api, file_name, axis, volume=1, initPOS=None, mode=dTyp
 
 
 # 1回動作指令を出す関数
-def Coordinate_OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
+def OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """One step operation"""
         if (x is None or y is None or z is None or r is None):
             pose = dType.GetPose(api)
