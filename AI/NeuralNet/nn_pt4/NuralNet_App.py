@@ -136,8 +136,7 @@ class NuralNet_APP:
         self.model.evaluate(x, t)
 
 
-<<<<<<< HEAD
-    def FlowChart(self):
+    def FlowChartPrint_click(self):
         xmin = -8
         xmax = 8
         ymin = 0
@@ -168,15 +167,70 @@ class NuralNet_APP:
 
         # Store texts in list
         a = []
+        ax = []
+        ay = []
+        i = 0
+        iis = 3
+        ii = iis+1
+        wx = 10
+        row = 1
+        llw = 0.5
+        fsize = 5  # fontsize
+        title = 'model'
         for key in self.model.sequential.keys():
             a = a+[key]
-=======
+            # Store coordinats of texts in list
+            ii += 1
+            ys = ii*dh
+            xs = 0
+            ax = ax+[xs]
+            ay = ay+[ys+0.5*dh] 
+
+            # Store coordinates of tbox shapes in list
+            xs = -0.5*wx
+            xe = 0.5*wx
+            ye = ys + row*dh ## 行間
+
+            # Draw box
+            poly = Polygon(
+                [(xs, ys), (xe, ys), (xe, ye), (xs, ye)],
+                facecolor = '#dddddd', 
+                edgecolor = '#000000',
+                lw = llw
+            )
+            ax1.add_patch(poly)
+            # Draw text
+            if ax[i] == 0:
+                plt.text(ax[i], ay[i], a[i], rotation=0, 
+                         ha='center', va='center', fontsize=fsize)
+            else:
+                plt.text(ax[i], ay[i], a[i], rotation=0,
+                         ha='left', va='center', fontsize=fsize)
+            
+            # Draw line
+            ii += 1 
+            lx = [0, 0]
+            ly = [ii*dh, (ii+1)*dh]
+            plt.plot(lx, ly, 'k-', lw=0.5)
+            i += 1
+
+        # Draw title
+        xs = 0
+        ys = iis*dh-1.0*dh
+        plt.text(xs, ys, title, rotation=0, ha='center', 
+                 va='center', fontsize=fsize, fontweight='bold')
+
+
+
+        plt.show()
+
+
     def Flow_click(self, flow_data):
         y = self.model.flow(flow_data)
 
         return y
 
->>>>>>> 0f674dd92f67e7fea5c6e7f414d0760592fe5f45
+
 
     def main(self):
         # ----- Column Definition ----- #
@@ -229,9 +283,8 @@ class NuralNet_APP:
             sg.Button('NetMake', key='-NetMake-')],
         ]
 
-
-        NetMakeTree = [
-            [sg.TreeData]
+        FlowChartPrint = [
+            [sg.Button('FlowChart', key='-FlowChartPrint-')],
         ]
 
         NuralNet = [
@@ -263,7 +316,8 @@ class NuralNet_APP:
 
         layout = [
             [sg.Frame('NetMake', NetMake),
-            sg.Frame('NuralNet', NuralNet), ],
+             sg.Frame('NuralNet', NuralNet), 
+             sg.Column(FlowChartPrint)],
             [sg.Frame('DataConv', dataConv)],
             [sg.Quit()],
         ]
@@ -323,7 +377,9 @@ class NuralNet_APP:
                 self.Training_click((values['-orgLRN-'], values['-orgTrg-']),
                                values['-Batch-'], values['-epochs-'], feature, val)
 
-        #elif event is '-TestRUN-':
+            elif event is '-FlowChartPrint-':
+                self.FlowChartPrint_click()
+
 
 
 
