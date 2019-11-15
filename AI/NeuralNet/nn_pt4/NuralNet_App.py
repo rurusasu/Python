@@ -388,13 +388,7 @@ class NuralNet_APP:
             elif event is '-FlowChartPrint-':
                     self.FlowChartPrint_click()
 
-
-
 #def NetWorkTree():
-
-
-
-
 
 if __name__ == "__main__":
     NuralNet_APP()
