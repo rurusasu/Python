@@ -10,6 +10,10 @@ from common.functions import Datafeature
 from common.callbacks import LearningVisualizationCallback
 from common.csvIO import DataConv
 
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.ticker import *
+
 
 def __filePath__(dir_name, file_name):
     path = str(dir_name) + '/' + str(file_name)
@@ -50,7 +54,9 @@ class NuralNet_APP:
             self.model.add(Input(input_shape=Node))
         elif layerName == 'Dense':
             self.model.add(Dense(Node, activation, weight, bias))
-        #self.model.printParams()
+        
+        print(layerName + ':' + str(Node))
+        return layerName
 
 
     def NetMake_click(self, loss, optimizer, metrics):
@@ -131,12 +137,99 @@ class NuralNet_APP:
             t = Datafeature(t, feature)
         self.model.evaluate(x, t)
 
+    def FlowChartPrint_click(self):
+        xmin = -8
+        xmax = 8
+        ymin = 0
+        ymax = 25
+        dh = 0.7  # 行ごとの高さ
+        A = []
+        B = []
+        for i in range(0, int(ymax//dh)+1):
+            s = '{0:.1f}'.format(dh*i)
+            A += [float(s)]
+            B += [i]
+
+        fig = plt.figure()
+        ax1 = plt.subplot(111)
+        ax1 = plt.gca()
+        ax1.set_xlim([xmin, xmax])
+        ax1.set_ylim([ymax, ymin])
+        aspect = (abs(ymax-ymin))/(abs(xmax-xmin))*abs(ax1.get_xlim()
+                                                       [1] - ax1.get_xlim()[0]) / abs(ax1.get_ylim()[1] - ax1.get_ylim()[0])
+
+        ax1.set_aspect(aspect)
+
+        ax1.tick_params(labelsize=6)
+        ax1.xaxis.set_major_locator(MultipleLocator(1))
+        ax1.yaxis.set_major_locator(MultipleLocator(dh))
+        plt.yticks(A, B)
+        plt.grid(which='both', lw=0.3, color='#cccccc', linestyle='-')
+
+        # Store texts in list
+        a = []
+        ax = []
+        ay = []
+        i = 0
+        iis = 3
+        ii = iis+1
+        wx = 10
+        row = 1
+        llw = 0.5
+        fsize = 5  # fontsize
+        title = 'model'
+
+        # Draw title
+        xs = 0
+        ys = iis*dh-1.0*dh
+        plt.text(xs, ys, title, rotation=0, ha='center',
+                 va='center', fontsize=fsize, fontweight='bold')
+
+        for key in self.model.sequential.keys():
+            a = a+[key]
+            # Store coordinats of texts in list
+            ii += 1
+            ys = ii*dh
+            xs = 0
+            ax = ax+[xs]
+            ay = ay+[ys+0.5*dh]
+
+            # Store coordinates of tbox shapes in list
+            xs = -0.5*wx
+            xe = 0.5*wx
+            ye = ys + row*dh  # 行間
+
+            # Draw box
+            poly = Polygon(
+                [(xs, ys), (xe, ys), (xe, ye), (xs, ye)],  # 左回りでプロット
+                facecolor='#dddddd',
+                edgecolor='#000000',
+                lw=llw
+            )
+            ax1.add_patch(poly)
+
+            # Draw text
+            if ax[i] == 0:
+                plt.text(ax[i], ay[i], a[i], rotation=0,
+                         ha='center', va='center', fontsize=fsize)
+            else:
+                plt.text(ax[i], ay[i], a[i], rotation=0,
+                         ha='left', va='center', fontsize=fsize)
+
+            # Draw line
+            ii += 1
+            lx = [0, 0]
+            ly = [ii*dh, (ii+1)*dh]
+            plt.plot(lx, ly, 'k-', lw=0.5)
+            i += 1
+
+        plt.show()
+
 
     def Flow_click(self, flow_data):
         y = self.model.flow(flow_data)
 
         return y
-
 
     def main(self):
         # ----- Column Definition ----- #
@@ -154,28 +247,30 @@ class NuralNet_APP:
             [sg.Text('LearnData')],
             [sg.InputText('learn.csv', size=(13, 1), key='-lrnDataFileName-')],
             [sg.Text('TestData'),
-            sg.Text('小数点以下の桁数')],
+             sg.Text('小数点以下の桁数')],
             [sg.InputText('test.csv', size=(13, 1), key='-tstDataFileName-'),
-            sg.InputText('2', size=(5, 1), key='-Digit-')],
+             sg.InputText('2', size=(5, 1), key='-Digit-')],
         ]
 
         dataConv = [
             [sg.Column(Dir), sg.Column(convfunc)],
-            ]
+        ]
 
         NetMake = [
             [sg.Text('層の種類          '), sg.Text('ユニット数')],
             [sg.InputCombo(('input', 'Dense'), size=(15, 1), key='-LayerName-'),
-            sg.InputText('50', size=(5, 1), key='-Node-')],
+             sg.InputText('50', size=(5, 1), key='-Node-')],
             [sg.Text('重みの初期値')],
-            [sg.InputCombo(('He', 'Xavier',), size=(15, 1), key='-weightInit-')],
+            [sg.InputCombo(('He', 'Xavier',), size=(
+                15, 1), key='-weightInit-')],
             [sg.Text('閾値の初期値')],
             [sg.InputCombo(('ZEROS',), size=(15, 1), key='-biasInit-')],
             [sg.Text('活性化関数')],
             [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1), key='-activation-'),
-            sg.Button('add', key='-LayerAdd-')],
+             sg.Button('add', key='-LayerAdd-')],
             [sg.Text('損失関数')],
-            [sg.InputCombo(('mean_squared_error',), size=(20, 1), key='-loss-')],
+            [sg.InputCombo(('mean_squared_error',),
+                           size=(20, 1), key='-loss-')],
             [sg.Text('最適化')],
             [sg.InputCombo(('sgd',
                             'momentum_sgd',
@@ -186,12 +281,11 @@ class NuralNet_APP:
                             'adam',), size=(20, 1), key='-optimizer-')],
             [sg.Text('評価関数')],
             [sg.InputCombo(('r2', 'rmse'), size=(15, 1), key='-metrics-'),
-            sg.Button('NetMake', key='-NetMake-')],
+             sg.Button('NetMake', key='-NetMake-')],
         ]
 
-
-        NetMakeTree = [
-            [sg.TreeData]
+        FlowChartPrint = [
+            [sg.Button('FlowChart', key='-FlowChartPrint-')],
         ]
 
         NuralNet = [
@@ -204,31 +298,32 @@ class NuralNet_APP:
             [sg.Text('Validation用ラベル')],
             [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valTrg-')],
             [sg.Radio('標準化', 'feature', size=(10, 1), key='-feature_0-'),
-            sg.Radio('正規化', 'feature', size=(10, 1), key='-feature_1-'),
-            sg.Radio('両方', 'feature', size=(10, 1),  key='-feature_2-')],
+             sg.Radio('正規化', 'feature', size=(10, 1), key='-feature_1-'),
+             sg.Radio('両方', 'feature', size=(10, 1),  key='-feature_2-')],
             [sg.Text('Batch Size'), sg.Text('epochs')],
             [sg.InputText('128', size=(10, 1), key='-Batch-'),
-            sg.InputText('100', size=(10, 1), key='-epochs-'),
-            sg.Button('Training', key='-TrainingRUN-')],
+             sg.InputText('100', size=(10, 1), key='-epochs-'),
+             sg.Button('Training', key='-TrainingRUN-')],
         ]
 
         NetEvaluate = [
             [sg.Text('テスト用データ')],
             [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstRLN-')],
             [sg.Text('テスト用ラベル')],
-            [sg.Input(size=(30, 1)), 
-            sg.FileBrowse(key='-tstTrg-'),
-            sg.Button('Test', key='-TestRUN-')],
+            [sg.Input(size=(30, 1)),
+             sg.FileBrowse(key='-tstTrg-'),
+             sg.Button('Test', key='-TestRUN-')],
         ]
 
         layout = [
             [sg.Frame('NetMake', NetMake),
-            sg.Frame('NuralNet', NuralNet), ],
+             sg.Frame('NuralNet', NuralNet),
+             sg.Column(FlowChartPrint)],
             [sg.Frame('DataConv', dataConv)],
             [sg.Quit()],
         ]
-        
-        
+
+        InLayer = None # 層が追加されているか判定するための変数
         window = sg.Window('NeuralNet', layout, default_element_size=(40, 1))
         while True:
             event, values = window.Read(timeout=10)
@@ -248,12 +343,15 @@ class NuralNet_APP:
             # Networkの層を追加する。
             #---------------------------------
             elif event is '-LayerAdd-':
-                self.LayerAdd_click(layerName=values['-LayerName-'],
-                               Node=values['-Node-'],
-                               weight=values['-weightInit-'],
-                               bias=values['-biasInit-'],
-                               activation=values['-activation-'])
+                InLayer = self.LayerAdd_click(layerName=values['-LayerName-'],
+                                              Node=values['-Node-'],
+                                              weight=values['-weightInit-'],
+                                              bias=values['-biasInit-'],
+                                              activation=values['-activation-'])
             elif event is '-NetMake-':
+                if InLayer is None or InLayer in 'input':
+                    print('層もしくは隠れ層がセットされていません。')
+                    continue
                 self.NetMake_click(values['-loss-'],
                               values['-optimizer-'], values['-metrics-'])
                 #NetMake_click(values['-loss-'])
@@ -261,6 +359,9 @@ class NuralNet_APP:
             # Trainig_click
             #----------------------------
             elif event is '-TrainingRUN-':
+                if InLayer is None or InLayer in 'input':
+                    print('層もしくは隠れ層がセットされていません。')
+                    continue
                 #----------------------------
                 # ラジオボタンの条件分岐
                 #----------------------------
@@ -283,7 +384,8 @@ class NuralNet_APP:
                 self.Training_click((values['-orgLRN-'], values['-orgTrg-']),
                                values['-Batch-'], values['-epochs-'], feature, val)
 
-        #elif event is '-TestRUN-':
+            elif event is '-FlowChartPrint-':
+                    self.FlowChartPrint_click()
 
 
 
