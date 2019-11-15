@@ -137,7 +137,20 @@ def DobotAct(x_pos, y_pos, z_pos):
 
 
 def ACT_JOGMode_click(J1_Angle, J2_Angle, J3_Angle, J4_Angle):
-    Operation(api, 'z', J1_Angle, mode=dType.PTPMode.PTPMOVLANGLEMode)
+    #Operation(api, 'z', J1_Angle, mode=dType.PTPMode.PTPMOVLANGLEMode)
+    pose = dType.GetPose(api)
+    if J1_Angle is '':
+        J1_Angle = pose[4]
+    J1_Angle = float(J1_Angle)
+    J2_Angle = float(J2_Angle)
+    J3_Angle = float(J3_Angle)
+    J4_Angle = float(J4_Angle)
+
+    OneAction(api, J1_Angle, J2_Angle, J3_Angle, J4_Angle, mode=dType.PTPMode.PTPMOVLANGLEMode)
+    print(J1_Angle)
+    print(J2_Angle)
+    print(J3_Angle)
+    print(J4_Angle)
 
 
 

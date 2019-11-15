@@ -110,7 +110,7 @@ def Operation(api, axis, volume=1, file_name=None, initPOS=None, mode=dType.PTPM
             else:
                 print('rは実装されていません。')
         elif mode is 4 or mode is 5:
-            OneAction(api, pose[0] + volume, pose[1], pose[2], pose[3], mode)
+            OneAction(api, pose[4], pose[5], pose[6], pose[7], mode)
         else:
             print('選択したmodeに問題があります！')
 
@@ -124,6 +124,7 @@ def Operation(api, axis, volume=1, file_name=None, initPOS=None, mode=dType.PTPM
 # 1回動作指令を出す関数
 def OneAction(api, x=None, y=None, z=None, r=None, mode=dType.PTPMode.PTPMOVLXYZMode):
         """One step operation"""
+        print('OneAction')
         if mode is 1 or mode is 2:
             if (x is None or y is None or z is None or r is None):
                 pose = dType.GetPose(api)
