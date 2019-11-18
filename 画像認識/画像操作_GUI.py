@@ -312,7 +312,7 @@ layout = [[sg.Text('インポートしたい画像フォルダ')],
 
 window = sg.Window('Tree Element Test', layout, default_element_size=(40, 1))
 
-img_list = None
+img_dict = {}
 while True:     # Event Loop
     event, values = window.read()
     if event in (None, 'Cancel'):
@@ -337,6 +337,9 @@ while True:     # Event Loop
         # 画像の明るさを変更する
         #----------------------------
         if values['-brightness-'] is True:
+            if 1 < int(values['-brightness_Max-']):
+                for i in range(1, int(values['-brightness_Max-']), 0.1):
+
             img_list = brightness(img_list)
         for img in img_list:
             img = np.array(img)
