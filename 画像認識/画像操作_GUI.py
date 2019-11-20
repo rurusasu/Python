@@ -69,6 +69,19 @@ def get_filePaths_in_folder(dirname, extension='.jpg'):
 
 
 def fig_Open(file_Path):
+    """
+    パスを基に画像を読み込む関数
+
+    Parameters
+    ----------
+    file_Path : list
+        画像ファイルのパス
+    
+    Returns
+    -------
+    img : list
+        展開した画像のlist
+    """
     img = []
     
     for path in file_Path:
@@ -76,7 +89,7 @@ def fig_Open(file_Path):
     return img
 
 def make_dir(parent):
-    files = Path(paent)
+    files = Path(parent)
     if files:
         print('既にディレクトリが存在します。')
     else:
@@ -321,29 +334,31 @@ while True:     # Event Loop
         dir_list, file_list=get_filePaths_in_folder(values['-TREE-'][0])
         #print(dir_list)
         #print(file_list)
-        img_list=fig_Open(file_list)
-        print(img_list)
+        img_dict['original'] = fig_Open(file_list)
+        print(img_dict['original'])
     elif event is '-Convert-':
         #----------------------------
         # ラジオボタンの条件分岐
         #----------------------------
         if values['-gray-'] is True:
             # グレースケールが選択されたとき
-            img_list = grayscale(img_list)
+            img_dict['gray'] = grayscale(img_dict['original'])
         elif values['-rgb-'] is True:
             # RGBが選択されたとき
-            img_list = RGB(img_list)
+            img_dict['rgb'] = RGB(img_dict['original'])
         #----------------------------
         # 画像の明るさを変更する
         #----------------------------
         if values['-brightness-'] is True:
-            if 1 < int(values['-brightness_Max-']):
-                for i in range(1, int(values['-brightness_Max-']), 0.1):
+            if 1 < int(values['-brightness_Max-']): # 明るさの倍率が1より大きい時
+                for i in range(1, values['-brightness_Max-'], 0.1): # 明るさを0.1ずつ上げる
+                    img_dict['brightly'] = brightness(img_dict['-original-'], i)
 
-            img_list = brightness(img_list)
-        for img in img_list:
-            img = np.array(img)
-        plt.imshow(img)
-        plt.show()
+            if 1 > int(values['-brightness_Min-']): # 明るさの倍率が1より小さい時
+                for i in range(1, values['-brightness_Min-'], -0.1): # 明るさを0.1ずつ下げる
+                    img_dict['dark'] = brightness(img_dict['-original-'], i)
+            
+        #plt.imshow(img)
+        #plt.show()
     #print(event, values)
 window.close()

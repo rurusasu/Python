@@ -9,7 +9,7 @@ import numpy as np
 import DobotDllType as dType
 from common.DobotFunction import initDobot, Operation, OneAction
 from ctypes import cdll
-from NuralNet_API import NuralNetApp
+from NeuralNet_API import NeuralNetApp
 
 api = cdll.LoadLibrary('DobotDll.dll')
 
@@ -138,9 +138,15 @@ def DobotAct(x_pos, y_pos, z_pos):
 
 def ACT_JOGMode_click(J1_Angle, J2_Angle, J3_Angle, J4_Angle):
     #Operation(api, 'z', J1_Angle, mode=dType.PTPMode.PTPMOVLANGLEMode)
-    pose = dType.GetPose(api)
     if J1_Angle is '':
-        J1_Angle = pose[4]
+        J1_Angle = dType.GetPose(api)[4]
+    if J2_Angle is '':
+        J2_Angle = dType.GetPose(api)[5]
+    if J3_Angle is '':
+        J3_Angle = dType.GetPose(api)[6]
+    if J4_Angle is '':
+        J4_Angle = dType.GetPose(api)[7]
+    
     J1_Angle = float(J1_Angle)
     J2_Angle = float(J2_Angle)
     J3_Angle = float(J3_Angle)
@@ -201,7 +207,7 @@ layout = [
      sg.Frame('Angle', 
         [[sg.Column(printAngle)],]),
     ],
-    [sg.Frame('移動座標', inputPoint)],
+    [sg.Frame('移動座標', inputPoint), sg.Button('NeuralNetAPI', key='-NeuralNetAPI-')],
     [sg.Quit()],
 ]
 
@@ -211,7 +217,7 @@ window = sg.Window('Dobot', layout, default_element_size=(40, 1))
 #event, values = window.Read()
 
 #CON_STR = Dobot()
-#NuralNet = NuralNetApp()
+NuralNet = None
 # Dobotの接続確認用変数
 connect_Check = 0 # 0:DisConnect, 1:Connect
 while True:
@@ -251,3 +257,12 @@ while True:
         # 動作
         ACT_JOGMode_click(values['-J1-'], values['-J2-'],
                             values['-J3-'], values['-J4-'])
+    elif event is '-NeuralNetAPI-':
+        # 初回動作時
+        if NuralNet is None:
+            NuralNet = NeuralNetApp()
+            continue
+        else:
+            print('APIはすでに起動しています。')
+            continue
+

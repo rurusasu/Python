@@ -32,11 +32,12 @@ def dataLoad(filePath, dtype):
 
 
 # ----- The callback function ----- #
-class NuralNet_APP:
+class NeuralNet_APP:
     def __init__(self):
         # コンストラクタ
         self.model = Sequential()
-        self.main()
+        self.layout = self.Layout()
+        #self.main()
         
     def DataMake_click(self, importDirPath, outputDirPath, org_FileName, lrn_FileName, tst_FileName, digit):
         """ Originalデータを学習用データと正解ラベルに分ける関数 """
@@ -67,7 +68,6 @@ class NuralNet_APP:
         metrics = [metrics]
         self.model.compile(loss, optimizer=optimizer, metrics=metrics)
         print('コンパイル完了')
-
 
     def Training_click(self, orgPath, batch_size, epochs, feature=None, valPath=None):
         orgLrn_Path = orgPath[0]
@@ -118,7 +118,6 @@ class NuralNet_APP:
         ]
 
         self.model.fit(x=x, t=t, batch_size=batch_size, epochs=epochs, validation=validation, callbacks=callbacks)
-
 
     def Test_click(self, tstDataPath, feature):
         tstLrn_Path = tstDataPath[0]
@@ -225,13 +224,12 @@ class NuralNet_APP:
 
         plt.show()
 
-
     def Flow_click(self, flow_data):
         y = self.model.flow(flow_data)
 
         return y
 
-    def main(self):
+    def Layout(self):
         # ----- Column Definition ----- #
         Dir = [
             [sg.Text('Import Dir')],
@@ -323,77 +321,84 @@ class NuralNet_APP:
             [sg.Quit()],
         ]
 
-        InLayer = None # 層が追加されているか判定するための変数
-        window = sg.Window('NeuralNet', layout, default_element_size=(40, 1))
-        while True:
-            event, values = window.Read(timeout=10)
-            if event is None or event == 'Quit':
-                break
-            #---------------------------------
-            # DataMake_click
-            #---------------------------------
-            if event is '-DataMake-':
-                self.DataMake_click(importDirPath=values['-importDirPath-'],
-                               outputDirPath=values['-outputDirPath-'],
-                               org_FileName=values['-orgDataFileName-'],
-                               lrn_FileName=values['-lrnDataFileName-'],
-                               tst_FileName=values['-tstDataFileName-'],
-                               digit=values['-Digit-'])
-            #---------------------------------
-            # Networkの層を追加する。
-            #---------------------------------
-            elif event is '-LayerAdd-':
-                InLayer = self.LayerAdd_click(layerName=values['-LayerName-'],
-                                              Node=values['-Node-'],
-                                              weight=values['-weightInit-'],
-                                              bias=values['-biasInit-'],
-                                              activation=values['-activation-'])
-            elif event is '-NetMake-':
-                if InLayer is None or InLayer in 'input':
-                    print('層もしくは隠れ層がセットされていません。')
-                    continue
-                self.NetMake_click(values['-loss-'],
-                              values['-optimizer-'], values['-metrics-'])
+        return layout
+    
+    def Event(self, event, values):
+        #---------------------------------
+        # DataMake_click
+        #---------------------------------
+        if event is '-DataMake-':
+            self.DataMake_click(importDirPath=values['-importDirPath-'],
+                                  outputDirPath=values['-outputDirPath-'],
+                                  org_FileName=values['-orgDataFileName-'],
+                                  lrn_FileName=values['-lrnDataFileName-'],
+                                  tst_FileName=values['-tstDataFileName-'],
+                                  digit=values['-Digit-'])
+        #---------------------------------
+        # Networkの層を追加する。
+        #---------------------------------
+        elif event is '-LayerAdd-':
+            InLayer = self.LayerAdd_click(layerName=values['-LayerName-'],
+                                          Node=values['-Node-'],
+                                          weight=values['-weightInit-'],
+                                          bias=values['-biasInit-'],
+                                          activation=values['-activation-'])
+        elif event is '-NetMake-':
+            if InLayer is None or InLayer in 'input':
+                print('層もしくは隠れ層がセットされていません。')
+                pass
+            self.NetMake_click(values['-loss-'],
+                               values['-optimizer-'],
+                               values['-metrics-'])
                 #NetMake_click(values['-loss-'])
+        #----------------------------
+        # Trainig_click
+        #----------------------------
+        elif event is '-TrainingRUN-':
+            if InLayer is None or InLayer in 'input':
+                print('層もしくは隠れ層がセットされていません。')
+                pass
             #----------------------------
-            # Trainig_click
+            # ラジオボタンの条件分岐
             #----------------------------
-            elif event is '-TrainingRUN-':
-                if InLayer is None or InLayer in 'input':
-                    print('層もしくは隠れ層がセットされていません。')
-                    continue
-                #----------------------------
-                # ラジオボタンの条件分岐
-                #----------------------------
-                if values['-feature_0-'] is True:
-                    feature = 0
-                elif values['-feature_1-'] is True:
-                    feature = 1
-                elif values['-feature_2-'] is True:
-                    feature = 2
-                else:
-                    feature = None
-                #----------------------------
-                # Validationの条件分岐
-                #----------------------------
-                if (values['-valRLN-'] != '' and values['-valTrg-'] != ''):
-                    val = (values['-valRLN-'], values['-valTrg-'])
-                else:
-                    val = None
+            if values['-feature_0-'] is True:
+                feature = 0
+            elif values['-feature_1-'] is True:
+                feature = 1
+            elif values['-feature_2-'] is True:
+                feature = 2
+            else:
+                feature = None
+            #----------------------------
+            # Validationの条件分岐
+            #----------------------------
+            if (values['-valRLN-'] != '' and values['-valTrg-'] != ''):
+                val = (values['-valRLN-'], values['-valTrg-'])
+            else:
+                val = None
 
-                self.Training_click((values['-orgLRN-'], values['-orgTrg-']),
-                               values['-Batch-'], values['-epochs-'], feature, val)
+            self.Training_click((values['-orgLRN-'], values['-orgTrg-']),
+                                    values['-Batch-'], values['-epochs-'], feature, val)
 
-            elif event is '-FlowChartPrint-':
-                    self.FlowChartPrint_click()
+        elif event is '-FlowChartPrint-':
+                self.FlowChartPrint_click()
 
 
+    def main(self):
+        return sg.Window('NeuralNet', self.layout, default_element_size=(40, 1))
+        
 
 #def NetWorkTree():
 
-
-
-
-
 if __name__ == "__main__":
-    NuralNet_APP()
+    InLayer = None  # 層が追加されているか判定するための変数
+    window = NeuralNet_APP()
+    read = window.main()
+    
+    while True:
+            event, values = read.Read(timeout=10)
+            window.Event(event, values)
+    
+    #event, values = read.Read(timeout=10)
+    #window.Event(event, values)
+            
