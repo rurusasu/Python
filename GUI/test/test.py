@@ -16,11 +16,26 @@ class Window:
 
 
 if __name__ == "__main__":
+    window = Window()
+    window2 = Window()
+
+    window = window.main()
+    window2 = window2.main()
     while True:
-        window = Window()
-        window = window.main()
+        #------------------------------------
+        # Window1
+        #------------------------------------            
         event, values = window.read(timeout=0)
         if event is None:
             break
-        elif event != '__timeout__':
+        elif event != '__TIMEOUT__':
+            print(event, values)
+
+        #------------------------------------
+        # Window2
+        #------------------------------------
+        event, values = window2.read(timeout=0)
+        if event is None:
+            break
+        elif event != '__TIMEOUT__': # readボタンを押すと出力をprint
             print(event, values)

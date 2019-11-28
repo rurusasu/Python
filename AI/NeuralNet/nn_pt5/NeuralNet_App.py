@@ -59,7 +59,6 @@ class NeuralNet_APP:
         print(layerName + ':' + str(Node))
         return layerName
 
-
     def NetMake_click(self, loss, optimizer, metrics):
         """ 
         NetWorkに損失関数、評価関数、最適化アルゴリズムをセットし、
@@ -324,10 +323,12 @@ class NeuralNet_APP:
         return layout
     
     def Event(self, event, values):
+        print(event, values)
+        InLayer = None  # 層が追加されているか判定するための変数
         #---------------------------------
         # DataMake_click
         #---------------------------------
-        if event is '-DataMake-':
+        if event == '-DataMake-':
             self.DataMake_click(importDirPath=values['-importDirPath-'],
                                   outputDirPath=values['-outputDirPath-'],
                                   org_FileName=values['-orgDataFileName-'],
@@ -337,16 +338,16 @@ class NeuralNet_APP:
         #---------------------------------
         # Networkの層を追加する。
         #---------------------------------
-        elif event is '-LayerAdd-':
+        elif event == '-LayerAdd-':
             InLayer = self.LayerAdd_click(layerName=values['-LayerName-'],
                                           Node=values['-Node-'],
                                           weight=values['-weightInit-'],
                                           bias=values['-biasInit-'],
                                           activation=values['-activation-'])
-        elif event is '-NetMake-':
+        elif event == '-NetMake-':
             if InLayer is None or InLayer in 'input':
                 print('層もしくは隠れ層がセットされていません。')
-                pass
+                return
             self.NetMake_click(values['-loss-'],
                                values['-optimizer-'],
                                values['-metrics-'])
@@ -354,10 +355,10 @@ class NeuralNet_APP:
         #----------------------------
         # Trainig_click
         #----------------------------
-        elif event is '-TrainingRUN-':
+        elif event == '-TrainingRUN-':
             if InLayer is None or InLayer in 'input':
                 print('層もしくは隠れ層がセットされていません。')
-                pass
+                return
             #----------------------------
             # ラジオボタンの条件分岐
             #----------------------------
@@ -380,8 +381,8 @@ class NeuralNet_APP:
             self.Training_click((values['-orgLRN-'], values['-orgTrg-']),
                                     values['-Batch-'], values['-epochs-'], feature, val)
 
-        elif event is '-FlowChartPrint-':
-                self.FlowChartPrint_click()
+        elif event == '-FlowChartPrint-':
+            self.FlowChartPrint_click()
 
 
     def main(self):
@@ -391,14 +392,14 @@ class NeuralNet_APP:
 #def NetWorkTree():
 
 if __name__ == "__main__":
-    InLayer = None  # 層が追加されているか判定するための変数
     window = NeuralNet_APP()
-    read = window.main()
+    Read = window.main()
     
     while True:
-            event, values = read.Read(timeout=10)
+        event, values = Read.read(timeout=0)
+        if event is None:
+            break
+        elif event != '__TIMEOUT__':
+            #print(event, values)
             window.Event(event, values)
-    
-    #event, values = read.Read(timeout=10)
-    #window.Event(event, values)
             

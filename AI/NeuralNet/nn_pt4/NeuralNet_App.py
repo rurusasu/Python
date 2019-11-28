@@ -225,7 +225,6 @@ class NuralNet_APP:
 
         plt.show()
 
-
     def Flow_click(self, flow_data):
         y = self.model.flow(flow_data)
 
