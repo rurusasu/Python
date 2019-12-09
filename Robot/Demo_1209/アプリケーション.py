@@ -362,83 +362,7 @@ class Dobot_APP:
         cv2.imshow('Convert', new_image)
 
         return response, new_image
-
-
-    def SaveOriginal_click(self, CON_STR, file_name):
-        x_roop = 10
-        y_roop = 20
-        z_roop = 1
-
-        file_name = __filePath__(file_name)
-        print(file_name + 'にデータを保存します。')
-
-        initPOS = dType.GetPose(api)
-        #-----------------------------
-        # 以下Z軸方向の動作
-        #-----------------------------
-        for i in range(0, z_roop):
-            print('第' + str(i + 1) + 'ステップ目')
-            #Operation(api, file_name, 'z', -i*10, initPOS)
-
-            #-------------------------
-            # 以下Y軸方向の動作
-            #-------------------------
-            for j in range(0, y_roop):
-                Operation(api, file_name, 'y', 10)
-
-                #-------------------------
-                # 以下X軸方向の動作
-                #-------------------------
-                if j % 2 == 0:
-                    for k in range(0, x_roop + 1):
-                        #Async Motion Params Setting
-                        Operation(api, file_name, 'x', 10)
-                else:
-                    for k in range(0, x_roop + 1):
-                        #Async Motion Params Setting
-                        Operation(api, file_name, 'x', -10)
-
-        print('データ取得が終了しました。')
-
-    def SaveValidation_click(CON_STR, file_name):
-        x_roop = 100
-        y_roop = 100
-        z_roop = 2
-
-        file_name = __filePath__(file_name)
-        print(file_name + 'にデータを保存します。')
-
-        initPOS = dType.GetPose(api)
-        #-----------------------------
-        # 以下Z軸方向の動作
-        #-----------------------------
-        for i in range(0, z_roop):
-            print('第' + str(i + 1) + 'ステップ目')
-            Operation(api, file_name, 'z', -0.5*i, initPOS)
-
-            #-------------------------
-            # 以下Y軸方向の動作
-            #-------------------------
-            for j in range(0, y_roop):
-                Operation(api, file_name, 'x', 0.5)
-
-                #-------------------------
-                # 以下X軸方向の動作
-                #-------------------------
-                if j % 2 == 0:
-                    for k in range(0, x_roop + 1):
-                        #Async Motion Params Setting
-                        Operation(api, file_name, 'y', 0.5)
-                else:
-                    for k in range(0, x_roop + 1):
-                        #Async Motion Params Setting
-                        Operation(api, file_name, 'y', -0.5)
-
-        print('testデータ取得が終了しました。')
-
-    def DobotAct(self, x_pos, y_pos, z_pos):
-        _OneAction(api, x=x_pos, y=y_pos, z=z_pos)
-
+        
 
     """
     ----------------------
@@ -539,10 +463,6 @@ class Dobot_APP:
             [sg.Col(WebCam)],
             [sg.Frame('Color of object', ColorOfObject, background_color='grey59')],
             [sg.Col(Threshold)],
-            [sg.Frame('Save', 
-                [[sg.Column(saveOrg)],
-                 [sg.Column(saveVal)],])],
-            [sg.Frame('移動座標', inputPoint)],
             [sg.Quit()],
         ]
 

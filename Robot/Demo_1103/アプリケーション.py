@@ -71,4 +71,4 @@ if (state == dType.DobotConnect.DobotConnect_NoError):
 
 
     """
-    lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMODE, )
+    lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, )
