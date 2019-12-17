@@ -20,7 +20,7 @@ def __filePath__(dir_name, file_name):
     return path
 
 def dataLoad(filePath, dtype):
-    if filePath != str:
+    if type(filePath) != str:
         filePath = str(filePath)
     x = np.loadtxt(
         filePath,  # 読み込むファイル名(例"save_data.csv")
@@ -92,9 +92,9 @@ class NeuralNet_APP:
         # Validationデータの読み込み
         #-----------------------------
         if valPath != None:
-            valRLN_Path = valPath[0]
+            valLRN_Path = valPath[0]
             valTrg_Path = valPath[1]
-            x_val = dataLoad(valRLN_Path, float)
+            x_val = dataLoad(valLRN_Path, float)
             t_val = dataLoad(valTrg_Path, float)
             #-------------------------------
             # DataFeature
@@ -309,7 +309,7 @@ class NeuralNet_APP:
             [sg.Text('学習用ラベル')],
             [sg.Input(size=(30, 1)), sg.FileBrowse(key='-orgTrg-')],
             [sg.Text('Validation用データ')],
-            [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valRLN-')],
+            [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valLRN-')],
             [sg.Text('Validation用ラベル')],
             [sg.Input(size=(30, 1)), sg.FileBrowse(key='-valTrg-')],
             [sg.Radio('標準化', 'feature', size=(10, 1), key='-feature_0-'),
@@ -323,7 +323,7 @@ class NeuralNet_APP:
 
         NetEvaluate = [
             [sg.Text('テスト用データ')],
-            [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstRLN-')],
+            [sg.Input(size=(30, 1)), sg.FileBrowse(key='-tstLRN-')],
             [sg.Text('テスト用ラベル')],
             [sg.Input(size=(30, 1)),
              sg.FileBrowse(key='-tstTrg-'),
@@ -397,8 +397,8 @@ class NeuralNet_APP:
             #----------------------------
             # Validationの条件分岐
             #----------------------------
-            if (values['-valRLN-'] != '' and values['-valTrg-'] != ''):
-                val = (values['-valRLN-'], values['-valTrg-'])
+            if (values['-valLRN-'] != '' and values['-valTrg-'] != ''):
+                val = (values['-valLRN-'], values['-valTrg-'])
             else:
                 val = None
 

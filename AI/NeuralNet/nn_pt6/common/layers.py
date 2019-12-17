@@ -355,20 +355,11 @@ class Dense:
 
 
     def backward(self, dout):
-        #revDense = list(self.func.values()) #OrederedDictを使う場合、内部の値を入れ替える際はlistにする必要がある。
-        #revDense.reverse()
-        #for revLayer in revDense:
-        #    dout = revLayer.backward(dout)
-        #del revDense
-
-        #dout = self.func['Activation'].backward(dout)
         dout = self.activation.backward(dout)
 
         dx = np.dot(dout, self.params['W'].T)
         self.params['dW'] = np.dot(self.x.T, dout)
         self.params['db'] = np.sum(dout, axis=0)
-        #self.optimizer(self.lr)
-        #self.func['optimizer'].update(self.params, self.diffparams)
 
         dx = dx.reshape(self.original_x_shape)  # 逆伝播を入力信号の形に戻す
         return dx

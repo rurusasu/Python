@@ -143,8 +143,14 @@ class Sequential:
         else:
             x = __shuffle__(x)
             t = __shuffle__(t)
-            x_val, x = __sorting__(x, 2000)
-            t_val, t = __sorting__(t, 2000)
+            #------------------
+            # Sorting
+            #------------------
+            # ホールドアウト法を採用
+            # 教師用データと検証用データを6:4で分割
+            thresh = int((x.shape[0]*0.4))
+            x_val, x = __sorting__(x, thresh)
+            t_val, t = __sorting__(t, thresh)
 
         loop = int(x.shape[0] / batch_size)  # 繰り返し回数
         #---------------------------
