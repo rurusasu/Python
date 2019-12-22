@@ -14,7 +14,7 @@ from collections import OrderedDict
 class Sequential:
     def __init__(self):
         self.sequential = OrderedDict()
-        self.Dense = OrderedDict()
+        #self.Dense = OrderedDict()
         self.grads = OrderedDict()
         #self.units = {}
         self.params = {}
@@ -48,7 +48,7 @@ class Sequential:
         #self.sequential[self.i] = layer_name
         if layer_name.name in 'input':
             self.inputLayer = [layer_name, layer_name.units]
-        elif layer_name.name in 'Dense_':
+        elif layer_name.name in 'Dense':
             self.sequential[layer_name.name + str(self.i)] = [
                 layer_name, 
                 layer_name.units,
@@ -58,11 +58,6 @@ class Sequential:
             self.i += 1
         else:
             print('実装されていないレイヤ名です。')
-        #self.sequential[layer_name.name] = layer_name
-        #self.sequential[self.i] = layer_name
-
-        #self.units[self.i] = self.sequential[self.i].units
-        #self.i += 1
 
     def compile(self, loss, optimizer='sgd', lr=0.01, metrics=['r2', 'rmse']):
         self.func['loss'] = _CallClass('common.layers', loss)
@@ -75,8 +70,6 @@ class Sequential:
         idx = 1
         y = np.zeros((1, self.inputLayer[1]))
         for key, layer in self.sequential.items():
-            #y = layer.compile(y, optimizer, lr)
-            #key, y, params = layer.compile(y)
             y = layer[0].compile(y)
             if 'Dense' in key:
                 #self.Dense[key + str(idx)] = layer
@@ -92,7 +85,6 @@ class Sequential:
                 metric = 'r2_score'
             if str(metric).lower() in ('rmse'):
                 metric = 'rmse_score'
-            #self.metrics_func[metric] = _CallFunction('common.functions', metric)
             self.func[metric] = _CallFunction('common.functions', metric)
             #--------------------------
             # 結果保存用の配列を設定
@@ -127,13 +119,6 @@ class Sequential:
     def fit(self, x, t, batch_size, epochs, validation=None, callbacks=None):
         # コールバック関数
         self.callbacks =callbacks
-        """
-        if callbacks != None:
-            one_epoch_end = []
-            for call in callbacks:
-                if ('one_epoch_end' in dir(call)):
-                    one_epoch_end.append(call.one_epoch_end)
-        """ 
         #-------------------------------
         # Validation
         #-------------------------------

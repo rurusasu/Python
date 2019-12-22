@@ -302,6 +302,7 @@ class Dobot_APP:
         Connect = [
             [sg.Button('Conect to DOBOT', key='-Connect-'),
              sg.Button('Disconnect to DOBOT', key='-Disconnect-'),],
+            [sg.Button('座標を検索', key='-Search-')],
         ]
 
         Gripper = [
@@ -490,6 +491,26 @@ class Dobot_APP:
                 self.connection = 1
                 return
 
+        elif event == '-Search-':
+            if self.DOBOT_err != 0:  # Dobotが接続されていない時
+                DobotError(self.DOBOT_err)
+            else:
+                #HomeParams = dType.GetHOMEParams(self.api)
+                #print(HomeParams)
+                #dType.SetHOMEParams(self.api, 150, -200, 100, 0, self.queue_index)
+                #dType.SetHOMEParams(self.api, 150, -200, 100, 0, isQueued=1)
+                dType.SetHOMEParams(self.api, 137, 0, 0, 0, isQueued=1)
+
+                #Async Home
+                dType.SetHOMECmd(self.api, temp=0, isQueued=1)
+
+                #キューに入っているコマンドを実行
+                dType.SetQueuedCmdStartExec(self.api)
+                print('動作終了')
+            return
+
+
+        # サクションカップを動作させる
         elif event == '-SuctionCup-':
             if (self.DOBOT_err == 0) or (self.DOBOT_err == 3):  # Dobotが接続されている、もしくはサクションカップが動作していないとき
                 if self.suctioncupON: # サクションカップが動作している場合
@@ -508,6 +529,7 @@ class Dobot_APP:
                 DobotError(self.DOBOT_err)
                 return
 
+        # グリッパーを動作させる
         elif event == '-Gripper-':
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -634,10 +656,13 @@ class Dobot_APP:
                     self.Window['-x0-'].update(str(pose[0]))
                     self.Window['-y0-'].update(str(pose[1]))
                     self.Window['-z0-'].update(str(pose[2]))
-                    self.Window['-r0-'].update(str(pose[3]))
-                    self.Record = (pose[0], pose[1], pose[2], pose[3]) # 退避位置をセット
+                    self.Window['-r0-'].update(float(0))
+                    #self.Window['-r0-'].update(str(pose[3]))
+                    #self.Record = (pose[0], pose[1], pose[2], pose[3]) # 退避位置をセット
+                    self.Record = (pose[0], pose[1], pose[2], float(0)) # 退避位置をセット
                     
-                    self.DOBOT_err = SetCoordinatePose_click(self.api, pose, self.queue_index)
+                    #self.DOBOT_err = SetCoordinatePose_click(self.api, pose, self.queue_index)
+                    self.DOBOT_err = SetCoordinatePose_click(self.api, self.Record, self.queue_index)
                     if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                         DobotError(self.DOBOT_err)
             return
@@ -984,7 +1009,7 @@ def GetPose_click(api):
         Dobotの姿勢を格納したリスト
     """
     response = 2
-    timeout(5)
+    timeout(2)
     try:
         pose = dType.GetPose(api)
     except TimeoutError:
