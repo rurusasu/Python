@@ -3,21 +3,25 @@
 import sys, os
 sys.path.append(os.getcwd())
 
+from ctypes import cdll
+import DobotDllType as dType
 import PySimpleGUI as sg
+
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
-import DobotDllType as dType
-from common.DobotFunction import initDobot, Operation, OneAction
-from ctypes import cdll
+import cv2
+from PIL import Image
 
 import time
 from timeout_decorator import timeout, TimeoutError
 
-import cv2
-from PIL import Image
+#from common.DobotFunction import initDobot, Operation, OneAction
+
+
+
 
 def __filePath__(file_name):
     path = './data/' + str(file_name)
@@ -172,7 +176,7 @@ class Dobot_APP:
             return 3, None, None
         sg.popup('スナップショットを撮影しました。', title='スナップショット')
         IMAGE_org = img.copy() # 撮影した画像を保存する
-        cv2.imshow('Snapshot', img)  # スナップショットを表示する
+        cv2.imshow('Snapshot', img)  # 画面に表示する
         
         # ------------------
         # 画像の解像度を表示
@@ -187,18 +191,26 @@ class Dobot_APP:
         #    撮影した画像を変換する。
         # ---------------------------
         # 色空間の変換
-        color_type, color_img = Color_cvt(img, values['-Color_Space-']) 
-        cv2.imshow('color_img', color_img)  # スナップショットを表示する
+        color_type, img = Color_cvt(img, values['-Color_Space-']) 
+        IMAGE_color_cvt = img.copy() # 色変換した画像を保存する
+        cv2.imshow('color_cvt', IMAGE_color_cvt)  # 画面に表示する
+        
         # 濃度変換（現在、グレー画像とrgb画像についてのみ実装）
         if values['-Color_Density-'] != 'なし':
-            cvt_img, fig = Contrast(color_img, color_type, values['-Color_Density-'])
-            cv2.imshow('cvt_img', cvt_img)  # スナップショットを表示する
+            img, fig = Contrast_cvt(img, color_type, values['-Color_Density-'])
+            IMAGE_contrast_cvt = img.copy() # 濃度変換した画像を表示する
+            cv2.imshow('contrast_img', IMAGE_contrast_cvt)  # スナップショットを表示する
+
+        if values['-Color_Filtering-'] != 'なし':
+            img = SpatialFiltering(img, values['-Color_Filtering-'])
+            IMAGE_filter = img.copy()
+            cv2.imshow('filter', IMAGE_filter)
 
             #------------------------
             # Matplotlibの画像を表示
             #------------------------
-            canvas_elem = self.Window[]
-            fig_agg = draw_figure
+            #canvas_elem = self.Window['-CANVAS-']
+            #fig_agg = draw_figure
 
 
         # フィルタリング
@@ -1297,7 +1309,7 @@ def __RGB2HSV__(RGB_img):
 #--------------------------
 # 画像変換（濃度）
 #--------------------------
-def Contrast(img, color_type, cvt_type):
+def Contrast_cvt(img, color_type, cvt_type):
     """
     濃度の変換方法を選択する関数
 
@@ -1574,7 +1586,7 @@ def plot_curve(f, a, rgb_img):
     histgram |       | histgram
     ----------------------------
     """
-    fig = plt.figure(figsize=(10, 5))
+    fig = plt.figure(figsize=(12, 5))
     gs = gridspec.GridSpec(2, 3)
     x = np.arange(256)
     
@@ -1612,7 +1624,7 @@ def plot_curve(f, a, rgb_img):
     ax5 = fig.add_subplot(gs[1, 2])
     ax5 = Image_hist(out_rgb_img, ax5, ticks)
     
-    #plt.show()
+    plt.show()
     return out_rgb_img, fig
 
 def LUT_curve(f, a, rgb_img):
@@ -1646,10 +1658,54 @@ def Image_hist(img, ax, ticks=None):
 
     return ax
 
-def Gaussian(img):
+def SpatialFiltering(img, filter_type):
     """
-    
+    ノイズ除去方法を選択する関数
+
+    Parameters
+    ----------
+    img : OpenCV型
+        変換前の画像
+    filter_type : string
+        空間フィルタの種類
+        ・平均化
+        ・メディアン
+        ・ガウシアン
     """
+    new_img = img.copy()
+    if filter_type == '平均化':
+        new_img = __AveragingFilter__(new_img)
+    elif filter_type == 'ガウシアン':
+        new_img = __GaussianFilter__(new_img)
+    elif filter_type == 'メディアン':
+        new_img = __MedianFilter__(new_img)
+
+    return new_img
+
+def __AveragingFilter__(img):
+    """
+    ある周辺の画素を平均化する空間フィルタ
+    """
+    return cv2.blur(img, ksize=(3, 3))
+
+def __GaussianFilter__(img):
+    """
+    ガウス分布を利用して、「注目画素からの距離に応じて近傍の画素値に重みをかける」という処理を行い、自然な平滑化を実現するフィルタ
+    """
+    return cv2.GaussianBlur(img, ksize=(3, 3), sigmaX=1.3)
+
+def __MedianFilter__(img):
+    """
+    注目領域の「画素を値が小さい順に並べた時に、真ん中にある画素（中央値）」を新しい画素値とするフィルタ
+    平均化フィルタと比べて、周囲の飛びぬけた値に左右されないという性質を持つ
+
+    Parameter
+    ---------
+    img : OpenCV型
+        変換前の画像
+    """
+    return cv2.medianBlur(img, ksize=13)
+
 
 def GlobalThreshold(img, gaussian=False, threshold=127, Type=cv2.THRESH_BINARY):
     """
