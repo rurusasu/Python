@@ -9,6 +9,7 @@ import PySimpleGUI as sg
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
@@ -197,25 +198,38 @@ class Dobot_APP:
         
         # 濃度変換（現在、グレー画像とrgb画像についてのみ実装）
         if values['-Color_Density-'] != 'なし':
-            img, fig = Contrast_cvt(img, color_type, values['-Color_Density-'])
+            img = Contrast_cvt(img, color_type, values['-Color_Density-'])
             IMAGE_contrast_cvt = img.copy() # 濃度変換した画像を表示する
             cv2.imshow('contrast_img', IMAGE_contrast_cvt)  # スナップショットを表示する
-
+        # フィルタリング
         if values['-Color_Filtering-'] != 'なし':
             img = SpatialFiltering(img, values['-Color_Filtering-'])
             IMAGE_filter = img.copy()
             cv2.imshow('filter', IMAGE_filter)
+        
+        imgbytes = cv2.imencode('.png', img)[1].tobytes()
+        imgbytes = cv2.resize()
+        self.Window['-IMAGE-'].update(data=)
 
-            #------------------------
-            # Matplotlibの画像を表示
-            #------------------------
-            #canvas_elem = self.Window['-CANVAS-']
-            #fig_agg = draw_figure
+        """
+        canvas_elem = self.Window['-CANVAS-']
+        canvas = canvas_elem.TKCanvas
+        
 
-
-        # フィルタリング
-        #if values['-Color_Filtering-'] != 'なし':
-
+        #fig = plt.figure(figsize=(3, 2))
+        fig = plt.figure(figsize=(3, 2))
+        #fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(3, 2))
+        #gs = gridspec.GridSpec(1, 2)
+        #sns.set_style('ticks')
+        #ax1 = fig.add_subplot(gs[0, 0])
+        #ax1.set_title('input image →')
+        #ax1.imshow(img)
+        #ax1.set_xticks([]), ax1.set_yticks([])  # 目盛りを消す
+    
+        fig_agg = draw_figure(canvas, fig)
+        #plt.imshow(img)
+        fig_agg.draw()
+        """
         return 0
 
     def binarycvt(self):
@@ -505,8 +519,10 @@ class Dobot_APP:
              sg.Frame('位置合わせの設定', Alignment)],
             [sg.Col(WebCamConnect), sg.Frame('画像の重心計算', Contours), ],
             #[sg.Col(RetrievalMode), sg.Col(ApproximateMode), sg.Col(KernelShape),],
-            [sg.Frame('輪郭抽出の設定', ContourExtractionSettings, size=(10, 10)), 
-             sg.Frame('二値化の共通設定', Bin_CommonSettings, size=(10, 10)), ],
+            #[sg.Canvas(size=(50, 100), key='-CANVAS-')],
+            [sg.Image(filename='', size=(100, 100), key='-IMAGE-')],
+            #[sg.Frame('輪郭抽出の設定', ContourExtractionSettings, size=(10, 10)), 
+            # sg.Frame('二値化の共通設定', Bin_CommonSettings, size=(10, 10)), ],
             [sg.Frame('Color of object', ColorOfObject, background_color='grey59'),],
             [sg.Col(Global_Threshold, size=(200, 115)), 
              sg.Col(Adaptive_Threshold, size=(200, 115)), 
@@ -1339,16 +1355,16 @@ def Contrast_cvt(img, color_type, cvt_type):
     new_img = img.copy()
     if color_type != 'HSV':
         if cvt_type == '線形濃度変換': # 線形濃度変換を行う
-            new_img, fig = plot_curve(curve_1, a, img)
+            new_img = plot_curve(curve_1, a, img)
         elif cvt_type == '非線形濃度変換': # ガンマ補正を行う
-            new_img, fig = plot_curve(curve_5, gamma, img)
+            new_img = plot_curve(curve_5, gamma, img)
         elif cvt_type == 'ヒストグラム平坦化': # ヒストグラム平坦化を行う
             if color_type == 'glay':  # グレー画像について変換
                 new_img = __glayHist__(new_img)
             elif color_type == 'RGB':  # rgb画像について変換
                 new_img = __rgbHist__(new_img)
 
-    return new_img, fig
+    return new_img
 
 def __glayToneCurve__(img):
     """
@@ -1586,46 +1602,10 @@ def plot_curve(f, a, rgb_img):
     histgram |       | histgram
     ----------------------------
     """
-    fig = plt.figure(figsize=(12, 5))
-    gs = gridspec.GridSpec(2, 3)
-    x = np.arange(256)
-    
-
-    # トーンカーブを真ん中に
-    sns.set_style('darkgrid')
-    ax2 = fig.add_subplot(gs[:, 1])
-    ax2.set_title('Tone Curve')
-    ticks = [0, 42, 84, 127, 169, 211, 255]
-    ax2.set_xlabel('Input')
-    ax2.set_ylabel('Output')
-    ax2.set_xticks(ticks)
-    ax2.set_yticks(ticks)
-    ax2.plot(x, f(a, x))
-
-    # 入力画像を←に, 出力画像を→に
-    sns.set_style('ticks')
-    ax1 = fig.add_subplot(gs[0, 0])
-    ax1.set_title('input image →')
-    ax1.imshow(rgb_img)
-    ax1.set_xticks([]), ax1.set_yticks([])  # 目盛りを消す
-
     # 画素値変換。uint8で渡さないと大変なことに
     out_rgb_img = LUT_curve(f, a, rgb_img)
 
-    ax3 = fig.add_subplot(gs[0, 2])
-    ax3.set_title('→ output image')
-    ax3.imshow(out_rgb_img)
-    ax3.set_xticks([]), ax3.set_yticks([])
-    
-    #入力と出力のヒストグラム
-    sns.set_style(style='whitegrid')
-    ax4 = fig.add_subplot(gs[1, 0])
-    ax4 = Image_hist(rgb_img, ax4, ticks)
-    ax5 = fig.add_subplot(gs[1, 2])
-    ax5 = Image_hist(out_rgb_img, ax5, ticks)
-    
-    plt.show()
-    return out_rgb_img, fig
+    return out_rgb_img
 
 def LUT_curve(f, a, rgb_img):
     """
@@ -1706,6 +1686,10 @@ def __MedianFilter__(img):
     """
     return cv2.medianBlur(img, ksize=13)
 
+# アスペクト比を固定して、指定した大きさに収まるようリサイズする。
+def scale_box(img, width, height):
+    scale = max(width / img.shape[1], height / img.shape[0])
+    return cv2.resize(img, dsize=None, fx=scale, fy=scale)
 
 def GlobalThreshold(img, gaussian=False, threshold=127, Type=cv2.THRESH_BINARY):
     """
