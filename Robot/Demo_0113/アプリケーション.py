@@ -21,9 +21,6 @@ from timeout_decorator import timeout, TimeoutError
 
 #from common.DobotFunction import initDobot, Operation, OneAction
 
-
-
-
 def __filePath__(file_name):
     path = './data/' + str(file_name)
     return path
@@ -44,6 +41,9 @@ class Dobot_APP:
         self.capture = None
         self.IMAGE_org = None  # 撮影した生画像
         self.IMAGE_bin = None  # 二値化後の画像
+        self.Image_height = 240 # 画面上に表示する画像の高さ
+        self.Image_width  = 320 # 画面上に表示する画像の幅
+        self.fig_agg = None     # 画像のヒストグラムを表示する用の変数
         self.COG_Coordinate = None # 画像の重心位置(COG: CenterOfGravity) : tuple
         self.Alignment_1 = None # 位置合わせ（始点）: tuple
         self.Alignment_2 = None # 位置合わせ（終点）: tuple
@@ -206,30 +206,28 @@ class Dobot_APP:
             img = SpatialFiltering(img, values['-Color_Filtering-'])
             IMAGE_filter = img.copy()
             cv2.imshow('filter', IMAGE_filter)
-        
-        imgbytes = cv2.imencode('.png', img)[1].tobytes()
-        imgbytes = cv2.resize()
-        self.Window['-IMAGE-'].update(data=)
 
-        """
+        #-----------------------------------
+        # 画面上に撮影した画像を表示する
+        #-----------------------------------
+        img = scale_box(img, self.Image_width, self.Image_height)
+        imgbytes = cv2.imencode('.png', img)[1].tobytes()
+        self.Window['-IMAGE-'].update(data=imgbytes)
+
+        #------------------------------------------------
+        # 画面上に撮影した画像のヒストグラムを表示する
+        #------------------------------------------------
         canvas_elem = self.Window['-CANVAS-']
         canvas = canvas_elem.TKCanvas
+        ticks = [0, 42, 84, 127, 169, 211, 255]
+        fig, ax = plt.subplots(figsize=(3, 2))
+        ax = Image_hist(img, ax, ticks)
+        if self.fig_agg:
+            # ** IMPORTANT ** Clean up previous drawing before drawing again
+            delete_figure_agg(self.fig_agg)
+        self.fig_agg = draw_figure(canvas, fig)
+        self.fig_agg.draw()
         
-
-        #fig = plt.figure(figsize=(3, 2))
-        fig = plt.figure(figsize=(3, 2))
-        #fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(3, 2))
-        #gs = gridspec.GridSpec(1, 2)
-        #sns.set_style('ticks')
-        #ax1 = fig.add_subplot(gs[0, 0])
-        #ax1.set_title('input image →')
-        #ax1.imshow(img)
-        #ax1.set_xticks([]), ax1.set_yticks([])  # 目盛りを消す
-    
-        fig_agg = draw_figure(canvas, fig)
-        #plt.imshow(img)
-        fig_agg.draw()
-        """
         return 0
 
     def binarycvt(self):
@@ -514,16 +512,15 @@ class Dobot_APP:
 
         layout = [
             [sg.Col(Connect), sg.Col(Gripper)],
-            [sg.Col(CurrentPose, size=(165, 136)),
-             sg.Col(SetPose, size=(165, 136)), 
-             sg.Frame('位置合わせの設定', Alignment)],
+            [sg.Col(CurrentPose, size=(165, 136)), sg.Col(SetPose, size=(165, 136)), sg.Frame('位置合わせの設定', Alignment)],
             [sg.Col(WebCamConnect), sg.Frame('画像の重心計算', Contours), ],
             #[sg.Col(RetrievalMode), sg.Col(ApproximateMode), sg.Col(KernelShape),],
             #[sg.Canvas(size=(50, 100), key='-CANVAS-')],
-            [sg.Image(filename='', size=(100, 100), key='-IMAGE-')],
+            [sg.Image(filename='', size=(self.Image_width, self.Image_height), key='-IMAGE-'), 
+             sg.Canvas(size=(self.Image_width, self.Image_height), key='-CANVAS-')],
             #[sg.Frame('輪郭抽出の設定', ContourExtractionSettings, size=(10, 10)), 
             # sg.Frame('二値化の共通設定', Bin_CommonSettings, size=(10, 10)), ],
-            [sg.Frame('Color of object', ColorOfObject, background_color='grey59'),],
+            #[sg.Frame('Color of object', ColorOfObject, background_color='grey59'),],
             [sg.Col(Global_Threshold, size=(200, 115)), 
              sg.Col(Adaptive_Threshold, size=(200, 115)), 
              sg.Col(TwoThreshold, size=(200, 115)), ],
@@ -2194,6 +2191,10 @@ def draw_figure(canvas, figure, loc=(0, 0)):
     figure_canvas_agg.draw()
     figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
     return figure_canvas_agg
+
+def delete_figure_agg(figure_agg):
+    figure_agg.get_tk_widget().forget()
+    plt.close('all')
 
 # ボタンを押したときのイベントとボタンが返す値を代入
 #event, values = window.Read()
