@@ -39,7 +39,7 @@ class Dobot_APP:
         self.suctioncupON = False # True:ON, False:OFF
         self.gripper = True       # True:Close, False:Open
         self.capture = None
-        self.IMAGE_org = None  # 撮影した生画像
+        self.IMAGE_cnv = None  # 撮影して変換画像
         self.IMAGE_bin = None  # 二値化後の画像
         self.Image_height = 240 # 画面上に表示する画像の高さ
         self.Image_width  = 320 # 画面上に表示する画像の幅
@@ -165,18 +165,24 @@ class Dobot_APP:
             4. 画像の変換エラー
             5. プロパティの選択エラー
             6. 変換画像が存在しない
+        IMAGE : OpenCV型
+            ・撮影および変換成功時
+                撮影及び変換を加えた画像
+            ・失敗時
+                None
         """
+        IMAGE = None
         if self.capture is None: # カメラが接続されていない場合
-            return 1, None, None
+            return 1, IMAGE
 
         # -----------------
         # 静止画を撮影する。
         # -----------------
         result, img = Snapshot(self.capture)
         if (result != 0) or (result is None):
-            return 3, None, None
+            return 3, IMAGE
         sg.popup('スナップショットを撮影しました。', title='スナップショット')
-        IMAGE_org = img.copy() # 撮影した画像を保存する
+        #IMAGE_org = img.copy() # 撮影した画像を保存する
         cv2.imshow('Snapshot', img)  # 画面に表示する
         
         # ------------------
@@ -193,20 +199,21 @@ class Dobot_APP:
         # ---------------------------
         # 色空間の変換
         color_type, img = Color_cvt(img, values['-Color_Space-']) 
-        IMAGE_color_cvt = img.copy() # 色変換した画像を保存する
-        cv2.imshow('color_cvt', IMAGE_color_cvt)  # 画面に表示する
+        #IMAGE_color_cvt = img.copy() # 色変換した画像を保存する
+        cv2.imshow('color_cvt', img)  # 画面に表示する
         
         # 濃度変換（現在、グレー画像とrgb画像についてのみ実装）
         if values['-Color_Density-'] != 'なし':
             img = Contrast_cvt(img, color_type, values['-Color_Density-'])
-            IMAGE_contrast_cvt = img.copy() # 濃度変換した画像を表示する
-            cv2.imshow('contrast_img', IMAGE_contrast_cvt)  # スナップショットを表示する
+            #IMAGE_contrast_cvt = img.copy() # 濃度変換した画像を表示する
+            cv2.imshow('contrast_img', img)  # スナップショットを表示する
         # フィルタリング
         if values['-Color_Filtering-'] != 'なし':
             img = SpatialFiltering(img, values['-Color_Filtering-'])
-            IMAGE_filter = img.copy()
-            cv2.imshow('filter', IMAGE_filter)
+            #IMAGE_filter = img.copy() # 空間フィルタを通した画像を保存する
+            cv2.imshow('filter', img)
 
+        IMAGE = img.copy()
         #-----------------------------------
         # 画面上に撮影した画像を表示する
         #-----------------------------------
@@ -228,7 +235,7 @@ class Dobot_APP:
         self.fig_agg = draw_figure(canvas, fig)
         self.fig_agg.draw()
         
-        return 0
+        return 0, IMAGE
 
     def binarycvt(self):
         # 二値化の変換タイプを選択する。
@@ -922,14 +929,13 @@ class Dobot_APP:
                 return
 
         elif event == '-Snapshot-':
-            self.WebCam_err = self.Snapshot_click(values)
+            self.WebCam_err, self.IMAGE_cnv = self.Snapshot_click(values)
             if self.WebCam_err != 0:
                 WebCamError(self.WebCam_err)
                 return
-
-            #cv2.imshow('Snapshot', self.IMAGE_org) # 画像として出力
-
             return
+
+        
 
         elif event == '-Contours-':
             self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(values, self.Window)
