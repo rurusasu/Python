@@ -1828,7 +1828,7 @@ def TwoThreshold(img, gaussian=False, LowerThreshold=0, UpperThreshold=128, Pick
         1: 緑
         2: 青
         3: 白
-        4: 黄色
+        4: 黒色
     Type
         閾値の処理方法
         ・cv2.THRESH_BINARY
@@ -1873,7 +1873,7 @@ def TwoThreshold(img, gaussian=False, LowerThreshold=0, UpperThreshold=128, Pick
     elif PickupColor == 3:
         IMAGE_bw = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
     elif PickupColor == 4:
-        IMAGE_bw = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　青色部分の抽出
+        IMAGE_bw = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　黒色部分の抽出
     else:
         return 5, None
 
