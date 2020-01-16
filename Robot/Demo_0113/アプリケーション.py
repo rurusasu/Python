@@ -935,8 +935,6 @@ class Dobot_APP:
                 return
             return
 
-        
-
         elif event == '-Contours-':
             self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(values, self.Window)
 
