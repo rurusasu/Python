@@ -353,7 +353,7 @@ class Dobot_APP:
         Connect = [
             [sg.Button('Conect to DOBOT', key='-Connect-'),
              sg.Button('Disconnect to DOBOT', key='-Disconnect-'),],
-            [sg.Button('座標を検索', key='-Search-')],
+            [sg.Button('ホーム位置合わせ', key='-HomeSet-')],
         ]
 
         Gripper = [
@@ -542,7 +542,9 @@ class Dobot_APP:
     ----------------------
     """
     def Event(self, event, values):
+        #------------------------
         # Dobotの接続を行う
+        #------------------------
         if event == '-Connect-':
             self.connection = self.Connect_click()
             if self.connection == 0:
@@ -553,7 +555,9 @@ class Dobot_APP:
             DobotError(self.DOBOT_err)
             return
 
+        #------------------------
         # Dobotの切断を行う
+        #------------------------
         elif event == '-Disconnect-':
             result = self.Disconnect_click()
             if result == 0:
@@ -564,14 +568,13 @@ class Dobot_APP:
                 self.connection = 1
                 return
 
-        elif event == '-Search-':
+        #----------------------------
+        # Dobotのホーム位置を決定する
+        #----------------------------
+        elif event == '-HomeSet-':
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
             else:
-                #HomeParams = dType.GetHOMEParams(self.api)
-                #print(HomeParams)
-                #dType.SetHOMEParams(self.api, 150, -200, 100, 0, self.queue_index)
-                #dType.SetHOMEParams(self.api, 150, -200, 100, 0, isQueued=1)
                 dType.SetHOMEParams(self.api, 137, 0, 0, 0, isQueued=1)
 
                 #Async Home
@@ -582,7 +585,9 @@ class Dobot_APP:
                 print('動作終了')
             return
 
+        #--------------------------------
         # サクションカップを動作させる
+        #--------------------------------
         elif event == '-SuctionCup-':
             if (self.DOBOT_err == 0) or (self.DOBOT_err == 3):  # Dobotが接続されている、もしくはサクションカップが動作していないとき
                 if self.suctioncupON: # サクションカップが動作している場合
@@ -601,7 +606,9 @@ class Dobot_APP:
                 DobotError(self.DOBOT_err)
                 return
 
+        #--------------------------
         # グリッパーを動作させる
+        #--------------------------
         elif event == '-Gripper-':
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -626,7 +633,9 @@ class Dobot_APP:
                     DobotError(self.DOBOT_err)
                 return
 
-        # Dobotの現在の姿勢を取得し表示する
+        # --------------------------------- #
+        #  Dobotの現在の姿勢を取得し表示する  #
+        # --------------------------------- #
         elif event == '-GetPose-':
             if self.DOBOT_err != 0: # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -636,6 +645,9 @@ class Dobot_APP:
                     DobotError(self.DOBOT_err)
             return
 
+        # -------------------------------- #
+        #  関節座標系で指定位置に動作させる   #
+        # -------------------------------- #
         elif event == '-SetJointPose-':
             if self.connection == 0:
                 sg.popup('Dobotに接続していません。', title='Dobotの接続')
@@ -676,6 +688,9 @@ class Dobot_APP:
                     return
                 else: return
 
+        # ------------------------------------ #
+        #  デカルト座標系で指定位置に動作させる   #
+        # ------------------------------------ #
         elif event == '-SetCoordinatePose-':
             if self.connection == 0:
                 sg.popup('Dobotに接続していません。', title='Dobotの接続')
@@ -717,6 +732,9 @@ class Dobot_APP:
                     return
             return
 
+        # ------------------------------ #
+        #  Dobotの動作終了位置を設定する   #
+        # ------------------------------ #
         elif event == '-Record-':
             if self.DOBOT_err != 0: # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -739,6 +757,9 @@ class Dobot_APP:
                         DobotError(self.DOBOT_err)
             return
 
+        #--------------------------------------------------- #
+        #  画像とDobotの座標系の位置合わせ用変数_1をセットする   #
+        #--------------------------------------------------- #
         elif event == '-Set_x1-':
             if self.DOBOT_err != 0: # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -756,6 +777,9 @@ class Dobot_APP:
                         DobotError(self.DOBOT_err)
             return
         
+        # -------------------------------------------------- #
+        #  画像とDobotの座標系の位置合わせ用変数_2をセットする   #
+        # -------------------------------------------------- #
         elif event == '-Set_x2-':
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
@@ -773,6 +797,9 @@ class Dobot_APP:
                         DobotError(self.DOBOT_err)
             return
 
+        # --------------------------------------------------- #
+        #  オブジェクトの重心位置に移動→掴む→退避 動作を実行する  #
+        # --------------------------------------------------- #
         elif event == '-MoveToThePoint-':
             # 位置合わせの始点と終点がセットされているか確認
             if (self.Alignment_1 is None) or (self.Alignment_2 is None):
@@ -914,6 +941,9 @@ class Dobot_APP:
             else:
                 sg.popup('WebCameraに接続しました。', title='Camの接続')
 
+        # ------------------------- #
+        #  カメラのプレビューを表示   #
+        # ------------------------- #
         elif event == '-Preview-':
             if self.capture is None: # カメラが接続されていない場合
                 self.WebCam_err = 1
@@ -928,6 +958,9 @@ class Dobot_APP:
                 sg.popup('WebCameraの画像を閉じました。', title='画像の表示')
                 return
 
+        # ---------------------- #
+        #  スナップショットを撮影  #
+        # ---------------------- #
         elif event == '-Snapshot-':
             self.WebCam_err, self.IMAGE_cnv = self.Snapshot_click(values)
             if self.WebCam_err != 0:
