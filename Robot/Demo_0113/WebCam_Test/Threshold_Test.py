@@ -49,7 +49,7 @@ window = sg.Window('Demo Application - OpenCV Integration',
                      [sg.Image(filename='', key='image_4'),
                       sg.Image(filename='', key='image_5'),
                       sg.Image(filename='', key='image_6')],], location=(800,400))
-cap = cv2.VideoCapture(1)       # Setup the camera as a capture device
+cap = cv2.VideoCapture(0)       # Setup the camera as a capture device
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 while True:                     # The PSG "Event Loop"
