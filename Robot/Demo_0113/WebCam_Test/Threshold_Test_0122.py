@@ -3,6 +3,12 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import cv2, PySimpleGUI as sg
 import numpy as np
 
+Cammera_num = 1
+fig_agg_1 = fig_agg_2 = fig_agg_3 = None     # 画像のヒストグラムを表示する用の変数
+Image_height = 120 # 画面上に表示する画像の高さ
+Image_width  = 160 # 画面上に表示する画像の幅
+
+
 def binalize(src, threshold=127, Type=cv2.THRESH_BINARY):
     ret, img = cv2.threshold(src, threshold, 255, Type)
     return img
@@ -95,9 +101,25 @@ def Image_hist(img, ax, ticks=None):
 
     return ax
 
-fig_agg_1 = fig_agg_2 = fig_agg_3 = None     # 画像のヒストグラムを表示する用の変数
-Image_height = 240 # 画面上に表示する画像の高さ
-Image_width  = 320 # 画面上に表示する画像の幅
+def scale_box(src, width, height):
+    """
+    アスペクト比を固定して、指定した大きさに収まるようリサイズする。
+
+    Parameters
+    ----------
+    src : OpenCV型
+        入力画像
+    width : int
+        変換後の画像幅
+    height : int
+        変換後の画像高さ
+    
+    Return
+    ------
+    dst : OpenCV型
+    """
+    scale = max(width / src.shape[1], height / src.shape[0])
+    return cv2.resize(src, dsize=None, fx=scale, fy=scale)
 
 window = sg.Window('Demo Application - OpenCV Integration', 
                     [[sg.Image(filename='', key='image'),
@@ -106,14 +128,14 @@ window = sg.Window('Demo Application - OpenCV Integration',
                       sg.Canvas(size=(Image_width, Image_height), key='-CANVAS_2-')],
                      [sg.Image(filename='', key='image_3'),
                       sg.Canvas(size=(Image_width, Image_height), key='-CANVAS_3-')],], location=(800,400))
-cap = cv2.VideoCapture(0)       # Setup the camera as a capture device
+cap = cv2.VideoCapture(Cammera_num)       # Setup the camera as a capture device
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 while True:                     # The PSG "Event Loop"
     event, values = window.read(timeout=20, timeout_key='timeout')      # get events for the window with 20ms max wait
     if event is None:  break                                            # if user closed window, quit
     ret, frame = cap.read()
-    src_1 = frame.copy()
+    src_1 = scale_box(frame, Image_width, Image_height)
     # bgr → glay
     src_2 = cv2.cvtColor(src_1, cv2.COLOR_BGR2GRAY)
     src_3 = src_4 = src_5 = src_6 = src_2.copy()
