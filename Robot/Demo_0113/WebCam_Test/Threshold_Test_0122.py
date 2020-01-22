@@ -3,7 +3,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import cv2, PySimpleGUI as sg
 import numpy as np
 
-Cammera_num = 1
+Cammera_num = 0
 fig_agg_1 = fig_agg_2 = fig_agg_3 = None     # 画像のヒストグラムを表示する用の変数
 Image_height = 120 # 画面上に表示する画像の高さ
 Image_width  = 160 # 画面上に表示する画像の幅
@@ -120,6 +120,8 @@ def scale_box(src, width, height):
     """
     scale = max(width / src.shape[1], height / src.shape[0])
     return cv2.resize(src, dsize=None, fx=scale, fy=scale)
+
+
 
 window = sg.Window('Demo Application - OpenCV Integration', 
                     [[sg.Image(filename='', key='image'),

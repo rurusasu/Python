@@ -1294,16 +1294,36 @@ def Snapshot(capture):
     response = 0
     return response, frame
 
+def scale_box(src, width, height):
+    """
+    アスペクト比を固定して、指定した大きさに収まるようリサイズする。
+
+    Parameters
+    ----------
+    src : OpenCV型
+        入力画像
+    width : int
+        変換後の画像幅
+    height : int
+        変換後の画像高さ
+    
+    Return
+    ------
+    dst : OpenCV型
+    """
+    scale = max(width / src.shape[1], height / src.shape[0])
+    return cv2.resize(src, dsize=None, fx=scale, fy=scale)
+
 #--------------------------
 # 画像変換（色空間）
 #--------------------------
-def Color_cvt(img, color_type):
+def Color_cvt(src, color_type):
     """
     色空間の変換方法を選択する関数
 
     Parameter
     ---------
-    img : OpenCV型
+    src : OpenCV型
         変換前の画像
     color_type : string
         変換方法
@@ -1312,60 +1332,25 @@ def Color_cvt(img, color_type):
     ------
     color_type : string
         変換方法
-    new_img : OpenCV型
+    dst : OpenCV型
         変換後の画像
     """
-    new_img = img.copy()
-    if color_type == 'Glay': new_img = __RGB2Glay__(img)
-    elif color_type == 'HSV':new_img = __RGB2HSV__(img)
+    new_img = src.copy()
+    if color_type == 'Glay': dst = cv2.cvtColor(new_img, cv2.COLOR_RGB2GRAY)
+    elif color_type == 'HSV':dst = cv2.cvtColor(new_img, cv2.COLOR_RGB2HSV)
 
-    return color_type, new_img
-
-def __RGB2Glay__(RGB_img):
-    """
-    RGB画像をグレースケールに画像を変換する関数
-
-    Parameter
-    ---------
-    RGB_img : OpenCV型
-        RGB画像
-
-    Return
-    ------
-    Glay_img
-        変換した画像
-    """
-    Glay_img = cv2.cvtColor(RGB_img, cv2.COLOR_RGB2GRAY) # Y ← 0.299・R + 0.587・G + 0.144・B
-    return Glay_img
-
-def __RGB2HSV__(RGB_img):
-    """
-    RGB画像をHSV色空間に画像を変換する関数
-    「色相(Heu)」, 「彩度(Saturation)」, 「明度(Value)」
-
-    Parameter
-    ---------
-    RGB_img : OpenCV型
-        RGB画像
-
-    Return
-    ------
-    new_image
-        変換した画像
-    """
-    RGB_img = cv2.cvtColor(RGB_img, cv2.COLOR_RGB2HSV)
-    return RGB_img
+    return color_type, dst
 
 #--------------------------
 # 画像変換（濃度）
 #--------------------------
-def Contrast_cvt(img, color_type, cvt_type):
+def Contrast_cvt(src, color_type, cvt_type):
     """
     濃度の変換方法を選択する関数
 
     Parameter
     ---------
-    img : OpenCV型
+    src : OpenCV型
         変換前の画像
     color_type : string
         画像の色の分類
@@ -1380,18 +1365,20 @@ def Contrast_cvt(img, color_type, cvt_type):
     
     Return
     ------
-    new_img : OpenCV型
+    dst : OpenCV型
         変換後の画像
     """
     a = 0.7
     gamma = 0.5
 
-    new_img = img.copy()
+    new_img = src.copy()
     if color_type != 'HSV':
+
+
         if cvt_type == '線形濃度変換': # 線形濃度変換を行う
-            new_img = plot_curve(curve_1, a, img)
+            new_img = LUT_curve(curve_1, a, new_img)
         elif cvt_type == '非線形濃度変換': # ガンマ補正を行う
-            new_img = plot_curve(curve_5, gamma, img)
+            new_img = LUT_curve(curve_5, gamma, new_img)
         elif cvt_type == 'ヒストグラム平坦化': # ヒストグラム平坦化を行う
             if color_type == 'glay':  # グレー画像について変換
                 new_img = __glayHist__(new_img)
@@ -1399,6 +1386,18 @@ def Contrast_cvt(img, color_type, cvt_type):
                 new_img = __rgbHist__(new_img)
 
     return new_img
+
+
+def LUT_curve(f, a, rgb_img):
+    """
+    Look Up Tableを LUT[input][0] = output という256行の配列として作る。
+    例: LUT[0][0] = 0, LUT[127][0] = 160, LUT[255][0] = 255
+    """
+    LUT = np.arange(256, dtype='uint8').reshape(-1, 1)
+    LUT = np.array([f(a, x).astype('uint8') for x in LUT])
+    out_rgb_img = cv2.LUT(rgb_img, LUT)
+    return out_rgb_img
+
 
 def __glayToneCurve__(img):
     """
@@ -1487,78 +1486,6 @@ def __rgbToneCurve__(img):
 
     return img
 
-def __glayGamma__(glay_img):
-    """
-    LUT(Look up Table)を用いてグレー画像のガンマ補正を行う関数
-
-    Parameter
-    ---------
-    glay_img : OpenCV型
-        変換前の画像
-
-    Return
-    ------
-    glay_img : OpenCV型
-        変換後の画像
-    """
-    # 線形濃度変換
-    gamma = 0.5
-    # 画素値の最大値
-    imax = glay_img.max()
-    
-    # ガンマ補正用のルックアップテーブルを作成
-    lookup_table = np.zeros((256, 1), dtype='uint8')
-    for i in range(256):
-        lookup_table[i][0] = imax * pow(float(i) / imax, 1.0/gamma)
-
-    # LTUで計算
-    glay_img = cv2.LUT(glay_img, lookup_table)
-
-    return glay_img
-
-def __rgbGamma__(rgb_img):
-    """
-    LUT(Look up Table)を用いてrgb画像のガンマ補正を行う関数
-
-    Parameter
-    ---------
-    rgb_img : OpenCV型
-        変換前の画像
-
-    Return
-    ------
-    rgb_img : OpenCV型
-        変換後の画像
-    """
-    r, g, b = cv2.split(rgb_img)
-    # 線形濃度変換
-    gamma = 0.5
-    
-    # ガンマ補正用のルックアップテーブルの初期化
-    lookup_table_R = np.zeros((256, 1), dtype='uint8') # 赤色用
-    lookup_table_G = np.zeros((256, 1), dtype='uint8') # 緑色用
-    lookup_table_B = np.zeros((256, 1), dtype='uint8') # 青色用
-
-    # 画素値の最大値
-    rmax = r.max()
-    gmax = g.max()
-    bmax = b.max()
-
-    for i in range(256):
-        lookup_table_R[i][0] = rmax * pow(float(i) / rmax, 1.0/gamma)
-        lookup_table_G[i][0] = gmax * pow(float(i) / gmax, 1.0/gamma)
-        lookup_table_B[i][0] = bmax * pow(float(i) / bmax, 1.0/gamma)
-
-    # LTUで計算
-    r_gamma = cv2.LUT(r, lookup_table_R)
-    g_gamma = cv2.LUT(g, lookup_table_G)
-    b_gamma = cv2.LUT(b, lookup_table_B)
-
-    rgb_img = cv2.merge((r_gamma, g_gamma, b_gamma))
-    rgb_img = rgb_img[:, :, ::-1]
-
-    return rgb_img
-
 def __glayHist__(glay_img, clip_limit=3, grid=(8, 8), thresh=225):
     """
     グレー画像に対して適応的ヒストグラム平坦化(Clahe)を行う関数
@@ -1627,29 +1554,7 @@ def __rgbHist__(rgb_img, clip_limit=3, grid=(8, 8), thresh=225):
 
     return rgb_img
 
-def plot_curve(f, a, rgb_img):
-    """
-    画像変換用の関数f, 画像 を受け取って
-    以下のようなグラフを出す.
-    ----------------------------
-    入力画像 | Curve | 出力画像
-    histgram |       | histgram
-    ----------------------------
-    """
-    # 画素値変換。uint8で渡さないと大変なことに
-    out_rgb_img = LUT_curve(f, a, rgb_img)
 
-    return out_rgb_img
-
-def LUT_curve(f, a, rgb_img):
-    """
-    Look Up Tableを LUT[input][0] = output という256行の配列として作る。
-    例: LUT[0][0] = 0, LUT[127][0] = 160, LUT[255][0] = 255
-    """
-    LUT = np.arange(256, dtype='uint8').reshape(-1, 1)
-    LUT = np.array([f(a, x).astype('uint8') for x in LUT])
-    out_rgb_img = cv2.LUT(rgb_img, LUT)
-    return out_rgb_img
 
 def Image_hist(img, ax, ticks=None):
     """
@@ -1696,6 +1601,9 @@ def SpatialFiltering(img, filter_type):
 
     return new_img
 
+# ---------------------------- #
+#  空間フィルタリング用フィルタ  #
+# ---------------------------- #
 def __AveragingFilter__(img):
     """
     ある周辺の画素を平均化する空間フィルタ
@@ -1720,10 +1628,7 @@ def __MedianFilter__(img):
     """
     return cv2.medianBlur(img, ksize=13)
 
-# アスペクト比を固定して、指定した大きさに収まるようリサイズする。
-def scale_box(img, width, height):
-    scale = max(width / img.shape[1], height / img.shape[0])
-    return cv2.resize(img, dsize=None, fx=scale, fy=scale)
+
 
 def GlobalThreshold(img, gaussian=False, threshold=127, Type=cv2.THRESH_BINARY):
     """
