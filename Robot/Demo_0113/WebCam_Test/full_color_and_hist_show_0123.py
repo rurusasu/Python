@@ -5,8 +5,8 @@ import numpy as np
 
 Cammera_num = 0
 frame = None
-Image_height = 120
-Image_width  = 160
+Image_height = 60  # 480
+Image_width  = 80  # 640
 ticks = [0, 42, 84, 127, 169, 211, 255]
 dic = {'rgb': [None, None],
        'glay': [None, None],
@@ -121,7 +121,7 @@ while True:
             value[0] = dst
             canvas_elem = window[CANVASname]
             canvas = canvas_elem.TKCanvas
-            fig, ax = plt.subplots(figsize=(2, 2))
+            fig, ax = plt.subplots(figsize=(3, 2))
             ax = Image_hist(value[0], ax, ticks)
                 
             if value[1]: delete_figure_agg(value[1])
