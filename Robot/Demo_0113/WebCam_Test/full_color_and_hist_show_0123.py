@@ -4,6 +4,7 @@ import cv2, PySimpleGUI as sg
 import numpy as np
 
 Cammera_num = 0
+frame = None
 Image_height = 120
 Image_width  = 160
 ticks = [0, 42, 84, 127, 169, 211, 255]
@@ -39,6 +40,26 @@ def Image_hist(img, ax, ticks=None):
 
     return ax
 
+def scale_box(src, width, height):
+    """
+    アスペクト比を固定して、指定した大きさに収まるようリサイズする。
+
+    Parameters
+    ----------
+    src : OpenCV型
+        入力画像
+    width : int
+        変換後の画像幅
+    height : int
+        変換後の画像高さ
+    
+    Return
+    ------
+    dst : OpenCV型
+    """
+    scale = max(width / src.shape[1], height / src.shape[0])
+    return cv2.resize(src, dsize=None, fx=scale, fy=scale)
+
 def draw_figure(canvas, figure, loc=(0, 0)):
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
     figure_canvas_agg.draw()
@@ -51,8 +72,8 @@ def delete_figure_agg(figure_agg):
 
 
 layout = [[sg.Input(size=(30, 1)), sg.FileBrowse(key='-Image_path-'), 
-           sg.Radio('カメラ', 'picture', default=True, size=(10, 1), key='-WebCam-'),
-           sg.Radio('画像', 'picture', size=(10, 1), key='-Image-'), ],
+           sg.Radio('カメラ', 'picture', size=(10, 1), key='-WebCam-'),
+           sg.Radio('画像', 'picture', default=True, size=(10, 1), key='-Image-'), ],
           [sg.Image(filename='', size=(Image_width, Image_height), key='rgb'), sg.Canvas(size=(Image_width, Image_height), key='rgb_CANV'),
            sg.Image(filename='', size=(Image_width, Image_height), key='glay'), sg.Canvas(size=(Image_width, Image_height), key='glay_CANV'),
            sg.Image(filename='', size=(Image_width, Image_height), key='xyz'), sg.Canvas(size=(Image_width, Image_height), key='xyz_CANV'),],
@@ -78,7 +99,11 @@ while True:
     # 画像を使う場合
     elif values['-Image-']:
         if values['-Image_path-']:
-             = values['-Image_path-']
+            ImagePath = values['-Image_path-']
+            frame = scale_box(cv2.imread(ImagePath), Image_width, Image_height)
+
+    
+    if frame is not None:
         for key, value in dic.items():
             CANVASname = key + '_CANV'
             src = frame.copy()
@@ -92,19 +117,19 @@ while True:
             elif key in 'luv': dst = cv2.cvtColor(src, cv2.COLOR_RGB2LUV)
             elif key in 'lab': dst = cv2.cvtColor(src, cv2.COLOR_RGB2LAB)
             elif key in 'yuv': dst = cv2.cvtColor(src, cv2.COLOR_RGB2YUV)
-            
+                
             value[0] = dst
             canvas_elem = window[CANVASname]
             canvas = canvas_elem.TKCanvas
             fig, ax = plt.subplots(figsize=(2, 2))
             ax = Image_hist(value[0], ax, ticks)
-            
+                
             if value[1]: delete_figure_agg(value[1])
             value[1] = draw_figure(canvas, fig)
 
             window[key].update(data=cv2.imencode('.png', value[0])[1].tobytes())
             value[1].draw()
-            
+                
             dic[key] = value
-
     
+    else: pass
