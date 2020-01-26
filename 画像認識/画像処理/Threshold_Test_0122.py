@@ -174,8 +174,3 @@ while True:                     # The PSG "Event Loop"
     window['image'].update(data=cv2.imencode('.png', src_1)[1].tobytes()) # Update image in window
     window['image_2'].update(data=cv2.imencode('.png', src_2)[1].tobytes()) # Update image in window
     window['image_3'].update(data=cv2.imencode('.png', src_3)[1].tobytes()) # Update image in window
-"""
-Putting the comment at the bottom so that you can see that the code is indeed 7 lines long.  And, there is nothing
-done out of the ordinary to make it 7 lines long.  There are no ; for example.  OK, so the if statement is on one line
-but that's the only place that you would traditionally see one more line.  So, call it 8 if you want.
-"""

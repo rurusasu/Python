@@ -189,7 +189,8 @@ WebCam = [
                     'Otsu',
                     'Adaptive',
                     'Bradley',
-                    'Two_Thresh'), size=(6, 1), key='-Binary_Type-', readonly=True),],
+                    #'Two_Thresh'
+                    'NPR'), size=(6, 1), key='-Binary_Type-', readonly=True),],
     [sg.Input(size=(30, 1), disabled=True), sg.FileBrowse(key='-Image_path-'), ],
     [sg.Image(filename='', size=(Image_width, Image_height), key='image')],
     [sg.Image(filename='', size=(Image_width, Image_height), key='image_2')]
