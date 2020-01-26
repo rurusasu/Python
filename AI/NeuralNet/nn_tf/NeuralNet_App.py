@@ -4,6 +4,7 @@ import sys, os
 sys.path.append(os.getcwd())
 import numpy as np
 import PySimpleGUI as sg
+import tensorflow as tf
 from common.layers import Input, Dense
 from common.sequential import Sequential
 from common.functions import Datafeature
@@ -248,6 +249,7 @@ class NeuralNet_APP:
     """
     def Layout(self):
         # ----- Column Definition ----- #
+        """
         Dir = [
             [sg.Text('Import Dir')],
             [sg.Input(size=(30, 1)), sg.FolderBrowse(key='-importDirPath-')],
@@ -270,22 +272,20 @@ class NeuralNet_APP:
         dataConv = [
             [sg.Column(Dir), sg.Column(convfunc)],
         ]
-
+        """
         NetMake = [
-            [sg.Text('層の種類          '), sg.Text('ユニット数')],
-            [sg.InputCombo(('input', 'Dense'), size=(15, 1), key='-LayerName-'),
+            [sg.Text('層の種類'), sg.Text('ユニット数')],
+            [sg.InputCombo(('input', 'Dense'), size=(6, 1), key='-LayerName-'),
              sg.InputText('50', size=(5, 1), key='-Node-')],
             [sg.Text('重みの初期値')],
-            [sg.InputCombo(('He', 'Xavier',), size=(
-                15, 1), key='-weightInit-')],
+            [sg.InputCombo(('He', 'Xavier',), size=(6, 1), key='-weightInit-', readonly=True)],
             [sg.Text('閾値の初期値')],
-            [sg.InputCombo(('ZEROS',), size=(15, 1), key='-biasInit-')],
+            [sg.InputCombo(('ZEROS',), size=(8, 1), key='-biasInit-', readonly=True)],
             [sg.Text('活性化関数')],
-            [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(15, 1), key='-activation-'),
+            [sg.InputCombo(('relu', 'sigmoid', 'liner'), size=(8, 1), key='-activation-', readonly=True),
              sg.Button('add', key='-LayerAdd-')],
             [sg.Text('損失関数')],
-            [sg.InputCombo(('mean_squared_error',),
-                           size=(20, 1), key='-loss-')],
+            [sg.InputCombo(('mean_squared_error',), size=(17, 1), key='-loss-', readonly=True)],
             [sg.Text('最適化')],
             [sg.InputCombo(('sgd',
                             'momentum_sgd',
@@ -293,9 +293,9 @@ class NeuralNet_APP:
                             'ada_grad',
                             'rmsprop',
                             'ada_delta',
-                            'adam',), size=(20, 1), key='-optimizer-')],
+                            'adam',), size=(14, 1), key='-optimizer-', readonly=True)],
             [sg.Text('評価関数')],
-            [sg.InputCombo(('r2', 'rmse'), size=(15, 1), key='-metrics-'),
+            [sg.InputCombo(('r2', 'rmse'), size=(5, 1), key='-metrics-', readonly=True),
              sg.Button('NetMake', key='-NetMake-')],
         ]
 
@@ -330,11 +330,19 @@ class NeuralNet_APP:
              sg.Button('Test', key='-TestRUN-')],
         ]
 
+        Transfer_Learning = [
+            [sg.Text('既存のモデル')],
+            [sg.InputCombo(('LeNet', 
+                            'AlexNet', 
+                            'liner'), size=(8, 1), key='-activation-', readonly=True),]
+        ]
+
         layout = [
             [sg.Frame('NetMake', NetMake),
-             sg.Frame('NuralNet', NuralNet),
+             sg.Frame('Model 作成', NuralNet),
              sg.Column(FlowChartPrint)],
-            [sg.Frame('DataConv', dataConv)],
+            #[sg.Frame('DataConv', dataConv)],
+            [sg.Frame('Tranfar Larning', Transfer_Learning)],
             [sg.Quit()],
         ]
 
@@ -411,7 +419,10 @@ class NeuralNet_APP:
 
     def main(self):
         return sg.Window('NeuralNet', self.layout, default_element_size=(40, 1))
-        
+
+def LeNet(x, keep_prob):
+    x = tf.layers.conv2d(inputs=x, filters=6, kernel_size=[5, 5], 
+    strides=1, padding='valid, ')
 
 #def NetWorkTree():
 
@@ -421,7 +432,7 @@ if __name__ == "__main__":
     
     while True:
         event, values = Read.read(timeout=0)
-        if event is None:
+        if event is None or event is 'Quit':
             break
         elif event != '__TIMEOUT__':
             #print(event, values)
