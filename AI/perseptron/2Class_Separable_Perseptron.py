@@ -1,41 +1,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
 
 def perceptron(w_vec, x_vec, label):
     low=0.5 # 学習係数
-    if (np.dot(w_vec, x_vec) * label < 0):
+    if (np.dot(w_vec, x_vec) * label >= 1):
         w_vec_new = w_vec + label*low*x_vec
         return w_vec_new
     else:
         return w_vec
 
+
+#-----------------------
+# 調整用パラメータ
+#-----------------------
+class_1 = 5  # class_1の(x, y)座標の倍率(正の整数)
+class_2 = -2  # class_2の(x, y)座標の倍率(負の整数)
+eta = 0.001  # 学習率(0 <= eta <= 1)
+loop = 100   # 反復回数
+
 if __name__ == "__main__":
-    train_num = 100 # 学習データ数
+    train_num = 100  # 学習データ数
 
     # class1の学習データ
-    x1_1 = np.random.rand(int(train_num/2))*5 + 1 # x成分
-    x1_2 = np.random.rand(int(train_num/2))*5 + 1 # y成分
-    label_x1 = np.ones(int(train_num/2)) # ラベル(すべて1)
+    x1_1 = np.random.rand(int(train_num/2))*5 + class_1  # x成分
+    x1_2 = np.random.rand(int(train_num/2))*5 + class_1  # y成分
+    label_x1 = np.ones(int(train_num/2))  # ラベル(すべて1)
 
     # class2の学習データ
-    x2_1 = (np.random.rand(int(train_num/2))*5 + 1)* -1
-    x2_2 = (np.random.rand(int(train_num/2))*5 + 1)* -1
-    label_x2 = np.ones(int(train_num/2)) * -1
+    x2_1 = (np.random.rand(int(train_num/2))*5 + 1) * class_2
+    x2_2 = (np.random.rand(int(train_num/2))*5 + 1) * class_2
+    label_x2 = np.ones(int(train_num/2)) * -1  # ラベル(すべて-1)
 
-    x0 = np.ones(int(train_num/2)) # x0は常に1(バイアス)
+    x0 = np.ones(int(train_num/2))  # x0は常に1(バイアス)
     x1 = np.c_[x0, x1_1, x1_2]
     x2 = np.c_[x0, x2_1, x2_2]
 
     x_vecs = np.r_[x1, x2]
     labels = np.r_[label_x1, label_x2]
 
-    w_vec = np.array([2, -1, 3]) # 初期の重みベクトル 適当に決める
+    w_vec = np.array([2, -1, 3], dtype='float64')  # 初期の重みベクトル 適当に決める
 
-    loop = 100
+    start = time.time()
     for i in range(loop):
         for x_vec, label in zip(x_vecs, labels):
             w_vec = perceptron(w_vec, x_vec, label)
 
+    elapsed_time = time.time() - start
+    print("elapsed_time:{0}".format(elapsed_time) + "[sec]")
     print(w_vec)
 
     # グラフの体裁を整える

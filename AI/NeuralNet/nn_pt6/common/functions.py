@@ -279,6 +279,40 @@ def _CallClass(mod_name, cls_name):
 
 
 if __name__ == "__main__":
-    class_def = _CallClass('optimizer', 'sgd')
-    obj = class_def()
+    import matplotlib.pyplot as plt
+
+    # グラフの体裁を整える
+    plt.rcParams['font.family'] = 'sans-serif'  # 使用するフォント
+    # x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+    plt.rcParams['xtick.direction'] = 'in'
+    # y軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.rcParams['xtick.major.width'] = 1.0  # x軸主目盛り線の線幅
+    plt.rcParams['ytick.major.width'] = 1.0  # y軸主目盛り線の線幅
+    plt.rcParams['font.size'] = 11  # フォントの大きさ
+    plt.rcParams['axes.linewidth'] = 1.0  # 軸の線幅edge linewidth。囲みの太さ
+
+
+    # 分離境界線
+    x_fig = np.arange(-6, 6, 0.1)
+    #y_fig = StepFunction(x_fig) # ヘヴィサイドの階段関数
+    #y_fig = Sigmoid(x_fig)      # シグモイド関数
+    y_fig = Relu(x_fig)
+
+    plt.plot(x_fig, y_fig, color='blue')
+
+    #plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0, fontsize=18)
+
+    # グラフ右と上の軸を消す
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['top'].set_visible(False)
+
+    plt.xlabel('x')
+    plt.ylabel('y')
+
+    plt.show()
+
+
+    #class_def = _CallClass('optimizer', 'sgd')
+    #obj = class_def()
     #obj.update()
