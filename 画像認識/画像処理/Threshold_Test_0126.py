@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from msvcrt import getch
 import cv2, PySimpleGUI as sg
 import numpy as np
 
@@ -282,10 +283,12 @@ WebCam = [
                     'Otsu',
                     'Adaptive',
                     'Bradley',
-                    'Two_Thresh',), size=(6, 1), key='-Binary_Type-', readonly=True),],
+                    'Two_Thresh',), size=(6, 1), key='-Binary_Type-', readonly=True),
+    sg.Button('Preview', size=(5, 1), key='-preview-'), ],
+    [sg.Text('入力画像', size=(8, 1), background_color='grey59', justification='left', pad=(0, 0))],
     [sg.Input(size=(30, 1), disabled=True), sg.FileBrowse(key='-Image_path-'),], 
-    [sg.Text('抽出する色', size=(22, 1), background_color='grey63', justification='center'), 
-     sg.Text('重心の計算方法', size=(17, 1), background_color='grey63', justification='center')],
+    [sg.Text('抽出する色', size=(23, 1), background_color='grey59', justification='center', pad=(0, 0)),
+     sg.Text('重心の計算方法', size=(17, 1), background_color='grey63', justification='center', pad=(0, 0))],
     [sg.Radio('R', group_id='color', background_color='grey59', text_color='red', key='-color_R-', pad=(0, 0)),
      sg.Radio('G', group_id='color', background_color='grey59', text_color='green', key='-color_G-', pad=(0, 0)),
      sg.Radio('B', group_id='color', background_color='grey59', text_color='blue', key='-color_B-', pad=(0, 0)),
@@ -319,12 +322,14 @@ layout = [
 
 window = sg.Window('Demo Application - OpenCV Integration', layout, location=(800,400))
 
-cap = cv2.VideoCapture(Cammera_num)       # Setup the camera as a capture device
+#cap = cv2.VideoCapture(Cammera_num)       # Setup the camera as a capture device
+cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, Image_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Image_height)
 
 while True:                     # The PSG "Event Loop"
     event, values = window.read(timeout=20, timeout_key='timeout')      # get events for the window with 20ms max wait
+    #key = ord(getch())
     if event is None: break
     # カメラを使う場合
     if values['-WebCam-']:
@@ -340,45 +345,48 @@ while True:                     # The PSG "Event Loop"
         src_1 = scale_box(frame, Image_width, Image_height)
         src_2 = cv2.cvtColor(src_1, cv2.COLOR_BGR2GRAY)  # bgr → glay
     else: continue
-
-    if values['-Binary_Type-'] is 'Global':
-        ret, dst = binalize(src_2, values['-LowerThresh-'])
-    elif values['-Binary_Type-'] is 'Otsu':
-        ret, dst = otsu_binalize(src_2)
-    elif values['-Binary_Type-'] is 'Adaptive':
-        dst = adaptive_binalize(src_2)
-        #elif values['-Binary_Type-'] is 'Bradley':
-    elif values['-Binary_Type-'] is 'Two_Thresh':
-        if values['-color_R-']: pickup = 0
-        elif values['-color_G-']: pickup = 1
-        elif values['-color_B-']: pickup = 2
-        elif values['-color_W-']: pickup = 3
-        elif values['-color_Bk-']: pickup = 4
-        ret, dst = Twothresh_binalize(src_1, LowerThreshold=values['-LowerThresh-'], UpperThreshold=values['-UpperThresh-'], PickupColor=pickup)
-
-
-    #------------------------------------------------
-    # 画面上に撮影した画像のヒストグラムを表示する
-    #------------------------------------------------
-    canvas_elem_1 = window['-CANVAS_1-']
-    canvas_1 = canvas_elem_1.TKCanvas
-    fig_1, ax_1 = plt.subplots()
-    #ax_1 = Image_hist(src_2, ax_1, ticks, ret)
-    ax_1 = Image_hist(src_1, ax_1, ticks, ret)
-
-    if fig_agg_1: delete_figure_agg(fig_agg_1)
-
-    fig_agg_1 = draw_figure(canvas_1, fig_1)
-    fig_agg_1.draw()
     
-    
-    if values['-CenterOfGravity-'] is 'なし': pass
-    elif values['-CenterOfGravity-'] is 'Image':
-        (Gx, Gy), dst = CenterOfGravity(dst, 0)
-        cv2.drawMarker(dst, (Gx, Gy), (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=15)
-    elif values['-CenterOfGravity-'] is '輪郭をもとに計算':
-        (Gx, Gy), dst = CenterOfGravity(dst, 1)
-        cv2.drawMarker(dst, (Gx, Gy), (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=15)
+    if event == '-preview-':
+        while key != 27:
+            if values['-Binary_Type-'] is 'Global':
+                ret, dst = binalize(src_2, values['-LowerThresh-'])
+            elif values['-Binary_Type-'] is 'Otsu':
+                ret, dst = otsu_binalize(src_2)
+            elif values['-Binary_Type-'] is 'Adaptive':
+                dst = adaptive_binalize(src_2)
+                #elif values['-Binary_Type-'] is 'Bradley':
+            elif values['-Binary_Type-'] is 'Two_Thresh':
+                if values['-color_R-']: pickup = 0
+                elif values['-color_G-']: pickup = 1
+                elif values['-color_B-']: pickup = 2
+                elif values['-color_W-']: pickup = 3
+                elif values['-color_Bk-']: pickup = 4
+                ret, dst = Twothresh_binalize(src_1, LowerThreshold=values['-LowerThresh-'], UpperThreshold=values['-UpperThresh-'], PickupColor=pickup)
 
-    window['image'].update(data=cv2.imencode('.png', src_1)[1].tobytes()) # Update image in window
-    window['image_2'].update(data=cv2.imencode('.png', dst)[1].tobytes()) # Update image in window
+
+            #------------------------------------------------
+            # 画面上に撮影した画像のヒストグラムを表示する
+            #------------------------------------------------
+            canvas_elem_1 = window['-CANVAS_1-']
+            canvas_1 = canvas_elem_1.TKCanvas
+            fig_1, ax_1 = plt.subplots()
+            #ax_1 = Image_hist(src_2, ax_1, ticks, ret)
+            ax_1 = Image_hist(src_1, ax_1, ticks, ret)
+
+            if fig_agg_1: delete_figure_agg(fig_agg_1)
+
+            fig_agg_1 = draw_figure(canvas_1, fig_1)
+            fig_agg_1.draw()
+            
+            
+            if values['-CenterOfGravity-'] is 'なし': pass
+            elif values['-CenterOfGravity-'] is 'Image':
+                (Gx, Gy), dst = CenterOfGravity(dst, 0)
+                cv2.drawMarker(dst, (Gx, Gy), (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=15)
+            elif values['-CenterOfGravity-'] is '輪郭をもとに計算':
+                (Gx, Gy), dst = CenterOfGravity(dst, 1)
+                cv2.drawMarker(dst, (Gx, Gy), (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=15)
+
+            window['image'].update(data=cv2.imencode('.png', src_1)[1].tobytes()) # Update image in window
+            window['image_2'].update(data=cv2.imencode('.png', dst)[1].tobytes()) # Update image in window
+        
