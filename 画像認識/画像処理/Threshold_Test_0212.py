@@ -7,9 +7,31 @@ Cammera_num = 1
 frame = None
 ret = None
 fig_agg = None     # 画像のヒストグラムを表示する用の変数
-Image_height = 240 # 画面上に表示する画像の高さ
-Image_width  = 320 # 画面上に表示する画像の幅
+Image_height = 120 # 画面上に表示する画像の高さ
+Image_width  = 160 # 画面上に表示する画像の幅
 ticks = [0, 40, 80, 120, 160, 200, 240]
+
+
+#----------------------------------
+# 画像を要素毎に分解
+#----------------------------------
+def Disassembly(src):
+            """
+            画像を3つの要素に分解
+
+            Parameter
+            ---------
+            src : OpenCV型
+                分解前の画像
+            
+            Return
+            ------
+            dst : list
+                要素のリスト
+            """
+            src_1, src_2, src_3 = cv2.split(src)  # Original → R,G,B(or H,S,V)
+            dst = [src_1, src_2, src_3]
+            return dst
 
 
 #----------------------------------
@@ -278,15 +300,17 @@ def scale_box(src, width, height):
 WebCam = [
     [sg.Radio('カメラ', 'picture', size=(5, 1), background_color='grey63', key='-WebCam-', pad=(0, 0)),
      sg.Radio('画像', 'picture', default=True, size=(3, 1), background_color='grey63', key='-Image-', pad=(0, 0)),
+     sg.Text('Color Space', background_color='grey63'),
+     sg.InputCombo(('RGB',
+                    'HSV',), size=(6, 1), key='-Color_space-', readonly=True),],
+    [sg.Text('入力画像', size=(8, 1), background_color='grey59', justification='left', pad=(0, 0)), 
+     sg.Checkbox('閾値の表示', default=False, size=(10, 1), background_color='grey59', key='-thresh_prev-'),
      sg.Text('Binary Type', background_color='grey63'),
      sg.InputCombo(('Global',
                     'Otsu',
                     'Adaptive',
                     'Bradley',
-                    'Two_Thresh',), size=(6, 1), key='-Binary_Type-', readonly=True),
-    sg.Button('Preview', size=(5, 1), key='-preview-'), ],
-    [sg.Text('入力画像', size=(8, 1), background_color='grey59', justification='left', pad=(0, 0)), 
-     sg.Checkbox('閾値の表示', default=False, size=(10, 1), background_color='grey59', key='-thresh_prev-')],
+                    'Two_Thresh',), size=(6, 1), key='-Binary_Type-', readonly=True),],
     [sg.Input(size=(30, 1), disabled=True), sg.FileBrowse(key='-Image_path-'),], 
     [sg.Text('抽出する色', size=(23, 1), background_color='grey59', justification='center', pad=(0, 0)),
      sg.Text('重心の計算方法', size=(17, 1), background_color='grey63', justification='center', pad=(0, 0))],
@@ -308,8 +332,14 @@ slider = [
     ]
 
 image = [
-    [sg.Image(filename='', size=(Image_width, Image_height), key='image')],
-    [sg.Image(filename='', size=(Image_width, Image_height), key='image_2')],
+    [sg.Image(filename='', size=(Image_width, Image_height), key='-Image_0-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_1-'),
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_2-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_3-'), ],
+    [sg.Image(filename='', size=(Image_width, Image_height), key='-Im_0_bin-'),
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_1_bin-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_2_bin-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_3_bin-'),],
 ]
 
 canvas = [
@@ -340,7 +370,6 @@ while True: # The PSG "Event Loop"
     if event is None: break
     
     elif event != '__TIMEOUT__':
-    
         # カメラを使う場合
         if values['-WebCam-']:
             _, frame = cap.read()
@@ -351,38 +380,47 @@ while True: # The PSG "Event Loop"
                 ImagePath = values['-Image_path-']
                 frame = scale_box(cv2.imread(ImagePath), Image_width, Image_height)
         
-        if frame is not None:
-            src_1 = scale_box(frame, Image_width, Image_height)
-            src_2 = cv2.cvtColor(src_1, cv2.COLOR_BGR2GRAY)  # bgr → glay
+        if frame is not None: # 出力する画像が存在する場合
+            if values['-Color_space-'] is 'RGB':
+                src = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            elif values['-Color_space-'] is 'HSV':
+                src = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            #src_1 = scale_box(frame, Image_width, Image_height)
         else: continue
         
+        dst_elem = Disassembly(src)
+        #src_glay = cv2.cvtColor(src_bin, cv2.COLOR_RGB2GRAY)  # bgr → glay
 
-        if values['-Binary_Type-'] is 'Global':
-            ret, dst = binalize(src_2, values['-LowerThresh-'])
-        elif values['-Binary_Type-'] is 'Otsu':
-            ret, dst = otsu_binalize(src_2)
-        elif values['-Binary_Type-'] is 'Adaptive':
-            dst = adaptive_binalize(src_2)
-            #elif values['-Binary_Type-'] is 'Bradley':
-        elif values['-Binary_Type-'] is 'Two_Thresh':
-            if values['-color_R-']: pickup = 0
-            elif values['-color_G-']: pickup = 1
-            elif values['-color_B-']: pickup = 2
-            elif values['-color_W-']: pickup = 3
-            elif values['-color_Bk-']: pickup = 4
-            ret, dst = Twothresh_binalize(src_1, LowerThreshold=values['-LowerThresh-'], UpperThreshold=values['-UpperThresh-'], PickupColor=pickup)
-
+        for i, src_bin in enumerate(dst_elem):
+            window_num = '-Image_' + str(i) + '-'
+            window_num_bin = '-Im_' + str(i) + '_bin-'
+            if values['-Binary_Type-'] is 'Global':
+                ret, dst = binalize(src_bin, values['-LowerThresh-'])
+            elif values['-Binary_Type-'] is 'Otsu':
+                ret, dst = otsu_binalize(src_bin)
+            elif values['-Binary_Type-'] is 'Adaptive':
+                dst = adaptive_binalize(src_bin)
+                #elif values['-Binary_Type-'] is 'Bradley':
+            elif values['-Binary_Type-'] is 'Two_Thresh':
+                if values['-color_R-']: pickup = 0
+                elif values['-color_G-']: pickup = 1
+                elif values['-color_B-']: pickup = 2
+                elif values['-color_W-']: pickup = 3
+                elif values['-color_Bk-']: pickup = 4
+                ret, dst = Twothresh_binalize(src_bin, LowerThreshold=values['-LowerThresh-'], UpperThreshold=values['-UpperThresh-'], PickupColor=pickup)
+            window[window_num].update(data=cv2.imencode('.png', src_bin)[1].tobytes()) # Update image in window
+            window[window_num_bin].update(data=cv2.imencode('.png', dst)[1].tobytes()) # Update image in window
 
         #------------------------------------------------
         # 画面上に撮影した画像のヒストグラムを表示する
         #------------------------------------------------
         canvas_elem = window['-CANVAS_1-']
         canvas = canvas_elem.TKCanvas
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(4, 3))
         if values['-thresh_prev-']:
-            ax = Image_hist(src_1, ax, ticks, ret)
+            ax = Image_hist(src, ax, ticks, ret)
         else:
-            ax = Image_hist(src_1, ax, ticks)
+            ax = Image_hist(src, ax, ticks)
 
         # グラフ右と上の軸を消す
         plt.gca().spines['right'].set_visible(False)
@@ -402,5 +440,10 @@ while True: # The PSG "Event Loop"
             (Gx, Gy), dst = CenterOfGravity(dst, 1)
             cv2.drawMarker(dst, (Gx, Gy), (0, 255, 0), markerType=cv2.MARKER_TILTED_CROSS, markerSize=15)
 
-        window['image'].update(data=cv2.imencode('.png', src_1)[1].tobytes()) # Update image in window
-        window['image_2'].update(data=cv2.imencode('.png', dst)[1].tobytes()) # Update image in window
+        #for i in range(4):
+            #window_num = '-Image_' + str(i) + '-'
+        #window['-Image_0-'].update(data=cv2.imencode('.png', src)[1].tobytes()) # Update image in window
+        #window['-Image_1-'].update(data=cv2.imencode('.png', src_1)[1].tobytes()) # Update image in window
+        #window['-Image_2-'].update(data=cv2.imencode('.png', src_2)[1].tobytes()) # Update image in window
+        #window['-Image_3-'].update(data=cv2.imencode('.png', src_3)[1].tobytes()) # Update image in window
+        #window['image_2'].update(data=cv2.imencode('.png', dst)[1].tobytes()) # Update image in window
