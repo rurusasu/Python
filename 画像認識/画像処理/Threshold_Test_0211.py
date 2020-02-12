@@ -6,10 +6,10 @@ import numpy as np
 Cammera_num = 1
 frame = None
 ret = None
-fig_agg_1 = fig_agg_2 = fig_agg_3 = None     # 画像のヒストグラムを表示する用の変数
+fig_agg = None     # 画像のヒストグラムを表示する用の変数
 Image_height = 240 # 画面上に表示する画像の高さ
 Image_width  = 320 # 画面上に表示する画像の幅
-ticks = [0, 42, 84, 127, 169, 211, 255]
+ticks = [0, 40, 80, 120, 160, 200, 240]
 
 
 #----------------------------------
@@ -161,6 +161,7 @@ def Image_hist(img, ax, ticks=None, thresh=None):
             ax.vlines(thresh, 0, hist.max(), "blue", linestyles='dashed')
     ax.set_title('histogram')
     ax.set_xlim([0, 256])
+    ax.set_ylim([0, 81])
 
     return ax
 
@@ -326,8 +327,15 @@ cap = cv2.VideoCapture(Cammera_num)       # Setup the camera as a capture device
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, Image_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Image_height)
 
+# グラフの体裁を整える
+plt.rcParams['xtick.direction'] = 'in' # x軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+plt.rcParams['ytick.direction'] = 'in' # y軸の目盛線が内向き('in')か外向き('out')か双方向か('inout')
+plt.rcParams['xtick.major.width'] = 1.0  # x軸主目盛り線の線幅
+plt.rcParams['ytick.major.width'] = 1.0  # y軸主目盛り線の線幅
+plt.rcParams['font.size'] = 11  # フォントの大きさ
+plt.rcParams['axes.linewidth'] = 1.0  # 軸の線幅edge linewidth。囲みの太さ
 
-while True:                     # The PSG "Event Loop"
+while True: # The PSG "Event Loop"
     event, values = window.read(timeout=20, timeout_key='timeout')      # get events for the window with 20ms max wait
     if event is None: break
     # カメラを使う場合
@@ -365,18 +373,22 @@ while True:                     # The PSG "Event Loop"
     #------------------------------------------------
     # 画面上に撮影した画像のヒストグラムを表示する
     #------------------------------------------------
-    canvas_elem_1 = window['-CANVAS_1-']
-    canvas_1 = canvas_elem_1.TKCanvas
-    fig_1, ax_1 = plt.subplots()
+    canvas_elem = window['-CANVAS_1-']
+    canvas = canvas_elem.TKCanvas
+    fig, ax = plt.subplots()
     if values['-thresh_prev-']:
-        ax_1 = Image_hist(src_1, ax_1, ticks, ret)
+        ax = Image_hist(src_1, ax, ticks, ret)
     else:
-        ax_1 = Image_hist(src_1, ax_1, ticks)
+        ax = Image_hist(src_1, ax, ticks)
 
-    if fig_agg_1: delete_figure_agg(fig_agg_1)
+    # グラフ右と上の軸を消す
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['top'].set_visible(False)
+    
+    if fig_agg: delete_figure_agg(fig_agg)
 
-    fig_agg_1 = draw_figure(canvas_1, fig_1)
-    fig_agg_1.draw()
+    fig_agg = draw_figure(canvas, fig)
+    fig_agg.draw()
             
             
     if values['-CenterOfGravity-'] is 'なし': pass
