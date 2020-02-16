@@ -332,14 +332,14 @@ slider = [
     ]
 
 image = [
-    [sg.Image(filename='', size=(Image_width, Image_height), key='-Image_0-'), 
-     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_1-'),
-     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_2-'), 
-     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_3-'), ],
-    [sg.Image(filename='', size=(Image_width, Image_height), key='-Im_0_bin-'),
+    [sg.Image(filename='', size=(Image_width, Image_height), key='-Image_org-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_0-'),
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_1-'), 
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Image_2-'), ],
+    [sg.Image(filename='', size=(Image_width, Image_height), key='-Im_Glay-'),
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_0_bin-'), 
      sg.Image(filename='', size=(Image_width, Image_height), key='-Im_1_bin-'), 
-     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_2_bin-'), 
-     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_3_bin-'),],
+     sg.Image(filename='', size=(Image_width, Image_height), key='-Im_2_bin-'),],
 ]
 
 canvas = [
@@ -378,16 +378,20 @@ while True: # The PSG "Event Loop"
         elif values['-Image-']:
             if values['-Image_path-']:
                 ImagePath = values['-Image_path-']
-                frame = scale_box(cv2.imread(ImagePath), Image_width, Image_height)
+                src = cv2.imread(ImagePath)
+                frame = scale_box(src, Image_width, Image_height)
         
         if frame is not None: # 出力する画像が存在する場合
-            if values['-Color_space-'] is 'RGB':
-                src = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            elif values['-Color_space-'] is 'HSV':
+            #if values['-Color_space-'] is 'RGB':
+                #src = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            if values['-Color_space-'] is 'HSV':
                 src = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             #src_1 = scale_box(frame, Image_width, Image_height)
         else: continue
         
+        src_glay = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
+        window['-Image_org-'].update(data=cv2.imencode('.png', src)[1].tobytes())    # Update image in window
+        window['-Im_Glay-'].update(data=cv2.imencode('.png', src_glay)[1].tobytes()) # Update image in window
         dst_elem = Disassembly(src)
         #src_glay = cv2.cvtColor(src_bin, cv2.COLOR_RGB2GRAY)  # bgr → glay
 
