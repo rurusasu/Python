@@ -228,11 +228,10 @@ class NeuralNet_APP:
         return y
 
 
-    """
-    ----------------------
-    DataMake
-    ----------------------
-    """
+    
+    #----------------------
+    # DataMake
+    #----------------------
     def DataMake_click(self, importDirPath, outputDirPath, org_FileName, lrn_FileName, tst_FileName, digit):
         """ Originalデータを学習用データと正解ラベルに分ける関数 """
         org_FileName = __filePath__(importDirPath, org_FileName)
@@ -242,11 +241,9 @@ class NeuralNet_APP:
         DataConv(org_FileName, tst_FileName, col_range_first=3, col_range_end=6, digit=digit)
 
 
-    """
-    ----------------------
-    GUI Layout
-    ----------------------
-    """
+    #----------------------
+    # GUI Layout
+    #----------------------
     def Layout(self):
         # ----- Column Definition ----- #
         """
@@ -349,11 +346,9 @@ class NeuralNet_APP:
         return layout
     
 
-    """
-    ----------------------
-    GUI EVENT
-    ----------------------
-    """
+    #----------------------
+    # GUI EVENT
+    #----------------------
     def Event(self, event, values):
         print(event, values)
         #InLayer = None  # 層が追加されているか判定するための変数
@@ -419,6 +414,7 @@ class NeuralNet_APP:
 
     def main(self):
         return sg.Window('NeuralNet', self.layout, default_element_size=(40, 1))
+
 
 def LeNet(x, keep_prob):
     x = tf.layers.conv2d(inputs=x, filters=6, kernel_size=[5, 5], 
