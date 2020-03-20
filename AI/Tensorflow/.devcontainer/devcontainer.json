@@ -1,0 +1,9 @@
+{
+    "name": "Tensorflow and Jupyter",
+    "dockerComposeFile":[
+        "../docker-compose.yml",
+        "docker-compose.extend.yml"
+    ],
+    "service": "dev",
+    "workspaceFolder": "/"
+}
