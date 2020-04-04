@@ -1,4 +1,0 @@
-FROM ubuntu
-ENV PYTHON_VERSIN 3.6
-
-apt-get update && apt-get install -y python && rm -rf /var/lib/apt/lists/*

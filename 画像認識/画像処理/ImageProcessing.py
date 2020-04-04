@@ -99,6 +99,9 @@ def Disassembly(src):
 #----------------------------------
 # 二値化方法
 #----------------------------------
+#----------------------------------
+# 大域的二値化法
+#----------------------------------
 def binalize(src, threshold=127, Type=cv2.THRESH_BINARY):
     """
     単純閾値処理を行う関数
@@ -121,8 +124,9 @@ def binalize(src, threshold=127, Type=cv2.THRESH_BINARY):
     new_src = src.copy()
     ret, dst = cv2.threshold(new_src, threshold, 255, Type)
     return ret, dst
-
-
+#----------------------------------
+# 大津の二値化法
+#----------------------------------
 def otsu_binalize(gray, min_value=0, max_value=255):
     """
     大津の閾値処理を行う関数
@@ -172,18 +176,98 @@ def otsu_binalize(gray, min_value=0, max_value=255):
     gray[gray >= t] = max_value
 
     return gray
+#----------------------------------
+# 適応的二値化法
+#----------------------------------
+def AdaptiveThreshold(src, ksize=3, c=2):
+    """
+    適応的閾値処理を行う関数
 
+    Parameters
+    ----------
+    src: OpenCV型
+        入力画像
+    ksize: int
+        正方形フィルタサイズ
+    c: int
+        閾値(0~255)の範囲
 
+    Return
+    ------
+    dst: OpenCV型
+        二値画像(0 or 255)
+    """
+    #if not int(ksize) and ksize <= 0: raise TypeError('ksizeはint型かつ0より大きい値のみ受付ます')
+    if not tuple(ksize) and (ksize[0] <= 0 or ksize[1] <=0):
+        raise TypeError('ksizeはtuple型かつ0より大きい値のみ受付ます')
+    if not int(c) and c <= 0: raise TypeError('ksizeはint型かつ0より大きい値のみ受付ます')
+
+    if src.ndim != 2:
+        src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
+    
+    # フィルタの幅
+    #d = int((ksize-1)/2)
+    m, n = ksize[0], ksize[1]
+    # 画像の高さと幅
+    h, w = src.shape[0], src.shape[1]
+    # 出力画像用の配列（要素はすべて255）
+    dst = np.empty((h, w))
+    dst.fill(255)
+
+    # 局所領域の画素数
+    #N = ksize*d
+    N = m*n
+
+    for y in range(0, h):
+        for x in range(0, w):
+            # 局所領域内の画素値の平均
+            #t = np.sum(src[y-d:y+d+1, x-d:x+d+1]) / N
+            t = np.sum(src[y-m:y+m+1, x-n:x+n+1]) / N
+
+            # 求めた閾値で二値化処理
+            #if(src[y][x] < t-c): dst[y][x] = 0
+            if(src[y][x] < t*(100-c)/100): dst[y][x] = 0
+            else: dst[y][x] = 255
+
+    return dst
+#------------------------------
+# 空間フィルタリングを行う関数
+#------------------------------
+def gamma_Image(src, gm):
+    gamma = gm/10
+    dst = LUT_curve(gamma_curve, gamma, src)
+    return dst
+#----------------------------------------
+# 空間フィルタリング用LTU(Look Up Table)
+#----------------------------------------
+def LUT_curve(f, a, src):
+    """
+    Look Up Tableを LUT[input][0] = output という256行の配列として作る。
+    例: LUT[0][0] = 0, LUT[127][0] = 160, LUT[255][0] = 255
+    """
+    LUT = np.arange(256, dtype='uint8').reshape(-1, 1)
+    LUT = np.array([f(a, x).astype('uint8') for x in LUT])
+    out_rgb_img = cv2.LUT(src, LUT)
+    return out_rgb_img
+#----------------------------
+# フィルタリング関数
+#----------------------------
+def gamma_curve(gamma, x):
+    y = 255 * pow(x / 255, 1.0 / gamma)
+    return y
 
 
 if __name__ == "__main__":
     import sys, os
     sys.path.append(os.getcwd())
     #ImagePath = 'D:/myfile/My_programing/python/画像認識/画像処理/resource/lena.png'
-    ImagePath = r'D:\myfile\My_programing\python\Data\AngleDetection\DataSet\ALL_0312\training\0\image1.jpg'
+    ImagePath = r'D:\myfile\My_programing\python\Data\AngleDetection\DataSet\ALL_0312\training\15\pen_1\image4.jpg'
     src = LoadImage(299, 299, ImagePath=ImagePath) # 画像を読み込む
 
-    #dst = Disassembly(src)
-    dst = otsu_binalize(src)
+    #dst = Disassembly(src) # 画像を成分ごとに分割
+    #dst = otsu_binalize(src) # 画像を大域的二値化を使って二値化
+    dst = AdaptiveThreshold(src, ksize=(3, 2), c=15) # 画像を適応的閾値処理を使って二値化
+
+    #dst = gamma_Image(src, 100)
     cv2.imshow('binarize', dst)
     cv2.waitKey(0)
