@@ -33,33 +33,23 @@ class DataLoad:
     def data_load(self):
         img_data = []
         lbl_data = []
-        #pathes = os.listdir(self.dir_path)
-        #pathes = glob(self.dir_path+os.sep+'**'+os.sep, recursive=True)
-        # 指定したディレクトリの下にあるすべてのファイルパスを取得
-        #f_pathes = [p for p in glob(self.dir_path+os.sep+'**', recursive=True) if os.path.isfile(p)]
-        #self.validate_f_pathes(f_pathes)
+        
         # ラベルとなるディレクトリ名を取得
         d_pathes = glob(self.opt['dir_path']+os.sep+'*')
         self.validate_d_pathes(d_pathes)
         num_classes = len(d_pathes)
         CLS = [os.path.basename(p) for p in d_pathes]
-        #print(f_pathes)
-        #print(d_pathes)
-        #print(CLS)
 
         ######################
         #  データをロードする  #
         ######################
-        for path in d_pathes:
-            #print(path)
-            # pathと一致するディレクトリ下の特定の拡張子のファイルを取得
-            #data = glob(path+os.sep+'*'+'.'+self.opt['extension'], recursive=True)
-            data = [p for p in 
-                        glob(path+os.sep+'**'+os.sep+'*.' +self.opt['extension'], recursive=True)
-                            if os.path.isfile(p)]
-            print(data)
-            if data: # もしdata配列に値がある場合
-                for i in data:
+        for parent_dir_path in d_pathes:
+            child_dir_path = [p for p in 
+                                glob(parent_dir_path+os.sep+'**'+os.sep+'*.' +self.opt['extension'], 
+                                recursive=True) 
+                                if os.path.isfile(p)]
+            if child_dir_path: # もしdata配列に値がある場合
+                for i in child_dir_path:
                     ##################
                     #  画像を読み込む  #
                     ##################
@@ -71,29 +61,30 @@ class DataLoad:
                     ##################
                     # ラベルを作成する #
                     ##################
-                    Label = path[path.find(os.sep):].strip(os.sep)
-                    print(Label)
+                    Label = parent_dir_path[parent_dir_path.find(os.sep):].strip(os.sep)
                     # 使用するフレームワークによって，正解ラベルの作成方法が異なる
                     if (self.opt['framework'] is 'Tensorflow') or (self.opt['framework'] is 'keras'):
                         # one-hot-labelを作成する
-                        v = np.zeros(num_classes)
-                        #[v[i] for i, cls in enumerate(CLS) if cls == str(Label)]
                         v = [1 if cls == str(Label) else 0 for i, cls in enumerate(CLS)]
-                        #for i, cls in enumerate(CLS):
-                        #    if cls == str(Label):
-                        #        v[i] = 1
-                        self.validate_OneHotLabel(v)
+                        # one-hot-labelの要素の合計が 1 か確認
+                        self.validate_OneHotLabel(v) 
                     elif (self.opt['framework'] is 'PyTorch'):
                         v = float(Label)
-                    
+
                     lbl_data.append(v)
+
+                    ###########################
+                    #  読み込んだ画像情報を表示  #
+                    ###########################
+                    img_name = i[i.find(os.sep):].strip(os.sep)
+                    print(f'path : {img_name}, size : ({img.shape[0]}, {img.shape[1]}, {img.shape[2]}), label : {Label}')
 
         img_data = np.array(img_data, dtype=np.float32)
         lbl_data = np.array(lbl_data, dtype=np.int)
-        print(len(img_data))
-        print(len(lbl_data))
+        # img_dataとlbl_dataの要素数が同等か判定
         self.validate_img_label(img_data, lbl_data)
-        
+        print(f'Number of read images : {len(img_data)}, Categories : {num_classes}')
+
         return img_data, lbl_data
 
 
@@ -126,10 +117,6 @@ class DataLoad:
     ######################
     #  関数内での確認事項  #
     ######################
-#    def validate_f_pathes(self, f_pathes):
-#        """f_pathesが空のリストならエラー"""
-#        assert f_pathes
-    
     def validate_d_pathes(self, d_pathes):
         """d_pathesが空のリストならエラー"""
         assert d_pathes
@@ -150,7 +137,8 @@ class DataLoad:
 if __name__ == "__main__":
     print(os.getcwd())
     DirPath = '../DataSet/AngleDetection/training'
+    img_width, img_height = 64, 64
     #DirPath = 'D:\My_programing\python\AI\DataSet\AngleDetection\training'
     #DirPath = "D:\My_programing\python\AI\Training"
-    load = DataLoad(DirPath, 'jpg')
+    load = DataLoad(DirPath, 'jpg', size=(img_width, img_height))
     load.data_load()
