@@ -1,20 +1,43 @@
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPool2D, Input, BatchNormalization
+import tensorflow as tf
+from keras import layers
 
-class LeNet(Model):
-    def __init__(self, opt):
-        super().__init__()
-        assert len(opt) == 0
-        img_height, img_width = opt['img_height', 'img_width']
+class LeNet(tf.keras.Model):
+    ##################
+    #  レイヤーを定義  #
+    ##################
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        #assert len(opt) != 0
+        img_height, img_width = opt['img_height'], opt['img_width']
         num_classes = opt['num_classes']
 
-        inputs = Input((img_height, img_width, 3))
-        x = Conv2D(6, (5, 5), padding='valid',
-                   activation=None, name='conv1')(inputs)
-        x = MaxPool2D((2, 2), padding='same')(x)
-        x = Activation('sigmoid')(x)
-        x = Conv2D(16, (5, 5), padding='valid', activation=None, name='conv2')(x)
-        x = MaxPool2D((2, 2), padding='same')(x)
+        # 隠れ層：1つ目のレイヤー
+        self.Conv2D = layers.Conv2D(
+            filters = 6,
+            kernel_size = (5, 5),
+            padding='valid',
+            activation=None,
+            name='conv1'
+        )
+        # 隠れ層：2つ目のレイヤー
+        self.MaxPool2D = layers.MaxPool2D(
+            pool_size=(2, 2), 
+            padding='same',
+            name='MaxPool1'
+        )
+        # 隠れ層：3つ目のレイヤー
+        self.Activation = layers.Activation('sigmoid')
+
+        # 隠れ層：4つ目のレイヤー
+        self.Conv2D = layers.Conv2D(
+            filters = 16, 
+            kernel_size = (5, 5), 
+            padding='valid', 
+            activation=None, 
+            name='conv2'
+        )
+
+        self MaxPool2D((2, 2), padding='same')(x)
         x = Activation('sigmoid')(x)
 
         x = Flatten()(x)
@@ -23,12 +46,11 @@ class LeNet(Model):
         x = Dense(num_classes, activation='softmax')(x)
 
         model = Model(inputs=inputs, outputs=x, name='model')
-        return model
+        #return model
 
 
 def create_model(opt):
     return LeNet(opt)
-
 
 def data_load(path, img_width, img_height, CLS, Framework='Tensorflow'):
     """ファイルパスからデータセットをロードするための関数"""
@@ -48,13 +70,12 @@ def data_load(path, img_width, img_height, CLS, Framework='Tensorflow'):
 
                 # 訓練用画像を読み込む
                 x = cv2.imread(path)
-                assert x is None  # もし，画像がロードできなかった場合
+                if x is None:  # もし，画像がロードできなかった場合
                     print(path, 'を読み込めませんでした．')
                     img_read_err.append(path)
                     continue
                 else:  # 画像がロードできた場合
-                    x = cv2.resize(x, (img_width, img_height)
-                                   ).astype(np.float32)
+                    x = cv2.resize(x, (img_width, img_height)).astype(np.float32)
                     x /= 255.
                     xs.append(x)
 
@@ -82,9 +103,10 @@ def data_load(path, img_width, img_height, CLS, Framework='Tensorflow'):
 
     return xs, ts, paths, img_read_err, lbl_err_path
 
-
-def train(DirPath, img_size, cls_label):
-    model = LeNet(img_size[0], img_size[1], len(cls_label)+1)
+# training
+def train(DirPath, opt):
+    model = create_model(opt)
+    #model = LeNet(img_size[0], img_size[1], len(cls_label)+1)
 
     for layer in model.layers:
         layer.trainable = True
@@ -96,7 +118,7 @@ def train(DirPath, img_size, cls_label):
         metrics=['accuracy'])
 
     xs, ts, paths, img_read_err, err_path = data_load(
-        DirPath, img_size[0], img_size[1], cls_label)
+        DirPath, opt['img_width'], opt['img_height'], opt['num_classes'])
     if img_read_err:
         print('画像の読み込みでエラーが発生しました．')
         print(img_read_err)
@@ -167,12 +189,13 @@ if __name__ == "__main__":
     }
 
     net = create_model(opt)
+# データを読み込むフォルダを指定する
+DirPath = '../../../DataSet/AngleDetection/training/*'
+#print(DirPath)
 
-    for layer in net.layers:
-        layer.trainable = True
+num_classes = 36
+img_width, img_height = 64, 64
+CLS = np.arange(0, 180, 5).astype('str')
 
-    model.compile(
-        loss='categorical_crossentropy',
-        optimizer=keras.optimizers.SGD(
-            lr=0.01, decay=1e-6, momentum=0.9, nesterov=True),
-        metrics=['accuracy'])
+#train(DirPath, img_size=(64, 64), cls_label=CLS)
+train(DirPath, opt)
