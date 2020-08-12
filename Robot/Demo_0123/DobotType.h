@@ -1,4 +1,4 @@
-﻿#ifndef DOBOTTYPE_H
+#ifndef DOBOTTYPE_H
 #define DOBOTTYPE_H
 
 #ifdef _MSC_VER
@@ -57,11 +57,6 @@ typedef struct tagHOMECmd {
     uint32_t reserved;
 }HOMECmd;
 
-typedef struct tagAutoLevelingCmd {
-    uint8_t controlFlag;
-    float precision;
-}AutoLevelingCmd;
-
 /*
  * Hand hold teach
  */
@@ -99,11 +94,6 @@ typedef struct tagJOGCoordinateParams {
     float velocity[4];
     float acceleration[4];
 }JOGCoordinateParams;
-
-typedef struct tagJOGLParams {
-    float velocity;
-    float acceleration;
-}JOGLParams;
 
 typedef struct tagJOGCommonParams {
     float velocityRatio;
@@ -144,21 +134,10 @@ typedef struct tagPTPCoordinateParams {
     float rAcceleration;
 }PTPCoordinateParams;
 
-typedef struct tagPTPLParams {
-    float velocity;
-    float acceleration;
-}PTPLParams;
-
 typedef struct tagPTPJumpParams {
     float jumpHeight;
     float zLimit;
 }PTPJumpParams;
-
-typedef struct tagPTPJump2Params {
-    float startJumpHeight;
-    float endJumpHeight;
-    float zLimit;
-}PTPJump2Params;
 
 typedef struct tagPTPCommonParams {
     float velocityRatio;
@@ -189,21 +168,6 @@ typedef struct tagPTPCmd {
     float r;
 }PTPCmd;
 
-typedef struct tagPTPWithLCmd {
-    uint8_t ptpMode;
-    float x;
-    float y;
-    float z;
-    float r;
-    float l;
-}PTPWithLCmd;
-
-typedef struct tagParallelOutputCmd {
-    uint8_t ratio;
-    uint16_t address;
-    uint8_t level;
-}ParallelOutputCmd;
-
 /*
  * CP related
  */
@@ -217,11 +181,6 @@ typedef struct tagCPParams
     };
     uint8_t realTimeTrack;
 }CPParams;
-
-typedef struct tagCPCommonParams {
-    float velocityRatio;
-    float accelerationRatio;
-}CPCommonParams;
 
 enum CPMode {
     CPRelativeMode,
@@ -249,11 +208,6 @@ typedef struct tagARCParams {
     float rAcceleration;
 }ARCParams;
 
-typedef struct tagARCCommonParams {
-    float velocityRatio;
-    float accelerationRatio;
-}ARCCommonParams;
-
 typedef struct tagARCCmd {
     struct {
         float x;
@@ -268,22 +222,6 @@ typedef struct tagARCCmd {
         float r;
     }toPoint;
 }ARCCmd;
-
-typedef struct tagCircleCmd {
-    struct {
-        float x;
-        float y;
-        float z;
-        float r;
-    }cirPoint;
-    struct {
-        float x;
-        float y;
-        float z;
-        float r;
-    }toPoint;
-    uint32_t count;
-}CircleCmd;
 
 typedef struct tagWAITCmd {
     uint32_t timeout;
@@ -350,15 +288,8 @@ typedef struct tagIOADC {
 typedef struct tagEMotor {
     uint8_t index;
     uint8_t isEnabled;
-    int32_t speed;
+    float speed;
 }EMotor;
-
-typedef struct tagEMotorS {
-    uint8_t index;
-    uint8_t isEnabled;
-    int32_t speed;
-    uint32_t distance;
-}EMotorS;
 
 /*
  * WIFI related
@@ -380,93 +311,9 @@ typedef struct tagWIFIDNS {
     uint8_t addr[4];
 }WIFIDNS;
 
-/*
- * Test
- */
 typedef struct tagUserParams{
     float params[8];
 }UserParams;
-
-/*
- * Firmware related
- */
-
-enum FirmwareSwitchMode{
-    NO_SWITCH,
-    DOBOT_SWITCH,
-    PRINTING_SWITCH,
-    DRIVER1_SWITCH,
-    DRIVER2_SWITCH,
-    DRIVER3_SWITCH,
-    DRIVER4_SWITCH,
-    DRIVER5_SWITCH
-};
-
-typedef struct tagFirmwareParams {
-    uint8_t  mode;
-}FirmwareParams;
-
-enum FirewareMode{
-    INVALID_MODE,
-    DOBOT_MODE,
-    PRINTING_MODE,
-    OFFLINE_MODE
-};
-
-typedef struct tagFirmwareModes {
-    uint8_t  mode;
-    uint8_t  ctl; //0 or 1
-}FirmwareMode;
-
-typedef enum tagServoControlLoop{
-    ServoPositionLoop,
-    ServoVelocityLoop,
-    ServoCurrentLoop
-}ServoControlLoop;
-
-typedef struct tagPIDParams{
-    float p;
-    float i;
-    float d;
-    float v;
-    float a;
-}PIDParams;
-
-typedef struct tagPID{
-    uint8_t index;
-    uint8_t controlLoop;
-    PIDParams params;
-}PID;
-
-typedef enum tagColorPort{
-    CL_PORT_GP1,
-    CL_PORT_GP2,
-    CL_PORT_GP4,
-    CL_PORT_GP5
-}ColorPort;
-
-typedef enum tagInfraredPort{
-    IF_PORT_GP1,
-    IF_PORT_GP2,
-    IF_PORT_GP4,
-    IF_PORT_GP5
-}InfraredPort;
-
-typedef enum tagUART4PeripheralsType {
-    UART4PeripheralsUART,
-    UART4PeripheralsWIFI,
-    UART4PeripheralsBLE,
-    UART4PeripheralsCH375
-} UART4PeripheralsType;
-
-typedef struct tagPluseCmd {
-    float j1;
-    float j2;
-    float j3;
-    float j4;
-    float e1;
-    float e2;
-} PluseCmd;
 
 /*********************************************************************************************************
 ** API result
