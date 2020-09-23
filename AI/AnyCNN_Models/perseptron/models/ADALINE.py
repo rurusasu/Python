@@ -130,3 +130,13 @@ class AdalineSGD(object):
     cost_(list):
         各エポックですべてのトレーニングサンプルの平均を求める誤差平方和コスト関数
     """
+
+    def __init__(self, eta=0.01, n_iter=10, shuffle=True, random_state=None):
+        # 学習率の初期化
+        self.eta = eta
+        # トレーニング回数の初期化
+        self.n_iter = n_iter
+        # 重みの初期化フラグはFalseに設定
+        self.w_initialized = False
+        # 各エポックでトレーニングデータをシャッフルするかどうかのフラグを初期化
+        self.shu
