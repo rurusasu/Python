@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument(
         "--network", type=str, default="perseptron", choices=["perseptron", "adaline"]
     )
+    parser.add_argument("--optimizer", type=str, default="GD", choices=["GD", "SGD"])
     parser.add_argument("--eta", type=float, default=0.1)
     parser.add_argument("--iter", type=int, default=10)
     args = parser.parse_args()
@@ -77,7 +78,16 @@ def training(X, y, args):
         net = Perceptron(eta=eta, n_iter=n_iter).fit(X, y)
         PlotData_ = net.errors_
     elif args.network == "adaline":
-        net = AdalineGD(eta=eta, n_iter=n_iter).fit(X, y)
+        if args.optimizer == "GD":
+            net = AdalineGD(eta=eta, n_iter=n_iter).fit(X, y)
+        elif args.optimizer == "SGD":
+            net = AdalineSGD(eta=eta, n_iter=n_iter).fit(X, y)
+        else:
+            print(
+                "NetWork モデル {} には optimizer {} は実装されていません。".format(
+                    args.network, args.optimizer
+                )
+            )
         PlotData_ = net.cost_
     else:
         print("NetWork モデル {} をロードできませんでした。".format(args.network))
@@ -93,6 +103,7 @@ if __name__ == "__main__":
 
     args = parse_args()
     args.network = "adaline"
+    args.optimier = "SGD"
     args.eta = 0.01
 
     df = ReadCSV(path)
