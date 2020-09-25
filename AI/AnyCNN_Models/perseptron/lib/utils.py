@@ -16,6 +16,8 @@ def ReadCSV(path):
         print("CSVファイルを読み込めませんでした。")
         df = None
 
+    print(df)
+
     return df
 
 
@@ -90,4 +92,3 @@ if __name__ == "__main__":
     df = ReadCSV(path)
     print(df.tail())
 
-    plot_data(df)

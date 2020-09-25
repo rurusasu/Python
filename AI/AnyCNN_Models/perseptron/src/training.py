@@ -1,8 +1,10 @@
+import os
 import sys
 
 sys.path.append(".")
 sys.path.append("..")
 
+from lib.configs import cfg
 from lib.utils import *
 from models.perceptron import *
 from models.ADALINE import *
@@ -14,7 +16,9 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="ilis", choices="ilis")
+    parser.add_argument(
+        "--datasets", type=str, default="ilis", choices=["ilis", "boston"]
+    )
     parser.add_argument(
         "--network", type=str, default="perseptron", choices=["perseptron", "adaline"]
     )
@@ -98,20 +102,26 @@ def training(X, y, args):
 
 
 if __name__ == "__main__":
-
-    path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
-
     args = parse_args()
+    args.datasets = "boston"
     args.network = "adaline"
     args.optimier = "SGD"
     args.eta = 0.01
+    # path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+    # name = "ilis"
+    path = os.path.join(cfg.DATASETS_DIR, args.datasets + ".csv")
 
     df = ReadCSV(path)
+
+    print(df.index.values)
+    print(df.columns.values)
+
+    """
 
     X, y = DataSet_choice(df, plot=False)
 
     training(X, y, args)
-
+    """
     """
     # パーセプトロンのオブジェクトの生成 (インスタンス化)
     ppn = Perceptron(eta=0.1, n_iter=10)
