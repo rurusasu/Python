@@ -21,3 +21,33 @@ def add_path():
 
 
 add_path()
+
+
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--datasets",
+        type=str,
+        default="iris",
+        choices=[
+            "ilis",
+            "boston",
+            "diabetes",
+            "digits",
+            "linnerrud",
+            "wine",
+            "breast_cancer",
+        ],
+    )
+    parser.add_argument(
+        "--network", type=str, default="perseptron", choices=["perseptron", "adaline"]
+    )
+    parser.add_argument("--optimizer", type=str, default="GD", choices=["GD", "SGD"])
+    parser.add_argument("--eta", type=float, default=0.1)
+    parser.add_argument("--iter", type=int, default=10)
+    args = parser.parse_args()
+
+    return args

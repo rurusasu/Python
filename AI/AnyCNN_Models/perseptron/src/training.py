@@ -4,30 +4,12 @@ import sys
 sys.path.append(".")
 sys.path.append("..")
 
-from lib.configs import cfg
+from lib.configs import cfg, parse_args
 from lib.utils import *
 from models.perceptron import *
 from models.ADALINE import *
 
 import matplotlib.pyplot as plt
-
-import argparse
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--datasets", type=str, default="ilis", choices=["ilis", "boston"]
-    )
-    parser.add_argument(
-        "--network", type=str, default="perseptron", choices=["perseptron", "adaline"]
-    )
-    parser.add_argument("--optimizer", type=str, default="GD", choices=["GD", "SGD"])
-    parser.add_argument("--eta", type=float, default=0.1)
-    parser.add_argument("--iter", type=int, default=10)
-    args = parser.parse_args()
-
-    return args
 
 
 def test_plot(net, plot_data, LogPlot=(False, False)):
@@ -103,25 +85,20 @@ def training(X, y, args):
 
 if __name__ == "__main__":
     args = parse_args()
-    args.datasets = "boston"
+    # args.datasets = "boston"
     args.network = "adaline"
     args.optimier = "SGD"
     args.eta = 0.01
-    # path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
-    # name = "ilis"
+    #path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
     path = os.path.join(cfg.DATASETS_DIR, args.datasets + ".csv")
 
     df = ReadCSV(path)
 
-    print(df.index.values)
-    print(df.columns.values)
-
-    """
-
+    # print(df.index.values)
+    # print(df.columns.values)
     X, y = DataSet_choice(df, plot=False)
 
     training(X, y, args)
-    """
     """
     # パーセプトロンのオブジェクトの生成 (インスタンス化)
     ppn = Perceptron(eta=0.1, n_iter=10)
