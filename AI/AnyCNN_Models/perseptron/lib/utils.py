@@ -85,6 +85,18 @@ def plot_decision_regions(X, y, classifier, resolution=0.02):
             edgecolor="black",
         )
 
+    # テストサンプルを目立たせる（点を〇で表示）
+    if test idx:
+        # すべてのサンプルをプロット
+        x_test, y_test = X[test_idx,:], y[test_idx]
+        plt.scatter(X_test[:, 0], X_test[:, 1],
+                        c='',
+                        edgecolor='black',
+                        alpha=1.0,
+                        linewidth=1,
+                        marker='o',
+                        s=100,
+                        label='test set')
 
 if __name__ == "__main__":
     path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
