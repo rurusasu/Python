@@ -11,7 +11,7 @@ from matplotlib.colors import ListedColormap
 
 def ReadCSV(path):
     try:
-        df = pd.read_csv(path, header=None)
+        df = pd.read_csv(path, header=0)
     except:
         print("CSVファイルを読み込めませんでした。")
         df = None
@@ -22,10 +22,11 @@ def ReadCSV(path):
 
 
 def DataSet_choice(df, standardized=True, plot=True):
+    #    df = NoIndex_NoHeader(df)
     # 1-100行目の目的変数を抽出
     y = df.iloc[0:100, 4].values
     # Iris-setosaを-1, Iris-virginicaを1に変換
-    y = np.where(y == "Iris-setosa", -1, 1)
+    y = np.where(y == "setosa", -1, 1)
     # 1-100行目の1, 3列目の抽出
     X = df.iloc[0:100, [0, 2]].values
 
