@@ -1,0 +1,67 @@
+# base image
+ARG BASE_IMAGE=ubuntu:latest
+FROM ${BASE_IMAGE}
+
+# system update & package install
+RUN apt-get clean &&\
+    apt-get -y update && \
+    apt-get install -y --no-install-recommends \
+    unzip bzip2 \
+    openssl libssl-dev \
+    curl wget \
+    ca-certificates \
+    locales \
+    bash \
+    sudo \
+    git \
+    && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
+    && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 言語などの環境設定
+ENV LANG ja_JP.UTF-8
+ENV LANGUAGE ja_JP:ja
+ENV LC_ALL ja_JP.UTF-8
+ENV TZ JST-9
+ENV TERM xterm
+
+# ローカルuser作成
+ARG USER_NAME=user
+ARG USER_UID=1000
+ARG PASSWD=password
+RUN useradd -m -s /bin/bash -u ${USER_UID} ${USER_NAME} && \
+    gpasswd -a ${USER_NAME} sudo && \
+    echo "${USER_NAME}:${PASSWD}" | chpasswd && \
+    echo "${USER_NAME} ALL=(ALL) ALL" >> /etc/sudoers && \
+    chmod g+w /etc/passwd
+
+# conda 用準備
+ENV CONDA_DIR=/opt/conda \
+    CONDA_TMP_DIR=/tmp/conda \
+    HOME=/home/$USER_NAME \
+    SHELL=/bin/bash
+RUN mkdir -p $CONDA_DIR && \
+    mkdir -p $CONDA_TMP_DIR && \
+    chown $USER_NAME:$USER_UID $CONDA_DIR &&\
+    chown $USER_NAME:$USER_UID $CONDA_TMP_DIR
+# yamlファイルの取り込み
+ARG CONDA_YAML="./env/myenv.yml"
+COPY $CONDA_YAML /tmp/conda_packages.yml
+
+USER ${USER_NAME}
+WORKDIR $HOME
+
+# miniconda
+ARG MINICONDA_VERSION=py38_4.9.2-Linux-x86_64
+ARG MINICONDA_MD5=122c8c9beb51e124ab32a0fa6426c656
+ENV PATH=${CONDA_DIR}/bin:$PATH
+
+RUN cd /tmp && \
+    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -f -b -p $CONDA_TMP_DIR
+#RUN echo "${MINICONDA_MD5} *Miniconda3-${MINICONDA_VERSION}.sh" | md5sum -c && \
+#/bin/bash Miniconda3-${MINICONDA_VERSION}.sh -f -b -p $CONDA_TMP_DIR
+RUN rm ~/miniconda.sh && \
+    $CONDA_TMP_DIR/bin/conda env create -f /tmp/conda_packages.yml -p $CONDA_DIR
+RUN rm -rf $HOME/.cache/*
+RUN rm -rf $CONDA_TMP_DIR/*
