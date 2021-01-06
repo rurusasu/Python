@@ -37,7 +37,7 @@
     "${env:CONDA_ENVS_PATH}\\analysis\\Lib\\site-packages"
   ],
   // Python コマンドのパス。作成した Anaconda仮想環境下の python.exe を指定する。
-  "python.pythonPath": "c:\\tools\\miniconda3\\envs\\analysis\\python.exe",
+  "python.pythonPath": "/opt/conda/bin/python",
   // conda コマンドのパス。[Anacondaインストール先] / condabin / conda.bat を指定する。
   "python.condaPath": "C:\\tools\\miniconda3\\condabin\\conda.bat",
   // フォーマッターの設定。autopep8 を指定する。

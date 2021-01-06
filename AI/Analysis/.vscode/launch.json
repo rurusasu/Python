@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "program": "${file}",
-      //"pythonPath": "C:\\tools\\miniconda3\\envs\\py37_cnn\\python.exe",
+      //"python": "C:\\tools\\miniconda3\\envs\\py37_cnn\\python.exe",
       "console": "integratedTerminal",
       "cwd": "${fileDirname}",
       "redirectOutput": true
