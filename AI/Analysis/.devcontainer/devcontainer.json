@@ -1,0 +1,21 @@
+{
+    "name": "Miniconda 3",
+    "context": "..",
+    "dockerFile": "Dockerfile",
+
+    "settings":{
+        "terminal.integrated.shell.linux": "/bin/bash",
+    },
+
+    "appPort": [
+        9000
+    ],
+
+    "postCreateCommand": "sudo pip install -r requirements.txt",
+
+    "remoteUser": "vscode",
+
+    "extensions": [
+        "ms-python.python"
+    ]
+}

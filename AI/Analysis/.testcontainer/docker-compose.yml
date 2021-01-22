@@ -1,0 +1,10 @@
+version: '3'
+services:
+  miniconda3:
+    restart: always
+    build: .
+    container_name: 'miniconda3'
+    working_dir: '/root/analysis'
+    tty: true
+    volumes:
+      - ..:/root/analysis

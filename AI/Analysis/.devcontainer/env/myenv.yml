@@ -1,0 +1,15 @@
+# Docker 内の cnonda 上に構築する開発環境の設定
+
+name: myenv
+channnels:
+  - default
+  - conda-forge
+dependencies:
+  #  - easydict=1.9=py_0=conda-forge
+  - matplotlib=3.3.2=h06a4308_0
+  - numpy=1.19.2=py38h54aff64_0
+  - pandas=1.1.5=py38ha9443f7_0
+  - pillow=8.0.1=py38he98fc37_0
+  #  - pysimplegui=4.32.1=pyhd3deb0d_0=conda-forge
+  - python=3.8.5=h7579374_1
+  - pytorch=1.4.0=cuda101py38h02f0884_0
