@@ -1,1 +1,3 @@
 *.mat
+*.pyc
+AI/GoogleOpenImage/Data/train-images-boxable-with-rotation.csv
