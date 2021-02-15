@@ -1,71 +1,23 @@
-# base image
-ARG BASE_IMAGE=ubuntu:latest
-FROM ${BASE_IMAGE}
+# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.155.1/containers/python-3-miniconda/.devcontainer/base.Dockerfile
 
-# system update & package install
-RUN apt-get clean &&\
-    apt-get -y update && \
-    apt-get install -y --no-install-recommends \
-    unzip bzip2 \
-    openssl libssl-dev \
-    curl wget \
-    ca-certificates \
-    locales \
-    bash \
-    sudo \
-    git \
-    && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
-    && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists/*
+FROM mcr.microsoft.com/vscode/devcontainers/miniconda:0-3
 
-# 言語などの環境設定
-ENV LANG ja_JP.UTF-8
-ENV LANGUAGE ja_JP:ja
-ENV LC_ALL ja_JP.UTF-8
-ENV TZ JST-9
-ENV TERM xterm
+# [Option] Install Node.js
+ARG INSTALL_NODE="true"
+ARG NODE_VERSION="lts/*"
+RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
-# ローカルuser作成
-ARG USER_NAME=user
-ARG USER_UID=1000
-ARG PASSWD=password
-RUN useradd -m -s /bin/bash -u ${USER_UID} ${USER_NAME} && \
-    gpasswd -a ${USER_NAME} sudo && \
-    echo "${USER_NAME}:${PASSWD}" | chpasswd && \
-    echo "${USER_NAME} ALL=(ALL) ALL" >> /etc/sudoers && \
-    chmod g+w /etc/passwd
+# Copy environment.yml (if found) to a temp locaition so we update the environment. Also
+# copy "noop.txt" so the COPY instruction does not fail if no environment.yml exists.
+COPY .devcontainer/environment.yml .devcontainer/noop.txt /tmp/conda-tmp/
+RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
+    && rm -rf /tmp/conda-tmp
 
-# conda 用準備
-ENV CONDA_DIR=/opt/conda \
-    CONDA_TMP_DIR=/tmp/conda \
-    HOME=/home/$USER_NAME \
-    SHELL=/bin/bash
-RUN mkdir -p $CONDA_DIR && \
-    mkdir -p $CONDA_TMP_DIR && \
-    chown $USER_NAME:$USER_UID $CONDA_DIR &&\
-    chown $USER_NAME:$USER_UID $CONDA_TMP_DIR
+# [Optional] Uncomment to install a different version of Python than the default
+# RUN conda install -y python=3.6 \
+#     && pip install --no-cache-dir pipx \
+#     && pipx reinstall-all
 
-# yamlファイルの取り込み:
-ARG CONDA_YAML="./env/myenv.yml"
-COPY $CONDA_YAML /tmp/conda_packages.yml
-
-USER ${USER_NAME}
-WORKDIR $HOME
-
-# miniconda install:
-ARG MINICONDA_VERSION=py38_4.9.2-Linux-x86_64
-ARG MINICONDA_MD5=122c8c9beb51e124ab32a0fa6426c656
-ENV PATH=${CONDA_DIR}/bin:$PATH
-
-RUN cd /tmp && \
-    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}.sh -O ~/miniconda.sh && \
-    /bin/bash ~/miniconda.sh -f -b -p $CONDA_TMP_DIR &&\
-    rm ~/miniconda.sh
-
-# Creaet the environment:
-RUN $CONDA_TMP_DIR/bin/conda env create -f /tmp/conda_packages.yml -p $CONDA_DIR
-RUN rm -rf $HOME/.cache/*
-RUN rm -rf $CONDA_TMP_DIR/*
-
-# Activate the environment, and make sure it's activated:
-# RUN conda activate
+# [Optional] Uncomment this section to install additional OS packages.
+# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+#     && apt-get -y install --no-install-recommends <your-package-list-here>

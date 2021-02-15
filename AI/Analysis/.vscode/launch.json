@@ -5,11 +5,21 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "alalysis",
+      "name": "Python for linux", // デバッグ構成として表示する名前
+      "type": "python",    // デバッカの種別
+      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
+      "program": "${file}",
+      "python": "/opt/conda/bin/python",
+      "console": "integratedTerminal",   // プログラムを起動するコンソールの種類を指定
+      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
+      "redirectOutput": true
+    },
+    {
+      "name": "Python for windows",
       "type": "python",
       "request": "launch",
       "program": "${file}",
-      //"python": "C:\\tools\\miniconda3\\envs\\py37_cnn\\python.exe",
+      "python": "C:\\tools\\miniconda3\\python.exe",
       "console": "integratedTerminal",
       "cwd": "${fileDirname}",
       "redirectOutput": true

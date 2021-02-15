@@ -6,7 +6,6 @@
   "files.trimTrailingWhitespace": true,
   // ファイル保存時に末尾に新しい行を挿入しない。
   "files.insertFinalNewline": false,
-
   // Tab をスペース 4 つに変換
   "[python]": {
     // python 言語に対してエディタ設定を上書き
@@ -28,21 +27,35 @@
     // 1つの Tab に対するスペースの数
     "editor.tabSize": 4
   },
-
+  // Contrils the OS.
   // 拡張機能のロード時にターミナルで Python 環境をアクティブにする。
   "python.terminal.activateEnvInCurrentTerminal": true,
   // 仮想環境のパス。作成した Anaconda 仮想環境を指定する。
-  "python.venvPath": "${env:CONDA_ENVS_PATH}\\analysis",
+  //"python.venvPath": "${env:CONDA_ENVS_PATH}\\analysis",
+  // @sync os=windows
+  "python.venvFolders": [],
+  // @sync os=linux
+  // "python.venvPath": "/opt/conda/envs/analysis",
+  // @sync os=linux
   "python.autoComplete.extraPaths": [
-    "${env:CONDA_ENVS_PATH}\\analysis\\Lib\\site-packages"
+    "/opt/conda/envs/analysis/Lib/site-packages"
   ],
   // Python コマンドのパス。作成した Anaconda仮想環境下の python.exe を指定する。
-  "python.pythonPath": "/opt/conda/bin/python",
+  // @sync os=windows
+  "python.pythonPath": "C:\\tools\\miniconda3\\python.exe",
+  // @sync os=linux
+  // "python.pythonPath": "/opt/conda/bin/python",
   // conda コマンドのパス。[Anacondaインストール先] / condabin / conda.bat を指定する。
-  "python.condaPath": "C:\\tools\\miniconda3\\condabin\\conda.bat",
+  // @sync os=windows
+  "python.condaPath": "C:\\tools\\miniconda3\\etc\\profile.d",
+  // @sync os=linux
+  // "python.condaPath": "/opt/conda/etc/profile.d",
+  // フォーマッターの設定。black を指定する。
+  "python.formatting.provider": "black",
+  "python.formatting.blackPath": "black",
   // フォーマッターの設定。autopep8 を指定する。
-  "python.formatting.provider": "autopep8",
-  "python.formatting.autopep8Path": "C:\\tools\\miniconda3\\envs\\analysis\\Scripts\\autopep8",
+  //"python.formatting.provider": "autopep8",
+  //"python.formatting.autopep8Path": "C:\\tools\\miniconda3\\envs\\analysis\\Scripts\\autopep8",
   // Lint の設定。
   // ファイル保存時に lint を実行する。
   "python.linting.lintOnSave": true,
@@ -50,8 +63,9 @@
   "python.linting.flake8Enabled": false,
   "python.linting.flake8Path": "C:\\tools\\miniconda3\\envs\\analysis\\Scripts\\flake8",
   "python.linting.mypyEnabled": true,
-  "python.linting.mypyPath": "C:\\tools\\miniconda3\\envs\\analysis\\Scripts\\mypy",
+  "python.linting.mypyPath": "/opt/conda/pkgs/mypy-0.800-pyhd3eb1b0_0/",
   "python.linting.pycodestyleEnabled": false,
-  "python.linting.pylintEnabled": false
+  "python.linting.pylintEnabled": false,
+  "python.linting.enabled": true
   // Testの設定。
 }
