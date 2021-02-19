@@ -76,7 +76,7 @@ class LeNet(nn.Module):
     def train(self):
         epoch = 50
 
-        
+
 
 if __name__ == "__main__":
 
