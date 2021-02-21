@@ -16,54 +16,66 @@ from PIL import Image, ImageFile
 from config.config import cfg
 
 
+def read_rgb_nppath: str, size: tuple = (64, 64), flatten=False) -> np.array:
+    """画像を読み込み ndarray に変換する関数
+
+    Param
+    -----
+    path (str):
+        読み込む画像のパス
+
+    Return
+    ------
+    img (ndarray):
+        uint 8 の numpy 配列
+    """
+
+    # PIL は極端に大きな画像など高速にロードできない画像は見過ごす仕様になっている。
+    # `LOAD_TRUNCATED_IMAGES` を `True` に設定することで、きちんとロードされるようになる。
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+    img = Image.open(path).convert("RGB")
+    img = img.resize(size, Image.LANCZOS)
+    img = np.array(img, np.uint8)
+    if flatten:
+        r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
+        # img = img.reshape([1, -1, 3])
+        img = np.column_stack([r.flatten(), g.flatten(), b.flatten()])
+    return img
+
+
+def read_rgb(path: str) -> torch.Tensor:
+    """画像を読み込み torch の tensor に変換する関数
+
+    Param
+    -----
+    path (str):
+        読み込む画像のパス
+
+    Return
+    ------
+    torch_tensor (tensor):
+        float 32 のテンソル
+    """
+
+    img = read_rgb_np(path)
+    return torch.from_numpy(img).float().permute(2, 0, 1)
+
+
 class DataUtils(object):
-    def __init__(self):
+    def __init__(self, load_dir_path: str):
+        search_path = load_dir_path + os.sep + "**" + os.sep + ".csv"
+        csv_path = glob.glob(search_path)
+        for f_path in csv_path:
+            if "train" in f_path:
+                self.train_csv_path = f_path
+            elif "validation" in f_path:
+                self.validation_csv_path = f_path
+            elif "test" in f_path:
+                self.test_csv_path = f_path
         self.extensions = [".png", ".jpg", ".bmp"]
 
-    def read_rgb_np(self, path: str, size: tuple = (64, 64), flatten=False) -> np.array:
-        """画像を読み込み ndarray に変換する関数
 
-        Param
-        -----
-        path (str):
-            読み込む画像のパス
-
-        Return
-        ------
-        img (ndarray):
-            uint 8 の numpy 配列
-        """
-
-        # PIL は極端に大きな画像など高速にロードできない画像は見過ごす仕様になっている。
-        # `LOAD_TRUNCATED_IMAGES` を `True` に設定することで、きちんとロードされるようになる。
-        ImageFile.LOAD_TRUNCATED_IMAGES = True
-        img = Image.open(path).convert("RGB")
-        img = img.resize(size, Image.LANCZOS)
-        img = np.array(img, np.uint8)
-        if flatten:
-            r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
-            # img = img.reshape([1, -1, 3])
-            img = np.column_stack([r.flatten(), g.flatten(), b.flatten()])
-        return img
-
-    def read_rgb(self, path: str) -> torch.Tensor:
-        """画像を読み込み torch の tensor に変換する関数
-
-        Param
-        -----
-        path (str):
-            読み込む画像のパス
-
-        Return
-        ------
-        torch_tensor (tensor):
-            float 32 のテンソル
-        """
-
-        img = self.read_rgb_np(path)
-        return torch.from_numpy(img).float().permute(2, 0, 1)
-
-    def read_all_image(self, path: str, flatten: bool = False):
+    def read_all_image(self, csv_path = self.train_csv_path, minibatch: int=30, flatten: bool = False):
         """フォルダ内の画像、すべてを読み込むための関数
 
         Param
@@ -82,30 +94,26 @@ class DataUtils(object):
             img_path_list.extend(glob.glob(path+os.sep+'**'+os.sep+'*'+ext, recursive=True))  # リストを結合する
         print(img_path_list)
         """
+        ext = ".jpg"
         img_data = {}
         img = {}
         # ImageData = pd.DataFrame()
-        i = 1
-        for ext in self.extensions:
-            img_dir = path + os.sep + "**" + os.sep + "*" + ext
-            for p in glob.iglob(img_dir, recursive=True):
-                name = os.path.basename(os.path.dirname(p.rstrip(os.sep)))
-                if i == 1:
-                    name_memo = name
 
-                if name != name_memo:
-                    # 初期化処理
-                    img = {}
-                    i = 1
-                    name_memo = name
+        df = pd.DataFrame(csv_path, usecols=["ImageID"], dtype=str)
+        size = df.size[0]
 
-                img[i] = self.read_rgb_np(p, flatten=flatten)
-                img_data[name] = img
-                i += 1
+        # データをサンプリングするための乱数を発生させる
+        np.random.seed(100) # シードを度定する
+        id = np.random.randint(1, size, size=minibatch)
 
-            DataFrame = pd.DataFrame(img_data)
+        for i in id
+            labels = df.at[df.index[i], 'ImageID']
+            # ロードするファイルのパスを指定
+            f_path = load_dir_path + os.sep + labels + ext
+            img[labels] = read_rgb_np(f_path, flatten=flatten)
 
-        return DataFrame
+        return pd.DataFrame(img)
+
 
     def data_plot(self, df: pd.DataFrame):
         """
@@ -130,10 +138,6 @@ class DataUtils(object):
 
 if __name__ == "__main__":
     from config.config import cfg
-
-    # angle_dir_path = cfg.ANGLE_ORIGINAL_DIR
-    # dir_name = 'training'
-    # base_dir = os.path.join(angle_dir_path, dir_name)
 
     base_dir = cfg.DEBUG_ONEIMAGE_DIR
     img_path = "0" + os.sep + "image1.jpg"
