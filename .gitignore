@@ -1,14 +1,3 @@
 *.mat
 *.pyc
-AI/GoogleOpenImage/Data/train-images-boxable-with-rotation.csv
-AI/Analysis/data/OpenImage/box/train/oidv6-train-annotations-bbox.csv
-AI/Analysis/data/OpenImage/box/validation/validation-annotations-bbox.csv
-AI/Analysis/data/OpenImage/image_id/test/test-images-with-rotation.csv
-AI/Analysis/data/OpenImage/image_id/train/train-images-boxable-with-rotation.csv
-AI/Analysis/data/OpenImage/image_id/validation/validation-images-with-rotation.csv
-AI/Analysis/data/OpenImage/image_label/test/test-annotations-human-imagelabels-boxable.csv
-AI/Analysis/data/OpenImage/image_label/train/train-annotations-human-imagelabels-boxable.csv
-AI/Analysis/data/OpenImage/image_label/validation/validation-annotations-human-imagelabels-boxable.csv
-AI/Analysis/data/OpenImage/meta_data/attributes/oidv6-attributes-description.csv
-AI/Analysis/data/OpenImage/meta_data/class_descriptions/class-descriptions-boxable.csv
-AI/Analysis/data/OpenImage/box/test/test-annotations-bbox.csv
+*.csv
