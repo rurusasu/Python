@@ -70,6 +70,12 @@ cfg.SEGMENTATION_TEST_DIR = os.path.join(cfg.SEGMENTATION_DIR, "test")
 """
 cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 
+"""
+Dobot
+"""
+cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
+cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
+
 
 def add_path():
     """システムのファイルパスを設定するための関数"""

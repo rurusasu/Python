@@ -1,55 +1,58 @@
 # cording: utf-8
 
 import sys, os
+
 sys.path.append(os.getcwd())
 
 import PySimpleGUI as sg
 import numpy as np
 
-import DobotDllType as dType
-from common.DobotFunction import initDobot, Operation, OneAction
+from gui.DobotDLL import DobotDllType as dType
+from gui.DobotFunction.DobotFunction import initDobot, Operation, OneAction
 from ctypes import cdll
 
 import time
-#from timeout_decorator import timeout, TimeoutError
+
+# from timeout_decorator import timeout, TimeoutError
 
 import cv2
 from PIL import Image
 
+
 def __filePath__(file_name):
-    path = './data/' + str(file_name)
+    path = "./data/" + str(file_name)
     return path
+
 
 # ----- The callback function ----- #
 class Dobot_APP:
     def __init__(self):
-        self.api = cdll.LoadLibrary('DobotDll.dll')
+        self.api = cdll.LoadLibrary("DobotDll.dll")
         self.CON_STR = {
-            dType.DobotConnect.DobotConnect_NoError:  'DobotConnect_NoError',
-            dType.DobotConnect.DobotConnect_NotFound: 'DobotConnect_NotFound',
-            dType.DobotConnect.DobotConnect_Occupied: 'DobotConnect_Occupied'
+            dType.DobotConnect.DobotConnect_NoError: "DobotConnect_NoError",
+            dType.DobotConnect.DobotConnect_NotFound: "DobotConnect_NotFound",
+            dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
         }
         self.CurrentPose = None
         self.queue_index = 0
-        self.suctioncupON = False # True:ON, False:OFF
-        self.gripper = True       # True:Close, False:Open
+        self.suctioncupON = False  # True:ON, False:OFF
+        self.gripper = True  # True:Close, False:Open
         self.capture = None
         self.IMAGE_org = None  # 撮影した生画像
         self.IMAGE_bin = None  # 二値化後の画像
-        self.COG_Coordinate = None # 画像の重心位置(COG: CenterOfGravity) : tuple
-        self.Alignment_1 = None # 位置合わせ（始点）: tuple
-        self.Alignment_2 = None # 位置合わせ（終点）: tuple
-        self.Record = None      # 退避位置 : tuple
-        #--- エラーフラグ ---#
-        self.connection = 1 # Connect:1, DisConnect:0
-        self.cammera_connection = 0 # Connect:1, DisConnect:0
+        self.COG_Coordinate = None  # 画像の重心位置(COG: CenterOfGravity) : tuple
+        self.Alignment_1 = None  # 位置合わせ（始点）: tuple
+        self.Alignment_2 = None  # 位置合わせ（終点）: tuple
+        self.Record = None  # 退避位置 : tuple
+        # --- エラーフラグ ---#
+        self.connection = 1  # Connect:1, DisConnect:0
+        self.cammera_connection = 0  # Connect:1, DisConnect:0
         self.DOBOT_err = 1  # Error occurred:1, No error:0
         self.Input_err = 0  # Error occurred:1, No error:0
-        self.WebCam_err = 1 # No error:0
-        #--- GUIの初期化 ---#
+        self.WebCam_err = 1  # No error:0
+        # --- GUIの初期化 ---#
         self.layout = self.Layout()
         self.Window = self.main()
-
 
     def Connect_click(self):
         """
@@ -69,7 +72,7 @@ class Dobot_APP:
         # Dobot Connect
         # ConectDobot(const char* pointName, int baudrate)
         state = dType.ConnectDobot(self.api, "", 115200)[0]
-        if (state != dType.DobotConnect.DobotConnect_NoError):
+        if state != dType.DobotConnect.DobotConnect_NoError:
             return 1  # Dobotに接続できなかった場合
         else:
             dType.SetCmdTimeout(self.api, 3000)
@@ -110,20 +113,22 @@ class Dobot_APP:
             0 : 応答なし
             1 : 応答あり
         """
-        response = 0 # Dobotからの応答 1:あり, 0:なし
+        response = 0  # Dobotからの応答 1:あり, 0:なし
         if self.connection == 0 or self.DOBOT_err == 1:
             self.DOBOT_err = 1
             return response
 
         timeout(5)
         try:
-            dType.SetPTPCmd(self.api,
-                            dType.PTPMode.PTPMOVJANGLEMode,
-                            pose[0],
-                            pose[1],
-                            pose[2],
-                            pose[3],
-                            self.queue_index)
+            dType.SetPTPCmd(
+                self.api,
+                dType.PTPMode.PTPMOVJANGLEMode,
+                pose[0],
+                pose[1],
+                pose[2],
+                pose[3],
+                self.queue_index,
+            )
         except TimeoutError:
             self.DOBOT_err = 1
             return response
@@ -158,7 +163,7 @@ class Dobot_APP:
             5. プロパティの選択エラー
             6. 変換画像が存在しない
         """
-        if self.capture is None: # カメラが接続されていない場合
+        if self.capture is None:  # カメラが接続されていない場合
             return 1, None, None
 
         # -----------------
@@ -167,18 +172,18 @@ class Dobot_APP:
         result, img = Snapshot(self.capture)
         if (result != 0) or (result is None):
             return 3, None, None
-        sg.popup('スナップショットを撮影しました。', title='スナップショット')
-        IMAGE_org = img.copy() # 撮影した画像を保存する
-        cv2.imshow('Snapshot', img)  # スナップショットを表示する
+        sg.popup("スナップショットを撮影しました。", title="スナップショット")
+        IMAGE_org = img.copy()  # 撮影した画像を保存する
+        cv2.imshow("Snapshot", img)  # スナップショットを表示する
 
         # ------------------
         # 画像の解像度を表示
         # ------------------
         [y, x, z] = img.shape
         # 画面上にスナップショットした画像の縦横の長さおよびチャンネル数を表示する。
-        self.Window['-IMAGE_width-'].update(str(x))
-        self.Window['-IMAGE_height-'].update(str(y))
-        self.Window['-IMAGE_channel-'].update(str(z))
+        self.Window["-IMAGE_width-"].update(str(x))
+        self.Window["-IMAGE_height-"].update(str(y))
+        self.Window["-IMAGE_channel-"].update(str(z))
 
         # ---------------------------
         # 撮影した画像をRGBに変換する。
@@ -188,62 +193,74 @@ class Dobot_APP:
             return 4, None, None
 
         # 二値化の変換タイプを選択する。
-        Type = ThresholdTypeOption(values['-Threshold_type-'])
+        Type = ThresholdTypeOption(values["-Threshold_type-"])
         if Type is None:
             return 5, None, None
         # -------------------- #
         #   GlobalThreshold    #
         # -------------------- #
-        if values['-GlobalThreshold-']:
+        if values["-GlobalThreshold-"]:
             # ------------------ #
             #    大津の二値化     #
             # ------------------ #
-            if values['-OTSU-']:
-                result, IMAGE_bin = OtsuThreshold(img_rgb, values['-Gaussian-'])
+            if values["-OTSU-"]:
+                result, IMAGE_bin = OtsuThreshold(img_rgb, values["-Gaussian-"])
             # 選択されていない　⇒　大局的閾値処理を行う場合
             else:
-                threshold = float(values['-threshold-'])
-                result, IMAGE_bin = GlobalThreshold(img_rgb, values['-Gaussian-'], threshold, Type=Type)
+                threshold = float(values["-threshold-"])
+                result, IMAGE_bin = GlobalThreshold(
+                    img_rgb, values["-Gaussian-"], threshold, Type=Type
+                )
             if result != 0:
                 return 4, None, None
 
         # -------------------- #
         #  AdaptiveThreshold   #
         # -------------------- #
-        elif values['-AdaptiveThreshold-']:
+        elif values["-AdaptiveThreshold-"]:
             # 適応的処理のタイプを選択する。
-            method = AdaptiveThresholdTypeOption(values['-AdaptiveThreshold_type-'])
+            method = AdaptiveThresholdTypeOption(values["-AdaptiveThreshold_type-"])
             if method is None:
                 return 5, None, None
 
             # 処理方法が適切か判定
-            if (values['-Threshold_type-'] == 'TRUNC') or \
-               (values['-Threshold_type-'] == 'TOZERO') or \
-               (values['-Threshold_type-'] == 'TOZERO_INV'):
+            if (
+                (values["-Threshold_type-"] == "TRUNC")
+                or (values["-Threshold_type-"] == "TOZERO")
+                or (values["-Threshold_type-"] == "TOZERO_INV")
+            ):
                 return 5, None, None
-
             # BlockSizeが奇数か判定
-            block_size = int(values['-AdaptiveThreshold_BlockSize-'])
+            block_size = int(values["-AdaptiveThreshold_BlockSize-"])
             if block_size % 2 == 0:
                 return 5, None, None
 
-            const = int(values['-AdaptiveThreshold_constant-'])
-            IMAGE_bin = AdaptiveThreshold(img, values['-Gaussian-'], method, Type, block_size=block_size, C=const)
+            const = int(values["-AdaptiveThreshold_constant-"])
+            IMAGE_bin = AdaptiveThreshold(
+                img, values["-Gaussian-"], method, Type, block_size=block_size, C=const
+            )
 
         # -------------------- #
         #     TwoThreshold     #
         # -------------------- #
-        elif values['-Twohreshold-']:
-            LowerThresh = int(values['-LowerThreshold-']) # 下側の閾値
-            UpperThresh = int(values['-UpperThreshold-']) # 上側の閾値
+        elif values["-Twohreshold-"]:
+            LowerThresh = int(values["-LowerThreshold-"])  # 下側の閾値
+            UpperThresh = int(values["-UpperThreshold-"])  # 上側の閾値
             # 抽出したい色を選択
-            if values['-color_R-']: color=0
-            elif values['-color_G-']: color=1
-            elif values['-color_B-']: color=2
-            elif values['-color_W-']: color=3
-            elif values['-color_Bk-']: color=4
+            if values["-color_R-"]:
+                color = 0
+            elif values["-color_G-"]:
+                color = 1
+            elif values["-color_B-"]:
+                color = 2
+            elif values["-color_W-"]:
+                color = 3
+            elif values["-color_Bk-"]:
+                color = 4
 
-            result, IMAGE_bin = TwoThreshold(img, values['-Gaussian-'], LowerThresh, UpperThresh, color, Type)
+            result, IMAGE_bin = TwoThreshold(
+                img, values["-Gaussian-"], LowerThresh, UpperThresh, color, Type
+            )
             # エラー判定
             if result == 5:
                 return 5, None, None
@@ -258,21 +275,31 @@ class Dobot_APP:
             return WebCam_err, None, None
 
         # 輪郭の階層情報の保持方法を選択
-        kernalShape = KernelShapeOption(values['-KernelShape-'])
+        kernalShape = KernelShapeOption(values["-KernelShape-"])
         # 輪郭の階層情報の保持方法を選択
-        Mode = ContourRetrievalModeOption(values['-ContourRetrievalMode-'])
+        Mode = ContourRetrievalModeOption(values["-ContourRetrievalMode-"])
         # 輪郭の近似方法を選択
-        Method = ApproximateModeOption(values['-ApproximateMode-'])
+        Method = ApproximateModeOption(values["-ApproximateMode-"])
 
-        if (kernalShape is None) or (Mode is None) or (Method is None): # いずれかのパラメータがNoneのとき
+        if (
+            (kernalShape is None) or (Mode is None) or (Method is None)
+        ):  # いずれかのパラメータがNoneのとき
             WebCam_err = 5
             return WebCam_err, None, None
 
         img = IMAGE_bin.copy()
-        contours, img = ExtractContours(img, kernelShape=kernalShape, RetrievalMode=Mode, ApproximateMode=Method, min_area=100)
+        contours, img = ExtractContours(
+            img,
+            kernelShape=kernalShape,
+            RetrievalMode=Mode,
+            ApproximateMode=Method,
+            min_area=100,
+        )
 
-        if values['-CenterOfGravity-'] == '画像をもとに計算':cal_Method = 0
-        else:cal_Method = 1
+        if values["-CenterOfGravity-"] == "画像をもとに計算":
+            cal_Method = 0
+        else:
+            cal_Method = 1
 
         G = CenterOfGravity(img, contours, cal_Method)
         if G is None:
@@ -280,11 +307,11 @@ class Dobot_APP:
             return WebCam_err, None, None
 
         cv2.circle(img, G, 4, 100, 2, 4)  # 重心位置を円で表示
-        cv2.imshow('Convert', img)  # 画像として出力
+        cv2.imshow("Convert", img)  # 画像として出力
 
         self.COG_Coordinate = G  # 重心座標を保存
-        Window['-CenterOfGravity_x-'].update(str(G[0]))
-        Window['-CenterOfGravity_y-'].update(str(G[1]))
+        Window["-CenterOfGravity_x-"].update(str(G[0]))
+        Window["-CenterOfGravity_y-"].update(str(G[1]))
         return WebCam_err, G, [IMAGE_org, IMAGE_bin]
 
     """
@@ -292,171 +319,394 @@ class Dobot_APP:
     GUI Layout
     ----------------------
     """
+
     def Layout(self):
         # ----- Menu Definition ----- #
-        menu_def = [['File', ['Open', 'Save', 'Exit', 'Properties']],
-                    ['Edit', []],
-                    ['Help'],]
+        menu_def = [
+            ["File", ["Open", "Save", "Exit", "Properties"]],
+            ["Edit", []],
+            ["Help"],
+        ]
 
         # ----- Column Definition ----- #
         Connect = [
-            [sg.Button('Conect to DOBOT', key='-Connect-'),
-             sg.Button('Disconnect to DOBOT', key='-Disconnect-'),],
+            [
+                sg.Button("Conect to DOBOT", key="-Connect-"),
+                sg.Button("Disconnect to DOBOT", key="-Disconnect-"),
+            ],
         ]
 
         Gripper = [
-            [sg.Button('SuctionCup ON/OFF', key='-SuctionCup-')],
-            [sg.Button('Gripper Open/Close', key='-Gripper-')],
+            [sg.Button("SuctionCup ON/OFF", key="-SuctionCup-")],
+            [sg.Button("Gripper Open/Close", key="-Gripper-")],
         ]
 
         CurrentPose = [
-            [sg.Button('Get Pose', size=(7, 1), key='-GetPose-')],
-            [sg.Text('J1', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-JointPose1-'),
-             sg.Text('X', size=(1, 1)),  sg.InputText('', size=(5, 1), disabled=True, key='-CoordinatePose_X-')],
-            [sg.Text('J2', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-JointPose2-'),
-             sg.Text('Y', size=(1, 1)),  sg.InputText('', size=(5, 1), disabled=True, key='-CoordinatePose_Y-')],
-            [sg.Text('J3', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-JointPose3-'),
-             sg.Text('Z', size=(1, 1)),  sg.InputText('', size=(5, 1), disabled=True, key='-CoordinatePose_Z-')],
-            [sg.Text('J4', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-JointPose4-'),
-             sg.Text('R', size=(1, 1)),  sg.InputText('', size=(5, 1), disabled=True, key='-CoordinatePose_R-')],
+            [sg.Button("Get Pose", size=(7, 1), key="-GetPose-")],
+            [
+                sg.Text("J1", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-JointPose1-"),
+                sg.Text("X", size=(1, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-CoordinatePose_X-"),
+            ],
+            [
+                sg.Text("J2", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-JointPose2-"),
+                sg.Text("Y", size=(1, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-CoordinatePose_Y-"),
+            ],
+            [
+                sg.Text("J3", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-JointPose3-"),
+                sg.Text("Z", size=(1, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-CoordinatePose_Z-"),
+            ],
+            [
+                sg.Text("J4", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-JointPose4-"),
+                sg.Text("R", size=(1, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-CoordinatePose_R-"),
+            ],
         ]
 
         SetPose = [
-            [sg.Button('Set pose', size=(7, 1), key='-SetJointPose-'),
-             sg.Button('Set pose', size=(7, 1), key='-SetCoordinatePose-'), ],
-            [sg.Text('J1', size=(2, 1)), sg.InputText('', size=(5, 1), key='-JointPoseInput_1-'),
-             sg.Text('X', size=(1, 1)), sg.InputText('', size=(5, 1), key='-CoordinatePoseInput_X-')],
-            [sg.Text('J2', size=(2, 1)), sg.InputText('', size=(5, 1), key='-JointPoseInput_2-'),
-             sg.Text('Y', size=(1, 1)), sg.InputText('', size=(5, 1), key='-CoordinatePoseInput_Y-')],
-            [sg.Text('J3', size=(2, 1)), sg.InputText('', size=(5, 1), key='-JointPoseInput_3-'),
-             sg.Text('Z', size=(1, 1)), sg.InputText('', size=(5, 1), key='-CoordinatePoseInput_Z-')],
-            [sg.Text('J4', size=(2, 1)), sg.InputText('', size=(5, 1), key='-JointPoseInput_4-'),
-             sg.Text('R', size=(1, 1)), sg.InputText('', size=(5, 1), key='-CoordinatePoseInput_R-')],
+            [
+                sg.Button("Set pose", size=(7, 1), key="-SetJointPose-"),
+                sg.Button("Set pose", size=(7, 1), key="-SetCoordinatePose-"),
+            ],
+            [
+                sg.Text("J1", size=(2, 1)),
+                sg.InputText("", size=(5, 1), key="-JointPoseInput_1-"),
+                sg.Text("X", size=(1, 1)),
+                sg.InputText("", size=(5, 1), key="-CoordinatePoseInput_X-"),
+            ],
+            [
+                sg.Text("J2", size=(2, 1)),
+                sg.InputText("", size=(5, 1), key="-JointPoseInput_2-"),
+                sg.Text("Y", size=(1, 1)),
+                sg.InputText("", size=(5, 1), key="-CoordinatePoseInput_Y-"),
+            ],
+            [
+                sg.Text("J3", size=(2, 1)),
+                sg.InputText("", size=(5, 1), key="-JointPoseInput_3-"),
+                sg.Text("Z", size=(1, 1)),
+                sg.InputText("", size=(5, 1), key="-CoordinatePoseInput_Z-"),
+            ],
+            [
+                sg.Text("J4", size=(2, 1)),
+                sg.InputText("", size=(5, 1), key="-JointPoseInput_4-"),
+                sg.Text("R", size=(1, 1)),
+                sg.InputText("", size=(5, 1), key="-CoordinatePoseInput_R-"),
+            ],
         ]
 
         # 画像上の位置とDobotの座標系との位置合わせを行うGUI
         Alignment = [
-            [sg.Button('MoveToThePoint', size=(16, 1), key='-MoveToThePoint-'),],
-            [sg.Button('Set', size=(8, 1), key='-Record-'),
-             sg.Button('Set', size=(8, 1), key='-Set_x1-'),
-             sg.Button('Set', size=(8, 1), key='-Set_x2-'),],
-            [sg.Text('X0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-x0-'),
-             sg.Text('X1', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-x1-'),
-             sg.Text('X2', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-x2-'),],
-            [sg.Text('Y0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-y0-'),
-             sg.Text('Y1', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-y1-'),
-             sg.Text('Y2', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-y2-'),],
-            [sg.Text('Z0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-z0-'),],
-            [sg.Text('R0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-r0-'),]
+            [sg.Button("MoveToThePoint", size=(16, 1), key="-MoveToThePoint-"),],
+            [
+                sg.Button("Set", size=(8, 1), key="-Record-"),
+                sg.Button("Set", size=(8, 1), key="-Set_x1-"),
+                sg.Button("Set", size=(8, 1), key="-Set_x2-"),
+            ],
+            [
+                sg.Text("X0", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-x0-"),
+                sg.Text("X1", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-x1-"),
+                sg.Text("X2", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-x2-"),
+            ],
+            [
+                sg.Text("Y0", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-y0-"),
+                sg.Text("Y1", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-y1-"),
+                sg.Text("Y2", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-y2-"),
+            ],
+            [
+                sg.Text("Z0", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-z0-"),
+            ],
+            [
+                sg.Text("R0", size=(2, 1)),
+                sg.InputText("", size=(5, 1), disabled=True, key="-r0-"),
+            ],
         ]
 
         WebCamConnect = [
-            [sg.Button('WEB CAM on/off', size=(15, 1), key='-SetWebCam-'),
-             sg.Button('Preview Opened', size=(11, 1), key='-Preview-'),
-             sg.Button('Snapshot', size=(7, 1), key='-Snapshot-'),],
-            [sg.InputCombo(('TOSHIBA_Web_Camera-HD',
-                            'Logicool_HD_Webcam_C270',), size=(15, 1), key='-WebCam_Name-', readonly=True),
-             sg.InputCombo(('640x480',
-                            '352x288',
-                            '320x240',
-                            '176x144',
-                            '160x120',
-                            '1280x720',
-                            '1280x800',), size=(11, 1), key='-WebCam_FrameSize-', readonly=True)],
-            [sg.Text('width', size=(4, 1)),
-             sg.InputText('0', size=(5, 1), disabled=True, justification='right', key='-IMAGE_width-'),
-             sg.Text('height', size=(4, 1)),
-             sg.InputText('0', size=(5, 1), disabled=True, justification='right', key='-IMAGE_height-'),
-             sg.Text('channel', size=(6, 1)),
-             sg.InputText('0', size=(5, 1), disabled=True, justification='right', key='-IMAGE_channel-'),],
+            [
+                sg.Button("WEB CAM on/off", size=(15, 1), key="-SetWebCam-"),
+                sg.Button("Preview Opened", size=(11, 1), key="-Preview-"),
+                sg.Button("Snapshot", size=(7, 1), key="-Snapshot-"),
+            ],
+            [
+                sg.InputCombo(
+                    ("TOSHIBA_Web_Camera-HD", "Logicool_HD_Webcam_C270",),
+                    size=(15, 1),
+                    key="-WebCam_Name-",
+                    readonly=True,
+                ),
+                sg.InputCombo(
+                    (
+                        "640x480",
+                        "352x288",
+                        "320x240",
+                        "176x144",
+                        "160x120",
+                        "1280x720",
+                        "1280x800",
+                    ),
+                    size=(11, 1),
+                    key="-WebCam_FrameSize-",
+                    readonly=True,
+                ),
+            ],
+            [
+                sg.Text("width", size=(4, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_width-",
+                ),
+                sg.Text("height", size=(4, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_height-",
+                ),
+                sg.Text("channel", size=(6, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_channel-",
+                ),
+            ],
         ]
 
         Contours = [
-            [sg.Button('Contours', size=(7, 1), key='-Contours-'),
-             sg.InputCombo(('画像をもとに計算',
-                            '輪郭をもとに計算', ), size=(16, 1), key='-CenterOfGravity-')],
-            [sg.Text('Gx', size=(2, 1)),
-             sg.InputText('0', size=(5, 1), disabled=True, justification='right', key='-CenterOfGravity_x-'),
-             sg.Text('Gy', size=(2, 1)),
-             sg.InputText('0', size=(5, 1), disabled=True, justification='right', key='-CenterOfGravity_y-'),],
+            [
+                sg.Button("Contours", size=(7, 1), key="-Contours-"),
+                sg.InputCombo(
+                    ("画像をもとに計算", "輪郭をもとに計算",), size=(16, 1), key="-CenterOfGravity-"
+                ),
+            ],
+            [
+                sg.Text("Gx", size=(2, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-CenterOfGravity_x-",
+                ),
+                sg.Text("Gy", size=(2, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-CenterOfGravity_y-",
+                ),
+            ],
         ]
 
         ColorOfObject = [
-            [sg.Radio('R', group_id='color', background_color='grey59', text_color='red', key='-color_R-'),
-             sg.Radio('G', group_id='color', background_color='grey59', text_color='green', key='-color_G-'),
-             sg.Radio('B', group_id='color', background_color='grey59', text_color='blue', key='-color_B-'),
-             sg.Radio('W', group_id='color', background_color='grey59', text_color='snow', key='-color_W-'),
-             sg.Radio('Bk', group_id='color', default=True, background_color='grey59', text_color='grey1', key='-color_Bk-')],
+            [
+                sg.Radio(
+                    "R",
+                    group_id="color",
+                    background_color="grey59",
+                    text_color="red",
+                    key="-color_R-",
+                ),
+                sg.Radio(
+                    "G",
+                    group_id="color",
+                    background_color="grey59",
+                    text_color="green",
+                    key="-color_G-",
+                ),
+                sg.Radio(
+                    "B",
+                    group_id="color",
+                    background_color="grey59",
+                    text_color="blue",
+                    key="-color_B-",
+                ),
+                sg.Radio(
+                    "W",
+                    group_id="color",
+                    background_color="grey59",
+                    text_color="snow",
+                    key="-color_W-",
+                ),
+                sg.Radio(
+                    "Bk",
+                    group_id="color",
+                    default=True,
+                    background_color="grey59",
+                    text_color="grey1",
+                    key="-color_Bk-",
+                ),
+            ],
         ]
 
         Bin_CommonSettings = [
-            [sg.Text('閾値の処理方法'),
-             sg.InputCombo(('BINARY',
-                            'BINARY_INV',
-                            'TRUNC',
-                            'TOZERO',
-                            'TOZERO_INV', ), size=(12, 1), key='-Threshold_type-', readonly=True)],
-            [sg.Checkbox('ヒストグラム平坦化', key='-EqualizeHist-')],
-            [sg.Checkbox('ガウシアンフィルタ', key='-Gaussian-'), ],
+            [
+                sg.Text("閾値の処理方法"),
+                sg.InputCombo(
+                    ("BINARY", "BINARY_INV", "TRUNC", "TOZERO", "TOZERO_INV",),
+                    size=(12, 1),
+                    key="-Threshold_type-",
+                    readonly=True,
+                ),
+            ],
+            [sg.Checkbox("ヒストグラム平坦化", key="-EqualizeHist-")],
+            [sg.Checkbox("ガウシアンフィルタ", key="-Gaussian-"),],
         ]
 
         # 画像から物体の輪郭を切り出す関数の設定部分_GUI
         ContourExtractionSettings = [
             # 輪郭のモードを指定する
-            [sg.Text('輪郭', size=(10, 1)),
-             sg.InputCombo(('親子関係を無視する',
-                            '最外の輪郭を検出する',
-                            '2つの階層に分類する',
-                            '全階層情報を保持する',), size=(20, 1), key='-ContourRetrievalMode-', readonly=True),],
+            [
+                sg.Text("輪郭", size=(10, 1)),
+                sg.InputCombo(
+                    ("親子関係を無視する", "最外の輪郭を検出する", "2つの階層に分類する", "全階層情報を保持する",),
+                    size=(20, 1),
+                    key="-ContourRetrievalMode-",
+                    readonly=True,
+                ),
+            ],
             # 近似方法を指定する
-            [sg.Text('近似方法', size=(10, 1)),
-             sg.InputCombo(('中間点を保持する',
-                            '中間点を保持しない'), size=(18, 1), key='-ApproximateMode-', readonly=True),],
+            [
+                sg.Text("近似方法", size=(10, 1)),
+                sg.InputCombo(
+                    ("中間点を保持する", "中間点を保持しない"),
+                    size=(18, 1),
+                    key="-ApproximateMode-",
+                    readonly=True,
+                ),
+            ],
             # カーネルの形を指定する
-            [sg.Text('カーネルの形', size=(10, 1)),
-             sg.InputCombo(('矩形',
-                            '楕円形',
-                            '十字型'), size=(6, 1), key='-KernelShape-', readonly=True),],
+            [
+                sg.Text("カーネルの形", size=(10, 1)),
+                sg.InputCombo(
+                    ("矩形", "楕円形", "十字型"),
+                    size=(6, 1),
+                    key="-KernelShape-",
+                    readonly=True,
+                ),
+            ],
         ]
 
         Global_Threshold = [
-            [sg.Radio('Global Threshold', group_id='threshold', key='-GlobalThreshold-'),],
-            [sg.Text('Threshold', size=(7, 1)),
-             sg.InputText('127', size=(4, 1), justification='right', key='-threshold-')],
-            [sg.Checkbox('大津の二値化', key='-OTSU-')],
-            ]
+            [
+                sg.Radio(
+                    "Global Threshold", group_id="threshold", key="-GlobalThreshold-"
+                ),
+            ],
+            [
+                sg.Text("Threshold", size=(7, 1)),
+                sg.InputText(
+                    "127", size=(4, 1), justification="right", key="-threshold-"
+                ),
+            ],
+            [sg.Checkbox("大津の二値化", key="-OTSU-")],
+        ]
 
         Adaptive_Threshold = [
-            [sg.Radio('Adaptive Threshold', group_id='threshold', key='-AdaptiveThreshold-'),],
-            [sg.InputCombo(('MEAN_C',
-                            'GAUSSIAN_C'), size=(12, 1), key='-AdaptiveThreshold_type-', readonly=True)],
-            [sg.Text('Block Size', size=(8, 1)),
-             sg.InputText('11', size=(4, 1), justification='right', key='-AdaptiveThreshold_BlockSize-'),],
-            [sg.Text('Constant', size=(8, 1)),
-             sg.InputText('2', size=(4, 1), justification='right', key='-AdaptiveThreshold_constant-')],
+            [
+                sg.Radio(
+                    "Adaptive Threshold",
+                    group_id="threshold",
+                    key="-AdaptiveThreshold-",
+                ),
+            ],
+            [
+                sg.InputCombo(
+                    ("MEAN_C", "GAUSSIAN_C"),
+                    size=(12, 1),
+                    key="-AdaptiveThreshold_type-",
+                    readonly=True,
+                )
+            ],
+            [
+                sg.Text("Block Size", size=(8, 1)),
+                sg.InputText(
+                    "11",
+                    size=(4, 1),
+                    justification="right",
+                    key="-AdaptiveThreshold_BlockSize-",
+                ),
+            ],
+            [
+                sg.Text("Constant", size=(8, 1)),
+                sg.InputText(
+                    "2",
+                    size=(4, 1),
+                    justification="right",
+                    key="-AdaptiveThreshold_constant-",
+                ),
+            ],
         ]
 
         TwoThreshold = [
-            [sg.Radio('TwoThreshold', group_id='threshold', default=True, key='-Twohreshold-'),],
-            [sg.Text('Lower', size=(4, 1)),
-             sg.Slider(range=(0, 127), default_value=10, orientation='horizontal', size=(12, 12), key='-LowerThreshold-'),],
-            [sg.Text('Upper', size=(4, 1)),
-             sg.Slider(range=(128, 256), default_value=138, orientation='horizontal', size=(12, 12), key='-UpperThreshold-')]
+            [
+                sg.Radio(
+                    "TwoThreshold",
+                    group_id="threshold",
+                    default=True,
+                    key="-Twohreshold-",
+                ),
+            ],
+            [
+                sg.Text("Lower", size=(4, 1)),
+                sg.Slider(
+                    range=(0, 127),
+                    default_value=10,
+                    orientation="horizontal",
+                    size=(12, 12),
+                    key="-LowerThreshold-",
+                ),
+            ],
+            [
+                sg.Text("Upper", size=(4, 1)),
+                sg.Slider(
+                    range=(128, 256),
+                    default_value=138,
+                    orientation="horizontal",
+                    size=(12, 12),
+                    key="-UpperThreshold-",
+                ),
+            ],
         ]
 
         layout = [
             [sg.Col(Connect), sg.Col(Gripper)],
-            [sg.Col(CurrentPose, size=(165, 136)),
-             sg.Col(SetPose, size=(165, 136)),
-             sg.Frame('位置合わせの設定', Alignment)],
-            [sg.Col(WebCamConnect), sg.Frame('画像の重心計算', Contours), ],
-            #[sg.Col(RetrievalMode), sg.Col(ApproximateMode), sg.Col(KernelShape),],
-            [sg.Frame('輪郭抽出の設定', ContourExtractionSettings, size=(10, 10)),
-             sg.Frame('二値化の共通設定', Bin_CommonSettings, size=(10, 10)), ],
-            [sg.Frame('Color of object', ColorOfObject, background_color='grey59'),],
-            [sg.Col(Global_Threshold, size=(200, 115)),
-             sg.Col(Adaptive_Threshold, size=(200, 115)),
-             sg.Col(TwoThreshold, size=(200, 115)), ],
+            [
+                sg.Col(CurrentPose, size=(165, 136)),
+                sg.Col(SetPose, size=(165, 136)),
+                sg.Frame("位置合わせの設定", Alignment),
+            ],
+            [sg.Col(WebCamConnect), sg.Frame("画像の重心計算", Contours),],
+            # [sg.Col(RetrievalMode), sg.Col(ApproximateMode), sg.Col(KernelShape),],
+            [
+                sg.Frame("輪郭抽出の設定", ContourExtractionSettings, size=(10, 10)),
+                sg.Frame("二値化の共通設定", Bin_CommonSettings, size=(10, 10)),
+            ],
+            [sg.Frame("Color of object", ColorOfObject, background_color="grey59"),],
+            [
+                sg.Col(Global_Threshold, size=(200, 115)),
+                sg.Col(Adaptive_Threshold, size=(200, 115)),
+                sg.Col(TwoThreshold, size=(200, 115)),
+            ],
             [sg.Quit()],
         ]
 
@@ -467,12 +717,13 @@ class Dobot_APP:
     GUI EVENT
     ----------------------
     """
+
     def Event(self, event, values):
         # Dobotの接続を行う
-        if event == '-Connect-':
+        if event == "-Connect-":
             self.connection = self.Connect_click()
             if self.connection == 0:
-                sg.popup('Dobotに接続しています。', title='接続')
+                sg.popup("Dobotに接続しています。", title="接続")
                 self.DOBOT_err = 0
             else:
                 self.DOBOT_err = 1
@@ -480,19 +731,21 @@ class Dobot_APP:
             return
 
         # Dobotの切断を行う
-        elif event == '-Disconnect-':
+        elif event == "-Disconnect-":
             result = self.Disconnect_click()
             if result == 0:
-                sg.popup('Dobotに接続できません。', title='Dobotの接続')
+                sg.popup("Dobotに接続できません。", title="Dobotの接続")
                 return
             elif result == 1:
-                sg.popup('Dobotの接続を切断しました。', title='Dobotの接続')
+                sg.popup("Dobotの接続を切断しました。", title="Dobotの接続")
                 self.connection = 1
                 return
 
-        elif event == '-SuctionCup-':
-            if (self.DOBOT_err == 0) or (self.DOBOT_err == 3):  # Dobotが接続されている、もしくはサクションカップが動作していないとき
-                if self.suctioncupON: # サクションカップが動作している場合
+        elif event == "-SuctionCup-":
+            if (self.DOBOT_err == 0) or (
+                self.DOBOT_err == 3
+            ):  # Dobotが接続されている、もしくはサクションカップが動作していないとき
+                if self.suctioncupON:  # サクションカップが動作している場合
                     self.DOBOT_err = GripperON(self.api, self.queue_index, False, True)
                     if self.DOBOT_err != 0:
                         DobotError(self.DOBOT_err)
@@ -504,25 +757,29 @@ class Dobot_APP:
                         DobotError(self.DOBOT_err)
                     self.suctioncupON = True
                     return
-            else: # それ以外のエラーの場合
+            else:  # それ以外のエラーの場合
                 DobotError(self.DOBOT_err)
                 return
 
-        elif event == '-Gripper-':
+        elif event == "-Gripper-":
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
                 return
             else:
-                if self.suctioncupON: # サクションカップが動作している場合
+                if self.suctioncupON:  # サクションカップが動作している場合
                     if self.gripper:  # グリッパーが閉じている場合
-                        self.DOBOT_err = GripperON(self.api, self.queue_index, True, False) # グリッパーを開く
+                        self.DOBOT_err = GripperON(
+                            self.api, self.queue_index, True, False
+                        )  # グリッパーを開く
                         if self.DOBOT_err != 0:
                             DobotError(self.DOBOT_err)
                             return
                         self.gripper = False
 
-                    else: # グリッパーが開いている場合
-                        self.DOBOT_err = GripperON(self.api, self.queue_index, True, True)  # グリッパーを閉じる
+                    else:  # グリッパーが開いている場合
+                        self.DOBOT_err = GripperON(
+                            self.api, self.queue_index, True, True
+                        )  # グリッパーを閉じる
                         if self.DOBOT_err != 0:
                             DobotError(self.DOBOT_err)
                             return
@@ -533,8 +790,8 @@ class Dobot_APP:
                 return
 
         # Dobotの現在の姿勢を取得し表示する
-        elif event == '-GetPose-':
-            if self.DOBOT_err != 0: # Dobotが接続されていない時
+        elif event == "-GetPose-":
+            if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
             else:
                 self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window)
@@ -542,56 +799,69 @@ class Dobot_APP:
                     DobotError(self.DOBOT_err)
             return
 
-        elif event == '-SetJointPose-':
+        elif event == "-SetJointPose-":
             if self.connection == 0:
-                sg.popup('Dobotに接続していません。', title='Dobotの接続')
+                sg.popup("Dobotに接続していません。", title="Dobotの接続")
                 return
             else:
-                if ((values['-JointPoseInput_1-'] is '') and (values['-JointPoseInput_2-'] is '') and (values['-JointPoseInput_3-'] is '') and (values['-JointPoseInput_4-'] is '')):
-                    sg.popup('移動先が入力されていません。', title='入力不良')
+                if (
+                    (values["-JointPoseInput_1-"] is "")
+                    and (values["-JointPoseInput_2-"] is "")
+                    and (values["-JointPoseInput_3-"] is "")
+                    and (values["-JointPoseInput_4-"] is "")
+                ):
+                    sg.popup("移動先が入力されていません。", title="入力不良")
                     self.Input_err = 1
                     return
 
                 # 入力姿勢の中に''があるか判定
-                if ((values['-JointPoseInput_1-'] is '') or (values['-JointPoseInput_2-'] is '') or (values['-JointPoseInput_3-'] is '') or (values['-JointPoseInput_4-'] is '')):
+                if (
+                    (values["-JointPoseInput_1-"] is "")
+                    or (values["-JointPoseInput_2-"] is "")
+                    or (values["-JointPoseInput_3-"] is "")
+                    or (values["-JointPoseInput_4-"] is "")
+                ):
                     self.DOBOT_err, CurrentPose = GetPose_click(self.api)
                     if self.DOBOT_err == 1:  # GetPoseできなかった時
-                        sg.popup('姿勢情報を取得できませんでした。', title='姿勢取得')
+                        sg.popup("姿勢情報を取得できませんでした。", title="姿勢取得")
                         return
                     else:
-                        if values['-JointPoseInput_1-'] is '':
-                            values['-JointPoseInput_1-'] = CurrentPose[4]
-                        if values['-JointPoseInput_2-'] is '':
-                            values['-JointPoseInput_2-'] = CurrentPose[5]
-                        if values['-JointPoseInput_3-'] is '':
-                            values['-JointPoseInput_3-'] = CurrentPose[6]
-                        if values['-JointPoseInput_4-'] is '':
-                            values['-JointPoseInput_4-'] = CurrentPose[7]
+                        if values["-JointPoseInput_1-"] is "":
+                            values["-JointPoseInput_1-"] = CurrentPose[4]
+                        if values["-JointPoseInput_2-"] is "":
+                            values["-JointPoseInput_2-"] = CurrentPose[5]
+                        if values["-JointPoseInput_3-"] is "":
+                            values["-JointPoseInput_3-"] = CurrentPose[6]
+                        if values["-JointPoseInput_4-"] is "":
+                            values["-JointPoseInput_4-"] = CurrentPose[7]
 
                 # 移動後の関節角度を指定
                 DestPose = [
-                    float(values['-JointPoseInput_1-']),
-                    float(values['-JointPoseInput_2-']),
-                    float(values['-JointPoseInput_3-']),
-                    float(values['-JointPoseInput_4-']),
+                    float(values["-JointPoseInput_1-"]),
+                    float(values["-JointPoseInput_2-"]),
+                    float(values["-JointPoseInput_3-"]),
+                    float(values["-JointPoseInput_4-"]),
                 ]
 
                 response_2 = self.SetJointPose_click(DestPose)
                 if response_2 == 0:
-                    sg.popup('Dobotからの応答がありません。', title='Dobotの接続')
+                    sg.popup("Dobotからの応答がありません。", title="Dobotの接続")
                     return
-                else: return
+                else:
+                    return
 
-        elif event == '-SetCoordinatePose-':
+        elif event == "-SetCoordinatePose-":
             if self.connection == 0:
-                sg.popup('Dobotに接続していません。', title='Dobotの接続')
+                sg.popup("Dobotに接続していません。", title="Dobotの接続")
                 return
             else:
-                if ((values['-CoordinatePoseInput_X-'] is '') and \
-                    (values['-CoordinatePoseInput_Y-'] is '') and \
-                    (values['-CoordinatePoseInput_Z-'] is '') and \
-                    (values['-CoordinatePoseInput_R-'] is '')): # 移動先が1つも入力場合
-                    sg.popup('移動先が入力されていません。', title='入力不良')
+                if (
+                    (values["-CoordinatePoseInput_X-"] is "")
+                    and (values["-CoordinatePoseInput_Y-"] is "")
+                    and (values["-CoordinatePoseInput_Z-"] is "")
+                    and (values["-CoordinatePoseInput_R-"] is "")
+                ):  # 移動先が1つも入力場合
+                    sg.popup("移動先が入力されていません。", title="入力不良")
                     self.Input_err = 1
                     return
 
@@ -599,67 +869,33 @@ class Dobot_APP:
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
-                else: # 入力姿勢の中に''があるか判定
-                    if values['-CoordinatePoseInput_X-'] is '':
-                        values['-CoordinatePoseInput_X-'] = pose[0]
-                    if values['-CoordinatePoseInput_Y-'] is '':
-                        values['-CoordinatePoseInput_Y-'] = pose[1]
-                    if values['-CoordinatePoseInput_Z-'] is '':
-                        values['-CoordinatePoseInput_Z-'] = pose[2]
-                    if values['-CoordinatePoseInput_R-'] is '':
-                        values['-CoordinatePoseInput_R-'] = pose[3]
+                else:  # 入力姿勢の中に''があるか判定
+                    if values["-CoordinatePoseInput_X-"] is "":
+                        values["-CoordinatePoseInput_X-"] = pose[0]
+                    if values["-CoordinatePoseInput_Y-"] is "":
+                        values["-CoordinatePoseInput_Y-"] = pose[1]
+                    if values["-CoordinatePoseInput_Z-"] is "":
+                        values["-CoordinatePoseInput_Z-"] = pose[2]
+                    if values["-CoordinatePoseInput_R-"] is "":
+                        values["-CoordinatePoseInput_R-"] = pose[3]
 
                 # 移動後の関節角度を指定
                 DestPose = [
-                    float(values['-CoordinatePoseInput_X-']),
-                    float(values['-CoordinatePoseInput_Y-']),
-                    float(values['-CoordinatePoseInput_Z-']),
-                    float(values['-CoordinatePoseInput_R-']),
+                    float(values["-CoordinatePoseInput_X-"]),
+                    float(values["-CoordinatePoseInput_Y-"]),
+                    float(values["-CoordinatePoseInput_Z-"]),
+                    float(values["-CoordinatePoseInput_R-"]),
                 ]
 
-                self.DOBOT_err = SetCoordinatePose_click(self.api, DestPose, self.queue_index)
+                self.DOBOT_err = SetCoordinatePose_click(
+                    self.api, DestPose, self.queue_index
+                )
                 if self.DOBOT_err == 1:  # Dobotのエラーが発生した場合
-                    sg.popup('Dobotからの応答がありません。', title='Dobotの接続')
+                    sg.popup("Dobotからの応答がありません。", title="Dobotの接続")
                     return
             return
 
-        elif event == '-Record-':
-            if self.DOBOT_err != 0: # Dobotが接続されていない時
-                DobotError(self.DOBOT_err)
-            else:
-                self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window)
-                if self.DOBOT_err != 0: # Dobotのエラーが発生した場合
-                    DobotError(self.DOBOT_err)
-                else:
-                    self.Window['-x0-'].update(str(pose[0]))
-                    self.Window['-y0-'].update(str(pose[1]))
-                    self.Window['-z0-'].update(str(pose[2]))
-                    self.Window['-r0-'].update(str(pose[3]))
-                    self.Record = (pose[0], pose[1], pose[2], pose[3]) # 退避位置をセット
-
-                    self.DOBOT_err = SetCoordinatePose_click(self.api, pose, self.queue_index)
-                    if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
-                        DobotError(self.DOBOT_err)
-            return
-
-        elif event == '-Set_x1-':
-            if self.DOBOT_err != 0: # Dobotが接続されていない時
-                DobotError(self.DOBOT_err)
-            else:
-                self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window)
-                if self.DOBOT_err != 0: # Dobotのエラーが発生した場合
-                    DobotError(self.DOBOT_err)
-                else:
-                    self.Window['-x1-'].update(str(pose[0]))
-                    self.Window['-y1-'].update(str(pose[1]))
-                    self.Alignment_1 = (pose[0], pose[1]) # 位置合わせ座標（始点）をセット
-
-                    self.DOBOT_err = SetCoordinatePose_click(self.api, pose, self.queue_index)
-                    if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
-                        DobotError(self.DOBOT_err)
-            return
-
-        elif event == '-Set_x2-':
+        elif event == "-Record-":
             if self.DOBOT_err != 0:  # Dobotが接続されていない時
                 DobotError(self.DOBOT_err)
             else:
@@ -667,53 +903,101 @@ class Dobot_APP:
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                 else:
-                    self.Window['-x2-'].update(str(pose[0]))
-                    self.Window['-y2-'].update(str(pose[1]))
-                    self.Alignment_2 = (pose[0], pose[1])  # 位置合わせ座標（始点）をセット
+                    self.Window["-x0-"].update(str(pose[0]))
+                    self.Window["-y0-"].update(str(pose[1]))
+                    self.Window["-z0-"].update(str(pose[2]))
+                    self.Window["-r0-"].update(str(pose[3]))
+                    self.Record = (pose[0], pose[1], pose[2], pose[3])  # 退避位置をセット
 
-                    self.DOBOT_err = SetCoordinatePose_click(self.api, pose, self.queue_index)
+                    self.DOBOT_err = SetCoordinatePose_click(
+                        self.api, pose, self.queue_index
+                    )
                     if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                         DobotError(self.DOBOT_err)
             return
 
-        elif event == '-MoveToThePoint-':
+        elif event == "-Set_x1-":
+            if self.DOBOT_err != 0:  # Dobotが接続されていない時
+                DobotError(self.DOBOT_err)
+            else:
+                self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window)
+                if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
+                    DobotError(self.DOBOT_err)
+                else:
+                    self.Window["-x1-"].update(str(pose[0]))
+                    self.Window["-y1-"].update(str(pose[1]))
+                    self.Alignment_1 = (pose[0], pose[1])  # 位置合わせ座標（始点）をセット
+
+                    self.DOBOT_err = SetCoordinatePose_click(
+                        self.api, pose, self.queue_index
+                    )
+                    if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
+                        DobotError(self.DOBOT_err)
+            return
+
+        elif event == "-Set_x2-":
+            if self.DOBOT_err != 0:  # Dobotが接続されていない時
+                DobotError(self.DOBOT_err)
+            else:
+                self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window)
+                if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
+                    DobotError(self.DOBOT_err)
+                else:
+                    self.Window["-x2-"].update(str(pose[0]))
+                    self.Window["-y2-"].update(str(pose[1]))
+                    self.Alignment_2 = (pose[0], pose[1])  # 位置合わせ座標（始点）をセット
+
+                    self.DOBOT_err = SetCoordinatePose_click(
+                        self.api, pose, self.queue_index
+                    )
+                    if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
+                        DobotError(self.DOBOT_err)
+            return
+
+        elif event == "-MoveToThePoint-":
             # 位置合わせの始点と終点がセットされているか確認
             if (self.Alignment_1 is None) or (self.Alignment_2 is None):
-                sg.popup('位置合わせ座標が入力されていません', title='エラー')
+                sg.popup("位置合わせ座標が入力されていません", title="エラー")
                 return
             # 退避位置がセットされているか確認
             elif self.Record is None:
-                sg.popup('退避位置が入力されていません。', title='エラー')
+                sg.popup("退避位置が入力されていません。", title="エラー")
                 return
 
             # 重心位置を計算する
-            self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(values, self.Window)
+            self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(
+                values, self.Window
+            )
             if self.WebCam_err != 0:  # エラーが発生した場合
                 WebCamError(self.WebCam_err)
                 return
 
                 self.IMAGE_org = IMAGE[0]
                 self.IMAGE_bin = IMAGE[1]
-                self.Window['-CenterOfGravity_x-'].update(str(self.COG_Coordinate[0]))
-                self.Window['-CenterOfGravity_y-'].update(str(self.COG_Coordinate[1]))
+                self.Window["-CenterOfGravity_x-"].update(str(self.COG_Coordinate[0]))
+                self.Window["-CenterOfGravity_y-"].update(str(self.COG_Coordinate[1]))
 
             # ------------------
             # 画像の解像度を表示
             # ------------------
             [height, width, channel] = IMAGE[0].shape
             # 画面上にスナップショットした画像の縦横の長さおよびチャンネル数を表示する。
-            self.Window['-IMAGE_width-'].update(str(width))
-            self.Window['-IMAGE_height-'].update(str(height))
-            self.Window['-IMAGE_channel-'].update(str(channel))
+            self.Window["-IMAGE_width-"].update(str(width))
+            self.Window["-IMAGE_height-"].update(str(height))
+            self.Window["-IMAGE_channel-"].update(str(channel))
 
             # --------------------
             # Dobotの移動位置を計算
             # --------------------
             try:
-                x = self.Alignment_1[0] + self.COG_Coordinate[1] * (self.Alignment_2[0] - self.Alignment_1[0]) / float(height)
-                y = self.Alignment_1[1] + self.COG_Coordinate[0] * (self.Alignment_2[1] - self.Alignment_1[1]) / float(width)
-            except ZeroDivisionError: # ゼロ割りが発生した場合
-                sg.popup('画像のサイズが計測されていません', title='エラー')
+                x = self.Alignment_1[0] + self.COG_Coordinate[1] * (
+                    self.Alignment_2[0] - self.Alignment_1[0]
+                ) / float(height)
+                y = self.Alignment_1[1] + self.COG_Coordinate[0] * (
+                    self.Alignment_2[1] - self.Alignment_1[1]
+                ) / float(width)
+            except ZeroDivisionError:  # ゼロ割りが発生した場合
+                sg.popup("画像のサイズが計測されていません", title="エラー")
                 return
 
             # 現在の座標を取得し、画面を更新する。
@@ -722,14 +1006,14 @@ class Dobot_APP:
                 DobotError(self.DOBOT_err)
                 return
             else:
-                DestPose = [
-                    x, y, pose[2], pose[3]
-                ]
+                DestPose = [x, y, pose[2], pose[3]]
 
                 # ---------------------------------
                 # Dobotを重心位置の真上まで移動させる
                 # ---------------------------------
-                self.DOBOT_err = SetCoordinatePose_click(self.api, DestPose, self.queue_index)
+                self.DOBOT_err = SetCoordinatePose_click(
+                    self.api, DestPose, self.queue_index
+                )
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
@@ -737,7 +1021,9 @@ class Dobot_APP:
                 # ----------------------
                 # Dobotのグリッパーを開く
                 # ----------------------
-                self.DOBOT_err = GripperON(self.api, self.queue_index, True, False)  # グリッパーを開く
+                self.DOBOT_err = GripperON(
+                    self.api, self.queue_index, True, False
+                )  # グリッパーを開く
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
@@ -745,17 +1031,19 @@ class Dobot_APP:
                 # -------------------------------
                 # DobotをZ=-35の位置まで降下させる
                 # -------------------------------
-                self.DOBOT_err, pose = GetPose_UpdateWindow(self.api, self.Window) #現在の位置を取得
+                self.DOBOT_err, pose = GetPose_UpdateWindow(
+                    self.api, self.Window
+                )  # 現在の位置を取得
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
 
                 else:
-                    DestPose = [
-                        x, y, float(-35), pose[3]
-                    ]
+                    DestPose = [x, y, float(-35), pose[3]]
 
-                self.DOBOT_err = SetCoordinatePose_click(self.api, DestPose, self.queue_index) #Z=-35の位置まで移動
+                self.DOBOT_err = SetCoordinatePose_click(
+                    self.api, DestPose, self.queue_index
+                )  # Z=-35の位置まで移動
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
@@ -764,24 +1052,24 @@ class Dobot_APP:
                 # ------------------------
                 # Dobotのグリッパーを閉じる
                 # ------------------------
-                self.DOBOT_err = GripperON(self.api, self.queue_index, True, True)  # グリッパーを閉じる
+                self.DOBOT_err = GripperON(
+                    self.api, self.queue_index, True, True
+                )  # グリッパーを閉じる
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
                 time.sleep(1)
 
-
                 # -------------------------------
                 # Dobotを降下前の位置まで上昇させる
                 # -------------------------------
-                DestPose = [
-                    x, y, pose[2], pose[3]
-                ]
-                self.DOBOT_err = SetCoordinatePose_click(self.api, DestPose, self.queue_index) #Z=-35の位置まで移動
+                DestPose = [x, y, pose[2], pose[3]]
+                self.DOBOT_err = SetCoordinatePose_click(
+                    self.api, DestPose, self.queue_index
+                )  # Z=-35の位置まで移動
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
-
 
                 # ----------------------------
                 # Dobotを退避位置まで移動させる
@@ -790,9 +1078,11 @@ class Dobot_APP:
                     self.Record[0],
                     self.Record[1],
                     self.Record[2],
-                    self.Record[3]
+                    self.Record[3],
                 ]
-                self.DOBOT_err = SetCoordinatePose_click(self.api, DestPose, self.queue_index) #Z=-35の位置まで移動
+                self.DOBOT_err = SetCoordinatePose_click(
+                    self.api, DestPose, self.queue_index
+                )  # Z=-35の位置まで移動
                 if self.DOBOT_err != 0:  # Dobotのエラーが発生した場合
                     DobotError(self.DOBOT_err)
                     return
@@ -802,23 +1092,23 @@ class Dobot_APP:
         # -------------------------- #
         #    WebCamに関するイベント   #
         # -------------------------- #
-        elif event == '-SetWebCam-':
-            device_num = WebCamOption(values['-WebCam_Name-'])
+        elif event == "-SetWebCam-":
+            device_num = WebCamOption(values["-WebCam_Name-"])
             if device_num is None:
-                sg.popup('選択したデバイスは存在しません。', title='エラー')
+                sg.popup("選択したデバイスは存在しません。", title="エラー")
                 return
 
-            #self.cammera_connection, self.capture = WebCam_OnOff_click(device_num, self.capture, self.cammera_connection)
+            # self.cammera_connection, self.capture = WebCam_OnOff_click(device_num, self.capture, self.cammera_connection)
             self.capture = WebCam_OnOff_click(device_num, self.capture)
             if self.capture is None:
                 self.WebCam_err = 1
                 WebCamError(self.WebCam_err)
                 return
             else:
-                sg.popup('WebCameraに接続しました。', title='Camの接続')
+                sg.popup("WebCameraに接続しました。", title="Camの接続")
 
-        elif event == '-Preview-':
-            if self.capture is None: # カメラが接続されていない場合
+        elif event == "-Preview-":
+            if self.capture is None:  # カメラが接続されていない場合
                 self.WebCam_err = 1
                 WebCamError(self.WebCam_err)
                 return
@@ -828,44 +1118,51 @@ class Dobot_APP:
                 WebCamError(self.WebCam_err)
                 return
             else:
-                sg.popup('WebCameraの画像を閉じました。', title='画像の表示')
+                sg.popup("WebCameraの画像を閉じました。", title="画像の表示")
                 return
 
-        elif event == '-Snapshot-':
-            self.WebCam_err, self.IMAGE_org, self.IMAGE_bin = self.SnapshotAndConv(values)
+        elif event == "-Snapshot-":
+            self.WebCam_err, self.IMAGE_org, self.IMAGE_bin = self.SnapshotAndConv(
+                values
+            )
             if self.WebCam_err != 0:
                 WebCamError(self.WebCam_err)
                 return
 
-            cv2.imshow('Snapshot', self.IMAGE_org) # 画像として出力
+            cv2.imshow("Snapshot", self.IMAGE_org)  # 画像として出力
 
             return
 
-        elif event == '-Contours-':
-            self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(values, self.Window)
+        elif event == "-Contours-":
+            self.WebCam_err, self.COG_Coordinate, IMAGE = self.Contours(
+                values, self.Window
+            )
 
-            if self.WebCam_err != 0: # エラーが発生した場合
+            if self.WebCam_err != 0:  # エラーが発生した場合
                 WebCamError(self.WebCam_err)
                 return
 
             self.IMAGE_org = IMAGE[0]
             self.IMAGE_bin = IMAGE[1]
-            self.Window['-CenterOfGravity_x-'].update(str(self.COG_Coordinate[0]))
-            self.Window['-CenterOfGravity_y-'].update(str(self.COG_Coordinate[1]))
+            self.Window["-CenterOfGravity_x-"].update(str(self.COG_Coordinate[0]))
+            self.Window["-CenterOfGravity_y-"].update(str(self.COG_Coordinate[1]))
 
             return
 
-
-
     def main(self):
-        return sg.Window('Dobot', self.layout, default_element_size=(40, 1), background_color='grey90')
+        return sg.Window(
+            "Dobot",
+            self.layout,
+            default_element_size=(40, 1),
+            background_color="grey90",
+        )
 
     def loop(self):
         while True:
             event, values = self.Window.Read(timeout=10)
-            if event is 'Quit':
+            if event is "Quit":
                 break
-            if event != '__TIMEOUT__':
+            if event != "__TIMEOUT__":
                 self.Event(event, values)
 
 
@@ -882,19 +1179,20 @@ def DobotError(error_num):
         3: サクションカップが動作していない
         4: グリッパーが動作していません
     """
-    if error_num == 0: # エラーがない場合
+    if error_num == 0:  # エラーがない場合
         return
     elif error_num == 1:
-        sg.popup('Dobotに接続できません。', title='接続')
+        sg.popup("Dobotに接続できません。", title="接続")
     elif error_num == 2:
-        sg.popup('Dobotからの応答がありません', title='応答なし')
+        sg.popup("Dobotからの応答がありません", title="応答なし")
     elif error_num == 3:
-        sg.popup('サクションカップが動作していません', title='エラー')
+        sg.popup("サクションカップが動作していません", title="エラー")
     elif error_num == 4:
-        sg.popup('グリッパーが動作していません', title='エラー')
+        sg.popup("グリッパーが動作していません", title="エラー")
     else:
-        sg.popup('未知のエラーです。', title='未知エラー')
+        sg.popup("未知のエラーです。", title="未知エラー")
     return
+
 
 def WebCamError(error_num):
     """
@@ -912,25 +1210,26 @@ def WebCamError(error_num):
         6: 変換画像が存在しない
         7: ゼロ除算
     """
-    if error_num == 0: # エラーがない場合
+    if error_num == 0:  # エラーがない場合
         return
-    elif error_num == 1: # カメラが接続されていないとき
-        sg.popup('WebCameraが接続されていません。', title='接続エラー')
-    elif error_num == 2: # プレビューが表示されない場合
-        sg.popup('Previewを表示できません', title='表示エラー')
-    elif error_num == 3: # スナップショット撮影エラー
-        sg.popup('スナップショットを撮影できませんでした。', title='撮影エラー')
-    elif error_num == 4: # 画像変換エラー
-        sg.popup('画像の変換ができませんでした。', title=' 変換エラー')
-    elif error_num == 5: # プロパティの選択エラー
-        sg.popup('存在しない変換方法です。', title='選択エラー')
-    elif error_num == 6: # 変換画像が存在しない
-        sg.popup('変換画像が存在しません。', title='変換エラー')
-    elif error_num == 7: # ゼロ除算です
-        sg.popup('ゼロ除算です', title='計算エラー')
+    elif error_num == 1:  # カメラが接続されていないとき
+        sg.popup("WebCameraが接続されていません。", title="接続エラー")
+    elif error_num == 2:  # プレビューが表示されない場合
+        sg.popup("Previewを表示できません", title="表示エラー")
+    elif error_num == 3:  # スナップショット撮影エラー
+        sg.popup("スナップショットを撮影できませんでした。", title="撮影エラー")
+    elif error_num == 4:  # 画像変換エラー
+        sg.popup("画像の変換ができませんでした。", title=" 変換エラー")
+    elif error_num == 5:  # プロパティの選択エラー
+        sg.popup("存在しない変換方法です。", title="選択エラー")
+    elif error_num == 6:  # 変換画像が存在しない
+        sg.popup("変換画像が存在しません。", title="変換エラー")
+    elif error_num == 7:  # ゼロ除算です
+        sg.popup("ゼロ除算です", title="計算エラー")
     else:
-        sg.popup('未知のエラーです。', title='未知エラー')
+        sg.popup("未知のエラーです。", title="未知エラー")
     return
+
 
 def GripperON(api, queue_index, SucCupCtr=False, gripperCtr=True):
     """
@@ -966,6 +1265,7 @@ def GripperON(api, queue_index, SucCupCtr=False, gripperCtr=True):
     response = 0
     return response
 
+
 def GetPose_click(api):
     """
     デカルト座標系と関節座標系でのDobotの姿勢を返す関数
@@ -993,6 +1293,7 @@ def GetPose_click(api):
     response = 0
     return response, pose
 
+
 def GetPose_UpdateWindow(api, Window):
     """
     姿勢を取得し、ウインドウを更新する関数
@@ -1007,16 +1308,17 @@ def GetPose_UpdateWindow(api, Window):
     """
     DOBOT_err, pose = GetPose_click(api)
     if DOBOT_err == 0:
-        Window['-JointPose1-'].update(str(pose[4]))
-        Window['-JointPose2-'].update(str(pose[5]))
-        Window['-JointPose3-'].update(str(pose[6]))
-        Window['-JointPose4-'].update(str(pose[7]))
-        Window['-CoordinatePose_X-'].update(str(pose[0]))
-        Window['-CoordinatePose_Y-'].update(str(pose[1]))
-        Window['-CoordinatePose_Z-'].update(str(pose[2]))
-        Window['-CoordinatePose_R-'].update(str(pose[3]))
+        Window["-JointPose1-"].update(str(pose[4]))
+        Window["-JointPose2-"].update(str(pose[5]))
+        Window["-JointPose3-"].update(str(pose[6]))
+        Window["-JointPose4-"].update(str(pose[7]))
+        Window["-CoordinatePose_X-"].update(str(pose[0]))
+        Window["-CoordinatePose_Y-"].update(str(pose[1]))
+        Window["-CoordinatePose_Z-"].update(str(pose[2]))
+        Window["-CoordinatePose_R-"].update(str(pose[3]))
 
     return DOBOT_err, pose
+
 
 def SetCoordinatePose_click(api, pose, queue_index):
     """
@@ -1040,23 +1342,26 @@ def SetCoordinatePose_click(api, pose, queue_index):
         1 : 応答なし
     """
     response = 1
-    if (len(pose) != 4) and (len(pose) != 8): # pose配列の長さが不正の場合
+    if (len(pose) != 4) and (len(pose) != 8):  # pose配列の長さが不正の場合
         return response
 
     timeout(5)
     try:
-        dType.SetPTPCmd(api,
-                        dType.PTPMode.PTPMOVJXYZMode,
-                        pose[0],
-                        pose[1],
-                        pose[2],
-                        pose[3],
-                        queue_index)
+        dType.SetPTPCmd(
+            api,
+            dType.PTPMode.PTPMOVJXYZMode,
+            pose[0],
+            pose[1],
+            pose[2],
+            pose[3],
+            queue_index,
+        )
     except TimeoutError:
         return response
 
     response = 0
     return response
+
 
 def WebCam_OnOff_click(device_num, capture=None):
     """
@@ -1076,18 +1381,21 @@ def WebCam_OnOff_click(device_num, capture=None):
     capture : OpenCV型
         接続したデバイス情報を返す
     """
-    if capture is None: # カメラが接続されていないとき
+    if capture is None:  # カメラが接続されていないとき
         capture = cv2.VideoCapture(device_num)
         # カメラに接続できなかった場合
-        if not capture.isOpened(): return None
+        if not capture.isOpened():
+            return None
         # 接続できた場合
-        else: return capture
+        else:
+            return capture
 
-    else: # カメラに接続されていたとき
+    else:  # カメラに接続されていたとき
         capture.release()
         return None
 
-def PreviewOpened_click(capture, window_name='frame', delay=1):
+
+def PreviewOpened_click(capture, window_name="frame", delay=1):
     """
     webカメラの画像を表示する関数
 
@@ -1106,20 +1414,21 @@ def PreviewOpened_click(capture, window_name='frame', delay=1):
         2: 表示できない。
     """
     response = 2
-    if (capture == None):
+    if capture == None:
         return response
 
     while True:
         ret, frame = capture.read()
         if ret:
             cv2.imshow(window_name, frame)
-            if cv2.waitKey(delay) & 0xFF == ord('e'):
+            if cv2.waitKey(delay) & 0xFF == ord("e"):
                 cv2.destroyWindow(window_name)
                 break
         else:
             break
     response = 0
     return response
+
 
 def Snapshot(capture):
     """
@@ -1137,7 +1446,7 @@ def Snapshot(capture):
         撮影した画像
     """
     response = 3
-    if (capture == None):
+    if capture == None:
         return response, None
 
     ret, frame = capture.read()  # 静止画像をGET
@@ -1146,6 +1455,7 @@ def Snapshot(capture):
 
     response = 0
     return response, frame
+
 
 def AnyImage2RGB(img):
     """
@@ -1169,32 +1479,34 @@ def AnyImage2RGB(img):
         return response, None
 
     new_image = img.copy()
-    #-------------------------------#
+    # -------------------------------#
     #             RGB               #
-    #-------------------------------#
+    # -------------------------------#
     if new_image.shape[2] == 3:  # RGB画像
         b, g, r = cv2.split(new_image)
         new_image = cv2.merge((r, g, b))
         new_image = new_image[:, :, ::-1]
-    #-------------------------------#
+    # -------------------------------#
     #             RGBA              #
-    #-------------------------------#
+    # -------------------------------#
     elif new_image.shape[2] == 4:
         b, g, r, a = cv2.split(new_image)
         new_image = cv2.merge((r, g, b, a))
         new_image = cv2.cvtColor(new_image, cv2.COLOR_RGBA2RGB)
-    #-------------------------------#
+    # -------------------------------#
     #          Gray Scale           #
-    #-------------------------------#
-    else: # モノクロ
-        gamma22LUT = np.array([pow(x/255.0, 2.2)
-                               for x in range(256)], dtype='float32')
+    # -------------------------------#
+    else:  # モノクロ
+        gamma22LUT = np.array(
+            [pow(x / 255.0, 2.2) for x in range(256)], dtype="float32"
+        )
         img_barL = cv2.LUT(new_image, gamma22LUT)
         img_grayL = cv2.cvtColor(img_barL, cv2.COLOR_BGR2GRAY)
-        img_gray = pow(img_grayL, 1.0/2.2) * 255
+        img_gray = pow(img_grayL, 1.0 / 2.2) * 255
         new_image = img_gray
     response = 0
     return response, new_image
+
 
 def GlobalThreshold(img, gaussian=False, threshold=127, Type=cv2.THRESH_BINARY):
     """
@@ -1235,6 +1547,7 @@ def GlobalThreshold(img, gaussian=False, threshold=127, Type=cv2.THRESH_BINARY):
     response = 0
     return response, img
 
+
 def OtsuThreshold(img, gaussian=False):
     """
     入力画像が bimodal image (ヒストグラムが双峰性を持つような画像)であることを仮定すると、
@@ -1265,12 +1578,20 @@ def OtsuThreshold(img, gaussian=False):
     # ガウシアンフィルタで前処理を行う場合
     if gaussian:
         img = cv2.GaussianBlur(img, (5, 5), 0)
-    ret, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    ret, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     response = 0
 
     return response, img
 
-def AdaptiveThreshold(img, gaussian=False, method=cv2.ADAPTIVE_THRESH_MEAN_C, Type=cv2.THRESH_BINARY, block_size=11, C=2):
+
+def AdaptiveThreshold(
+    img,
+    gaussian=False,
+    method=cv2.ADAPTIVE_THRESH_MEAN_C,
+    Type=cv2.THRESH_BINARY,
+    block_size=11,
+    C=2,
+):
     """
     適応的閾値処理では，画像の小領域ごとに閾値の値を計算する．
     そのため領域によって光源環境が変わるような画像に対しては，単純な閾値処理より良い結果が得られる．
@@ -1308,7 +1629,15 @@ def AdaptiveThreshold(img, gaussian=False, method=cv2.ADAPTIVE_THRESH_MEAN_C, Ty
     img = cv2.adaptiveThreshold(img, 255, method, Type, block_size, C)
     return img
 
-def TwoThreshold(img, gaussian=False, LowerThreshold=0, UpperThreshold=128, PickupColor=4, Type=cv2.THRESH_BINARY):
+
+def TwoThreshold(
+    img,
+    gaussian=False,
+    LowerThreshold=0,
+    UpperThreshold=128,
+    PickupColor=4,
+    Type=cv2.THRESH_BINARY,
+):
     """
     上側と下側の2つの閾値で2値化を行う。
     二値化には大局的閾値処理を用いる。
@@ -1369,22 +1698,29 @@ def TwoThreshold(img, gaussian=False, LowerThreshold=0, UpperThreshold=128, Pick
     IMAGE_B__ = cv2.bitwise_not(IMAGE_B__)
 
     if PickupColor == 0:
-        IMAGE_bw = IMAGE_R_bw*IMAGE_G__*IMAGE_B__   # 画素毎の積を計算　⇒　赤色部分の抽出
+        IMAGE_bw = IMAGE_R_bw * IMAGE_G__ * IMAGE_B__  # 画素毎の積を計算　⇒　赤色部分の抽出
     elif PickupColor == 1:
-        IMAGE_bw = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算　⇒　緑色部分の抽出
+        IMAGE_bw = IMAGE_G_bw * IMAGE_B__ * IMAGE_R__  # 画素毎の積を計算　⇒　緑色部分の抽出
     elif PickupColor == 2:
-        IMAGE_bw = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算　⇒　青色部分の抽出
+        IMAGE_bw = IMAGE_B_bw * IMAGE_R__ * IMAGE_G__  # 画素毎の積を計算　⇒　青色部分の抽出
     elif PickupColor == 3:
-        IMAGE_bw = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
+        IMAGE_bw = IMAGE_R_bw * IMAGE_G_bw * IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
     elif PickupColor == 4:
-        IMAGE_bw = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　青色部分の抽出
+        IMAGE_bw = IMAGE_R__ * IMAGE_G__ * IMAGE_B__  # 画素毎の積を計算　⇒　青色部分の抽出
     else:
         return 5, None
 
     return 0, IMAGE_bw
 
-def ExtractContours(org_img, kernelShape=cv2.MORPH_RECT, RetrievalMode=cv2.RETR_LIST, ApproximateMode=cv2.CHAIN_APPROX_SIMPLE, min_area=100):
-        """
+
+def ExtractContours(
+    org_img,
+    kernelShape=cv2.MORPH_RECT,
+    RetrievalMode=cv2.RETR_LIST,
+    ApproximateMode=cv2.CHAIN_APPROX_SIMPLE,
+    min_area=100,
+):
+    """
         画像に含まれるオブジェクトの輪郭を抽出する関数。
         黒い背景（暗い色）から白い物体（明るい色）の輪郭を検出すると仮定。
 
@@ -1413,38 +1749,41 @@ def ExtractContours(org_img, kernelShape=cv2.MORPH_RECT, RetrievalMode=cv2.RETR_
         min_area : int
             領域が占める面積の閾値を指定
         """
-        if org_img is None:  # 画像の元データが存在しない場合
-            return None
+    if org_img is None:  # 画像の元データが存在しない場合
+        return None
 
-        img_bin = org_img.copy()
-        # 二値化処理
-        # 画像のチャンネル数が2より大きい場合 ⇒ グレー画像に変換
-        if len(img_bin.shape) > 2:
-            img_bin = cv2.cvtColor(img_bin, cv2.COLOR_BGR2GRAY)
+    img_bin = org_img.copy()
+    # 二値化処理
+    # 画像のチャンネル数が2より大きい場合 ⇒ グレー画像に変換
+    if len(img_bin.shape) > 2:
+        img_bin = cv2.cvtColor(img_bin, cv2.COLOR_BGR2GRAY)
 
-        """
+    """
         モルフォロジー変換
         主に二値画像を対象とし、画像上に写っている図形に対して作用するシンプルな処理を指します。
         クロージング処理
         クロージング処理はオープニング処理の逆の処理を指し、膨張の後に収縮 をする処理。
         前景領域中の小さな(黒い)穴を埋めるのに役立ちます。
         """
-        # フィルタの設定
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 10))
-        # クロージング処理
-        img_morphing = cv2.morphologyEx(img_bin, cv2.MORPH_CLOSE, kernel)
+    # フィルタの設定
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 10))
+    # クロージング処理
+    img_morphing = cv2.morphologyEx(img_bin, cv2.MORPH_CLOSE, kernel)
 
-        # 輪郭検出（Detection contours）
-        tmp_img, contours, _ = cv2.findContours(img_morphing, RetrievalMode, ApproximateMode)
+    # 輪郭検出（Detection contours）
+    tmp_img, contours, _ = cv2.findContours(
+        img_morphing, RetrievalMode, ApproximateMode
+    )
 
-        # 輪郭近似（Contour approximation）
-        approx = approx_contour(contours)
+    # 輪郭近似（Contour approximation）
+    approx = approx_contour(contours)
 
-        # 等高線の描画（Contour line drawing）
-        cp_org_img_for_draw = np.copy(org_img)
-        drawing_edge(cp_org_img_for_draw, approx, min_area)
+    # 等高線の描画（Contour line drawing）
+    cp_org_img_for_draw = np.copy(org_img)
+    drawing_edge(cp_org_img_for_draw, approx, min_area)
 
-        return contours, cp_org_img_for_draw
+    return contours, cp_org_img_for_draw
+
 
 def CenterOfGravity(org_img, contours, cal_Method=0):
     """
@@ -1484,19 +1823,20 @@ def CenterOfGravity(org_img, contours, cal_Method=0):
     else:
         maxCont = contours[0]
         for c in contours:
-            if len(maxCont)< len(c):
+            if len(maxCont) < len(c):
                 maxCont = c
 
         M = cv2.moments(maxCont)
-    if int(M['m00']) == 0:
+    if int(M["m00"]) == 0:
         return None
 
     try:
-        cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+        cx, cy = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
     except ZeroDivisionError:
         return None
 
     return (cx, cy)
+
 
 def approx_contour(contours):
     """
@@ -1515,9 +1855,10 @@ def approx_contour(contours):
     approx = []
     for i in range(len(contours)):
         cnt = contours[i]
-        epsilon = 0.001*cv2.arcLength(cnt, True) # 実際の輪郭と近似輪郭の最大距離を表し、近似の精度を表すパラメータ
+        epsilon = 0.001 * cv2.arcLength(cnt, True)  # 実際の輪郭と近似輪郭の最大距離を表し、近似の精度を表すパラメータ
         approx.append(cv2.approxPolyDP(cnt, epsilon, True))
     return approx
+
 
 def drawing_edge(img, contours, min_area):
     """
@@ -1532,10 +1873,10 @@ def drawing_edge(img, contours, min_area):
     min_area : int
         領域が占める面積の閾値を指定
     """
-    large_contours = [
-        cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
+    large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
 
     cv2.drawContours(img, large_contours, -1, color=(0, 255, 0), thickness=1)
+
 
 def WebCamOption(device_name):
     """
@@ -1553,12 +1894,13 @@ def WebCamOption(device_name):
     """
 
     device_num = None
-    if device_name == 'TOSHIBA_Web_Camera-HD':
+    if device_name == "TOSHIBA_Web_Camera-HD":
         device_num = 0
-    if device_name == 'Logicool_HD_Webcam_C270':
+    if device_name == "Logicool_HD_Webcam_C270":
         device_num = 1
 
     return device_num
+
 
 def ThresholdTypeOption(Type_name):
     """
@@ -1579,13 +1921,19 @@ def ThresholdTypeOption(Type_name):
         名前が一致する処理方法を返す。
     """
     Type = None
-    if Type_name == 'BINARY':       Type = cv2.THRESH_BINARY
-    elif Type_name == 'BINARY_INV': Type = cv2.THRESH_BINARY_INV
-    elif Type_name == 'TRUNC':      Type = cv2.THRESH_TRUNC
-    elif Type_name == 'TOZERO':     Type = cv2.THRESH_TOZERO
-    elif Type_name == 'TOZERO_INV': Type = cv2.THRESH_TOZERO_INV
+    if Type_name == "BINARY":
+        Type = cv2.THRESH_BINARY
+    elif Type_name == "BINARY_INV":
+        Type = cv2.THRESH_BINARY_INV
+    elif Type_name == "TRUNC":
+        Type = cv2.THRESH_TRUNC
+    elif Type_name == "TOZERO":
+        Type = cv2.THRESH_TOZERO
+    elif Type_name == "TOZERO_INV":
+        Type = cv2.THRESH_TOZERO_INV
 
     return Type
+
 
 def AdaptiveThresholdTypeOption(Type_name):
     """
@@ -1606,12 +1954,13 @@ def AdaptiveThresholdTypeOption(Type_name):
         名前が一致する処理方法を返す。
     """
     method = None
-    if Type_name == 'MEAN_C':
+    if Type_name == "MEAN_C":
         method = cv2.ADAPTIVE_THRESH_MEAN_C
-    elif Type_name  == 'GAUSSIAN_C':
+    elif Type_name == "GAUSSIAN_C":
         method = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
 
     return method
+
 
 def KernelShapeOption(Type_name):
     """
@@ -1631,14 +1980,15 @@ def KernelShapeOption(Type_name):
         名前が一致する形を返す。
     """
     shape = None
-    if Type_name == '矩形':
+    if Type_name == "矩形":
         shape = cv2.MORPH_RECT
-    elif Type_name == '楕円形':
+    elif Type_name == "楕円形":
         shape = cv2.MORPH_ELLIPSE
-    elif Type_name == '十字型':
+    elif Type_name == "十字型":
         shape = cv2.MORPH_CROSS
 
     return shape
+
 
 def ContourRetrievalModeOption(Type_name):
     """
@@ -1659,16 +2009,17 @@ def ContourRetrievalModeOption(Type_name):
         名前が一致する形を返す。
     """
     mode = None
-    if Type_name == '親子関係を無視する':
+    if Type_name == "親子関係を無視する":
         mode = cv2.RETR_LIST
-    elif Type_name == '最外の輪郭を検出する':
+    elif Type_name == "最外の輪郭を検出する":
         mode = cv2.RETR_EXTERNAL
-    elif Type_name == '2つの階層に分類する':
+    elif Type_name == "2つの階層に分類する":
         mode = cv2.RETR_CCOMP
-    elif Type_name == '全階層情報を保持する':
+    elif Type_name == "全階層情報を保持する":
         mode = cv2.RETR_TREE
 
     return mode
+
 
 def ApproximateModeOption(Type_name):
     """
@@ -1687,20 +2038,20 @@ def ApproximateModeOption(Type_name):
         名前が一致する形を返す。
     """
     method = None
-    if Type_name == '中間点を保持する':
+    if Type_name == "中間点を保持する":
         method = cv2.CHAIN_APPROX_NONE
-    elif Type_name == '中間点を保持しない':
+    elif Type_name == "中間点を保持しない":
         method = cv2.CHAIN_APPROX_SIMPLE
 
     return method
 
 
 # ボタンを押したときのイベントとボタンが返す値を代入
-#event, values = window.Read()
+# event, values = window.Read()
 
-#CON_STR = Dobot()
+# CON_STR = Dobot()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     window = Dobot_APP()
     window.loop()
 
