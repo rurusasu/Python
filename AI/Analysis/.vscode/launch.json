@@ -15,11 +15,21 @@
       "redirectOutput": true
     },
     {
-      "name": "Python for windows",
+      "name": "Python for windows Note PC",
       "type": "python",
       "request": "launch",
       "program": "${file}",
       "python": "C:\\tools\\miniconda3\\python.exe",
+      "console": "integratedTerminal",
+      "cwd": "${fileDirname}",
+      "redirectOutput": true
+    },
+    {
+      "name": "Python for windows DeskTop",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "python": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
       "console": "integratedTerminal",
       "cwd": "${fileDirname}",
       "redirectOutput": true
