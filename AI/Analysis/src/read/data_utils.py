@@ -16,7 +16,7 @@ from PIL import Image, ImageFile
 from config.config import cfg
 
 
-def read_rgb_nppath: str, size: tuple = (64, 64), flatten=False) -> np.array:
+def (read_rgb_nppath: str, size: tuple = (64, 64), flatten=False) -> np.array:
     """画像を読み込み ndarray に変換する関数
 
     Param

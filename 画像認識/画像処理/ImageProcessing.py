@@ -20,7 +20,7 @@ def scale_box(src, width, height):
         変換後の画像幅
     height : int
         変換後の画像高さ
-    
+
     Return
     ------
     dst : OpenCV型
@@ -37,7 +37,7 @@ def LoadImage(ImageWidth, ImageHeight, Camera_num=None, ImagePath=None):
         raise ValueError('カメラを起動するか画像を読み込むかのどちらかのみを使ってください。')
     if Camera_num == None and ImagePath == None:
         raise ValueError('カメラを起動するか画像を読み込むかのどちらかを指定してください。')
-    
+
     #---------------------
     # カメラを起動する
     #---------------------
@@ -56,7 +56,7 @@ def LoadImage(ImageWidth, ImageHeight, Camera_num=None, ImagePath=None):
     elif ImagePath != None:
         if type(ImagePath) is not str:
             raise ValueError('ファイルパスは文字列で指定する必要があります。')
-        
+
         # 画像を読み込む
         frame = cv2.imread(ImagePath)
         if frame is None:
@@ -77,7 +77,7 @@ def Disassembly(src):
     ---------
     src : OpenCV型
         分解前の画像
-            
+
     Return
     ------
     dst : list
@@ -135,7 +135,7 @@ def otsu_binalize(gray, min_value=0, max_value=255):
     ---------
     new_img : OpenCV型
         入力画像
-    
+
     Returns
     -------
     ret : int
@@ -167,7 +167,7 @@ def otsu_binalize(gray, min_value=0, max_value=255):
         # クラス間分散の分子が最大のとき、クラス間分散の分子と閾値を記録
         if s > s_max[1]:
             s_max = (th, s)
-    
+
     # クラス間分散が最大のとき閾値を取得
     t = s_max[0]
 
@@ -204,7 +204,7 @@ def AdaptiveThreshold(src, ksize=3, c=2):
 
     if src.ndim != 2:
         src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
-    
+
     # フィルタの幅
     #d = int((ksize-1)/2)
     m, n = ksize[0], ksize[1]
