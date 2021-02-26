@@ -47,13 +47,13 @@ class Dobot_APP:
     ----------------------
     """
 
-    def SetJointPose_click(self, pose):
+    def SetJointPose_click(self, pose: dict):
         """
         指定された作業座標系にアームの先端を移動させる関数
         関節座標系で移動
 
         Args:
-            pose (list):
+            pose (dict):
                 デカルト座標系もしくは関節座標系での移動先を示したリスト
                 パラメータ数4個
 
