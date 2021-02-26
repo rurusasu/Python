@@ -6,7 +6,7 @@ sys.path.append("..")
 import cv2
 import numpy as np
 from ctypes import cdll
-from PIL import Image
+#from PIL import Image
 
 import PySimpleGUI as sg
 from src.config.config import cfg

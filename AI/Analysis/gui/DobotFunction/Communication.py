@@ -9,6 +9,9 @@ import csv
 from DobotDLL import DobotDllType as dType
 
 
+def SearchDobot():
+    
+
 # -----------------
 # Dobotの初期化
 # -----------------
