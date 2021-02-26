@@ -9,8 +9,10 @@ import csv
 from DobotDLL import DobotDllType as dType
 
 
-def SearchDobot():
-    
+def SearchDobot(api):
+    result = dType.SearchDobot(api)
+    print(result)
+
 
 # -----------------
 # Dobotの初期化
@@ -98,16 +100,16 @@ def initDobot(api):
 # 直交座標系での動作
 def Operation(api, file_name, axis, volume=1, initPOS=None):
     """
-        A function that sends a motion command in any direction
+    A function that sends a motion command in any direction
 
-        Parameters
-        ----------
-        api : CDLL
-        axis : str
-            移動方向
-        volume : int
-            移動量
-        """
+    Parameters
+    ----------
+    api : CDLL
+    axis : str
+        移動方向
+    volume : int
+        移動量
+    """
     axis_list = ["x", "y", "z", "r"]
     if initPOS != None:
         pose = initPOS
@@ -207,3 +209,15 @@ def _wirte(f, data):
     error = witer.writerows([data])
 
     return error  # エラーが無ければNoneを返す
+
+
+if __name__ == "__main__":
+    from ctypes import cdll
+
+    DobotFunctionDirPath = os.path.dirname(os.path.abspath(__file__))
+    GUIDirPath = os.path.dirname(DobotFunctionDirPath)
+    DobotDllPath = os.path.join(GUIDirPath, "DobotDll")
+    dll_path = DobotDllPath + os.sep + "DobotDll.dll"
+    api = cdll.LoadLibrary(dll_path)
+
+    SearchDobot(api)
