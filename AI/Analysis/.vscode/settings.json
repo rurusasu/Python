@@ -42,8 +42,8 @@
   ],
   // Python コマンドのパス。
   // @sync os=windows
-  //"python.pythonPath": "C:\\tools\\miniconda3\\python.exe",
-  "python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
+  "python.pythonPath": "C:\\tools\\miniconda3\\python.exe",
+  //"python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
   // @sync os=linux
   // "python.pythonPath": "/opt/conda/bin/python",
   // conda コマンドのパス。[Anacondaインストール先] / condabin / conda.bat を指定する。

@@ -6,12 +6,15 @@ sys.path.append("..")
 import cv2
 import numpy as np
 from ctypes import cdll
-#from PIL import Image
+
+# from PIL import Image
 
 import PySimpleGUI as sg
 from src.config.config import cfg
 from DobotDLL import DobotDllType as dType
-from Communication import Connect_Disconnect, Operation, _OneAction
+from DobotFunction.Communication import Connect_Disconnect, Operation, _OneAction
+
+# from DobotFunction.Camera import WebCam_OnOff
 
 
 class Dobot_APP:
@@ -34,6 +37,7 @@ class Dobot_APP:
             "joint4Angle",
         ]
         self.current_pose = {}  # Dobotの現在の姿勢
+        self.cam = None
         # --- エラーフラグ ---#
         self.connection = 1  # Connect: 0, DisConnect: 1, Err: -1
         self.act_err = 0  # State: 0, Err: -1
@@ -127,9 +131,66 @@ class Dobot_APP:
             ],
         ]
 
+        WebCamConnect = [
+            [
+                sg.Button("WEB CAM on/off", size=(15, 1), key="-SetWebCam-"),
+                sg.Button("Preview Opened", size=(11, 1), key="-Preview-"),
+                sg.Button("Snapshot", size=(7, 1), key="-Snapshot-"),
+            ],
+            [
+                sg.InputCombo(
+                    ("TOSHIBA_Web_Camera-HD", "Logicool_HD_Webcam_C270",),
+                    size=(15, 1),
+                    key="-WebCam_Name-",
+                    readonly=True,
+                ),
+                sg.InputCombo(
+                    (
+                        "640x480",
+                        "352x288",
+                        "320x240",
+                        "176x144",
+                        "160x120",
+                        "1280x720",
+                        "1280x800",
+                    ),
+                    size=(11, 1),
+                    key="-WebCam_FrameSize-",
+                    readonly=True,
+                ),
+            ],
+            [
+                sg.Text("width", size=(4, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_width-",
+                ),
+                sg.Text("height", size=(4, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_height-",
+                ),
+                sg.Text("channel", size=(6, 1)),
+                sg.InputText(
+                    "0",
+                    size=(5, 1),
+                    disabled=True,
+                    justification="right",
+                    key="-IMAGE_channel-",
+                ),
+            ],
+        ]
+
         layout = [
             Connect,
             [sg.Col(SetPose, size=(165, 136)),],
+            [sg.Col(WebCamConnect),],
             [sg.Quit()],
         ]
 
@@ -164,6 +225,18 @@ class Dobot_APP:
             response = self.SetJointPose_click()
             print(response)
 
+        # ------------------ #
+        # WebCamに関するイベント #
+        # ------------------ #
+        elif event == "-SetWebCam-":
+            device_num = WebCamOption(values["-WebCam_Name-"])
+            if device_num is None:
+                sg.popup("選択したデバイスは存在しません。", title="エラー")
+                return
+
+            self.cam = WebCam_OnOff(device_num, cam=self.cam)
+            sg.popup("WebCameraに接続しました。", title="Camの接続")
+
     def main(self):
         return sg.Window(
             "Dobot",
@@ -181,6 +254,76 @@ class Dobot_APP:
                 self.Event(event, values)
 
 
+def WebCamOption(device_name: str) -> int:
+    """
+    接続するWebCameraを選択する関数
+
+    Parameter
+    ---------
+    device_name : int
+        使用したいデバイス名を指定
+
+    Return
+    ------
+    device_num : int
+        名前が一致したデバイスに割り当てられた番号を返す
+    """
+
+    if device_name == "TOSHIBA_Web_Camera-HD":
+        device_num = 0
+    elif device_name == "Logicool_HD_Webcam_C270":
+        device_num = 1
+    else:
+        device_num = None
+
+    return device_num
+
+
+def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None):
+    """
+    WebCameraを読み込む関数
+
+    Parameter
+    ---------
+    device_num : int
+        カメラデバイスを番号で指定
+        0:PC内臓カメラ
+        1:外部カメラ
+    cam : OpenCV型
+        接続しているカメラ情報
+
+    Return
+    ------
+    response: int
+        動作終了を表すフラグ
+        0: カメラを開放した
+        1: カメラに接続した
+        -1: エラー
+    capture : OpenCV型
+        接続したデバイス情報を返す
+    """
+    if cam is None:  # カメラが接続されていないとき
+        cam = cv2.VideoCapture(device_num)
+        # カメラに接続できなかった場合
+        if not cam.isOpened():
+            return -1, None
+        # 接続できた場合
+        else:
+            return 1, cam
+
+    else:  # カメラに接続されていたとき
+        capture.release()
+        return 0, None
+
+
 if __name__ == "__main__":
+    # from DobotFunction.Camera import WebCam_OnOff
+    # from ImageProcessing.binarization import GlobalThreshold
+
+    # dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
+    # print(dll_path)
+    # api = cdll.LoadLibrary(dll_path)
+
     window = Dobot_APP()
     window.loop()
+

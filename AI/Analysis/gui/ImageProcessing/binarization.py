@@ -6,7 +6,7 @@ sys.path.append("..")
 import cv2
 import numpy as np
 
-from GrayScale import GrayScale
+from ImageProcessing.GrayScale import GrayScale
 
 
 def GlobalThreshold(

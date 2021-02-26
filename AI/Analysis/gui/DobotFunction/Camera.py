@@ -23,11 +23,12 @@ def WebCamOption(device_name: str) -> int:
         名前が一致したデバイスに割り当てられた番号を返す
     """
 
-    device_num = None
     if device_name == "TOSHIBA_Web_Camera-HD":
         device_num = 0
-    if device_name == "Logicool_HD_Webcam_C270":
+    elif device_name == "Logicool_HD_Webcam_C270":
         device_num = 1
+    else:
+        device_num = None
 
     return device_num
 
