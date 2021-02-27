@@ -17,7 +17,7 @@ cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
 cfg.EVAL_INDEXES_DIR = os.path.join(cfg.SRC_DIR, "eval_indexes")
 
 """
-DataDir
+TestDataDir
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
 

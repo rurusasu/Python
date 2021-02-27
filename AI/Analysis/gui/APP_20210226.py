@@ -38,6 +38,7 @@ class Dobot_APP:
         ]
         self.current_pose = {}  # Dobotの現在の姿勢
         self.cam = None
+        self.cam_num = None
         # --- エラーフラグ ---#
         self.connection = 1  # Connect: 0, DisConnect: 1, Err: -1
         self.act_err = 0  # State: 0, Err: -1
@@ -229,13 +230,80 @@ class Dobot_APP:
         # WebCamに関するイベント #
         # ------------------ #
         elif event == "-SetWebCam-":
-            device_num = WebCamOption(values["-WebCam_Name-"])
-            if device_num is None:
-                sg.popup("選択したデバイスは存在しません。", title="エラー")
+            # Webカメラの番号を取得する
+            cam_num = WebCamOption(values["-WebCam_Name-"])
+            # webカメラの番号が取得できなかった場合
+            if cam_num is None:
+                sg.popup("選択したデバイスは存在しません。", title="カメラ接続エラー")
                 return
 
-            self.cam = WebCam_OnOff(device_num, cam=self.cam)
-            sg.popup("WebCameraに接続しました。", title="Camの接続")
+            # ------------ #
+            # カメラを接続する #
+            # ------------ #
+            # カメラを初めて接続する場合
+            if (cam_num != None) and (self.cam_num == None):
+                response, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                # カメラが接続されていない場合
+                if response == -1:
+                    sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
+                # カメラを開放した場合
+                elif response == 0:
+                    sg.popup("WebCameraを開放しました。", title="Camの接続")
+                else:
+                    sg.popup("WebCameraに接続しました。", title="Camの接続")
+
+            # 接続したいカメラが接続していカメラと同じ場合
+            elif (cam_num != None) and (self.cam_num == cam_num):
+                response, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                # カメラが接続されていない場合
+                if response == -1:
+                    sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
+                # カメラを開放した場合
+                elif response == 0:
+                    sg.popup("WebCameraを開放しました。", title="Camの接続")
+                else:
+                    sg.popup("WebCameraに接続しました。", title="Camの接続")
+
+            # 接続したいカメラと接続しているカメラが違う場合
+            elif (cam_num != None) and (self.cam_num != cam_num):
+                # まず接続しているカメラを開放する．
+                ch_1, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                # 開放できた場合
+                if ch_1 == 0:
+                    sg.popup("WebCameraを開放しました。", title="Camの接続")
+                    # 次に新しいカメラを接続する．
+                    ch_2, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                    # カメラが接続されていない場合
+                    if ch_2 == -1:
+                        sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
+                    else:
+                        sg.popup("WebCameraに接続しました．", title="Camの接続")
+                # 新しいカメラを接続した場合
+                elif ch_1 == 1:
+                    sg.popup("新しくWebCameraに接続しました．", title="Camの接続")
+                # カメラの接続に失敗した場合
+                else:
+                    self.cam = None
+
+            self.cam_num = cam_num
+
+        elif event == "-Preview-":
+            window_name = "frame"
+
+            while True:
+                if type(self.cam) == cv2.VideoCapture:  # カメラが接続されている場合
+                    response, dst = Snapshot(self.cam)
+                    if response:
+                        response = Preview(dst, window_name=window_name)
+                        if cv2.waitKey(0) & 0xFF == ord("e"):
+                            cv2.destroyWindow(window_name)
+                            break
+                    else:
+                        sg.popup("SnapShotを撮影できませんでした．", title="撮影エラー")
+                        break
+                else:
+                    sg.popup("カメラが接続されていません．", title="カメラ接続エラー")
+                    break
 
     def main(self):
         return sg.Window(
@@ -258,17 +326,14 @@ def WebCamOption(device_name: str) -> int:
     """
     接続するWebCameraを選択する関数
 
-    Parameter
-    ---------
-    device_name : int
-        使用したいデバイス名を指定
+    Args:
+        device_name (int):
+            使用したいデバイス名を指定
 
-    Return
-    ------
-    device_num : int
-        名前が一致したデバイスに割り当てられた番号を返す
+    Return:
+        device_num (int):
+            名前が一致したデバイスに割り当てられた番号を返す
     """
-
     if device_name == "TOSHIBA_Web_Camera-HD":
         device_num = 0
     elif device_name == "Logicool_HD_Webcam_C270":
@@ -279,28 +344,26 @@ def WebCamOption(device_name: str) -> int:
     return device_num
 
 
-def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None):
+def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None) -> cv2.VideoCapture:
     """
     WebCameraを読み込む関数
 
-    Parameter
-    ---------
-    device_num : int
-        カメラデバイスを番号で指定
-        0:PC内臓カメラ
-        1:外部カメラ
-    cam : OpenCV型
-        接続しているカメラ情報
+    Args:
+        device_num (int):
+            カメラデバイスを番号で指定
+            0: PC内臓カメラ
+            1: 外部カメラ
+        cam (cv2.VideoCapture):
+            接続しているカメラ情報
 
-    Return
-    ------
-    response: int
-        動作終了を表すフラグ
-        0: カメラを開放した
-        1: カメラに接続した
-        -1: エラー
-    capture : OpenCV型
-        接続したデバイス情報を返す
+    Return:
+        response (int):
+            動作終了を表すフラグ
+            0: カメラを開放した
+            1: カメラに接続した
+            -1: エラー
+        cam (cv2.VideoCapture):
+            接続したデバイス情報を返す
     """
     if cam is None:  # カメラが接続されていないとき
         cam = cv2.VideoCapture(device_num)
@@ -312,18 +375,105 @@ def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None):
             return 1, cam
 
     else:  # カメラに接続されていたとき
-        capture.release()
+        cam.release()
         return 0, None
 
 
+def Snapshot(cam: cv2.VideoCapture = None) -> np.ndarray:
+    """
+    WebCameraでスナップショットを撮影する関数
+
+    Arg:
+        cam (cv2.VideoCapture):
+            接続しているカメラ情報
+            default : None
+
+    Return:
+        response (int):
+            1: 撮影できました。
+            -1: 撮影できませんでした。
+        img (np.ndarray):
+            撮影した画像
+    """
+    # カメラが接続されていない場合
+    if cam == None:
+        return -1, None
+
+    ret, img = cam.read()  # 静止画像をGET
+    # 静止画が撮影できた場合
+    if ret:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # BGR -> RGB
+        img = np.array(img)
+        return 1, img
+    # 撮影できなかった場合
+    else:
+        return -1, None
+
+
+def Preview(
+    img: np.ndarray = None, window_name: str = "frame", preview: str = "cv2"
+) -> int:
+    """
+    webカメラの画像を表示する関数
+
+    Parameters
+    ----------
+    img : ndarray型
+        画像のピクセル値配列
+        default : None
+    window_name : str
+        画像を表示する時のウインドウ名
+        default : "frame"
+    preview : str
+        画像をウインドウ上に表示するときに使用するパッケージ名
+        OpenCV の imshow を使用する場合 : "cv2" (default)
+        Matplotlib の plt.show を使用する場合: "plt"
+
+    Returns
+    -------
+    response : int
+        画像表示の可否を返す
+        1: 表示できた。
+        -1: 表示できない。
+    """
+    # 画像が入力されている場合
+    if type(img) is np.ndarray:
+        # 画像を OpenCV でウインドウ上に表示する
+        if preview == "cv2":
+            cv2.imshow(window_name, img)
+            return 1
+        # 画像を Matplotlib で ウインドウ上に表示する
+        elif preview == "plt":
+            # グレースケール画像の場合
+            if len(img.shape) == 2:
+                plt.imshow(img, cmap="gray")
+            # RGB画像の場合
+            elif len(img.shape) == 3:
+                plt.imshow(img)
+            plt.show()
+            return 1
+        # 表示に使うパッケージの選択が不適切な場合
+        else:
+            return -1
+    # 画像が入力されていない場合
+    else:
+        return -1
+
+
 if __name__ == "__main__":
-    # from DobotFunction.Camera import WebCam_OnOff
-    # from ImageProcessing.binarization import GlobalThreshold
-
-    # dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
-    # print(dll_path)
-    # api = cdll.LoadLibrary(dll_path)
-
+    """
+    response, cam = WebCam_OnOff(device_num=0)
+    window_name = "frame"
+    while True:
+        # ret, frame = cam.read()
+        ret, frame = Snapshot(cam)
+        if ret:
+            # cv2.imshow("frame", frame)
+            Preview(frame, window_name=window_name)
+            if cv2.waitKey(0) & 0xFF == ord("e"):
+                cv2.destroyWindow(window_name)
+                break
+    """
     window = Dobot_APP()
     window.loop()
 
