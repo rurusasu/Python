@@ -65,28 +65,59 @@ def SaltAndPepper(img: np.ndarray, sample_num: int = 1000):
             ノイズをかける座標のサンプル数
             default: 1000
 
-    Returns:
-        dst (np.ndarray): ノイズがかかった画像
+    Return:
+        dst (np.ndarray):
+            ノイズがかかった画像(Errorが発生した場合: None)
     """
-    w, h, ch = img.shape
     dst = img.copy()
-
-    # 白色のノイズをかける
-    pts_x = np.random.randint(0, h - 1, sample_num)
-    pts_y = np.random.randint(0, w - 1, sample_num)
-    dst[(pts_y, pts_x)] = (255, 255, 255)
-
-    # 黒色のノイズをかける
-    pts_x = np.random.randint(0, h - 1, 1000)
-    pts_y = np.random.randint(0, w - 1, 1000)
-    dst[(pts_y, pts_x)] = (0, 0, 0)
-
-    return dst
+    try:
+        w, h, ch = dst.shape
+        # 白色のノイズをかける
+        pts_x = np.random.randint(0, h - 1, sample_num)
+        pts_y = np.random.randint(0, w - 1, sample_num)
+        dst[(pts_y, pts_x)] = (255, 255, 255)
+        # 黒色のノイズをかける
+        pts_x = np.random.randint(0, h - 1, 1000)
+        pts_y = np.random.randint(0, w - 1, 1000)
+        dst[(pts_y, pts_x)] = (0, 0, 0)
+    except Exception as e:
+        print("SaltAndPepper Function Error:", e)
+        return None
+    else:
+        return dst
 
 
 if __name__ == "__main__":
+    import json
+    from PIL import Image
     from matplotlib import pyplot as plt
 
+    from src.config.config import cfg
+
+    # テスト画像の保存先
+    save_path = cfg.NOISE_IMG_DIR
+    sample_num = 5000
+
+    # テストデータロード
+    json_path = cfg.TEST_DIR + os.sep + "data.json"
+    with open(json_path, mode="rt", encoding="utf_8") as f:
+        datas = json.load(f)
+
+    # テスト
+    for data in datas["org_img"]:
+        for key, value in data.items():
+            if key == "path":
+                # 画像を開いて numpy 配列に変換
+                img = np.array(Image.open(value))
+                # ノイズを付加
+                img = SaltAndPepper(img)
+                if type(img) == np.ndarray:
+                    img = Image.fromarray(img)
+                    img.save(save_path + os.sep + name + ".png")
+            elif key == "name":
+                name = value.rstrip(".png") + "_salt_and_pepper_" + str(sample_num)
+
+    """
     img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "lena.png"
 
     img = Image.open(img_path)
@@ -101,3 +132,4 @@ if __name__ == "__main__":
     # img = np.array(img) + np.array(noise)
     plt.imshow(img)
     plt.show()
+    """

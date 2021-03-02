@@ -1,81 +1,94 @@
 {
   "binary_img": [],
-  "gray_img": [
+  "edge_img": [
     {
-      "name": "image1_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image1_gray_cv2.png",
-      "channel": "1",
-      "width": "3024",
-      "height": "4032"
-    },
-    {
-      "name": "image2_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image2_gray_cv2.png",
-      "channel": "1",
-      "width": "3024",
-      "height": "4032"
-    },
-    {
-      "name": "image3_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image3_gray_cv2.png",
-      "channel": "1",
-      "width": "3024",
-      "height": "4032"
-    },
-    {
-      "name": "image4_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image4_gray_cv2.png",
-      "channel": "1",
-      "width": "3024",
-      "height": "4032"
-    },
-    {
-      "name": "image5_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image5_gray_cv2.png",
-      "channel": "1",
-      "width": "3024",
-      "height": "4032"
-    },
-    {
-      "name": "image6_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image6_gray_cv2.png",
-      "channel": "1",
-      "width": "4032",
-      "height": "3024"
-    },
-    {
-      "name": "image7_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image7_gray_cv2.png",
-      "channel": "1",
-      "width": "4032",
-      "height": "3024"
-    },
-    {
-      "name": "image8_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\image8_gray_cv2.png",
-      "channel": "1",
-      "width": "128",
-      "height": "128"
-    },
-    {
-      "name": "im_gray_cv2.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\im_gray_cv2.png",
+      "name": "lena_gray_cv2canny.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\edge_img\\lena_gray_cv2canny.png",
+      "mode": "L",
       "channel": "1",
       "width": "256",
       "height": "256"
-    },
+    }
+  ],
+  "gray_img": [
     {
       "name": "lena_gray_cv2.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\gray_img\\lena_gray_cv2.png",
-      "channel": "1",
+      "mode": "RGB",
+      "channel": "3",
       "width": "256",
       "height": "256"
     }
   ],
   "noise_img": [
     {
-      "name": "SaltAndPepper.png",
-      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\SaltAndPepper.png",
+      "name": "image1_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image1_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image2_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image2_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image3_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image3_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image4_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image4_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image5_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image5_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image6_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image6_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "4032",
+      "height": "3024"
+    },
+    {
+      "name": "image7_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image7_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "4032",
+      "height": "3024"
+    },
+    {
+      "name": "image8_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\image8_salt_and_pepper_5000.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "128",
+      "height": "128"
+    },
+    {
+      "name": "lena_salt_and_pepper_5000.png",
+      "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\noise_img\\lena_salt_and_pepper_5000.png",
+      "mode": "RGB",
       "channel": "3",
       "width": "256",
       "height": "256"
@@ -85,62 +98,71 @@
     {
       "name": "image1.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image1.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "3024",
       "height": "4032"
     },
     {
       "name": "image2.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image2.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "3024",
       "height": "4032"
     },
     {
       "name": "image3.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image3.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "3024",
       "height": "4032"
     },
     {
       "name": "image4.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image4.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "3024",
       "height": "4032"
     },
     {
       "name": "image5.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image5.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "3024",
       "height": "4032"
     },
     {
       "name": "image6.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image6.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "4032",
       "height": "3024"
     },
     {
       "name": "image7.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image7.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "4032",
       "height": "3024"
     },
     {
       "name": "image8.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\image8.png",
-      "channel": "4",
+      "mode": "RGB",
+      "channel": "3",
       "width": "128",
       "height": "128"
     },
     {
       "name": "img.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\img.png",
+      "mode": "L",
       "channel": "1",
       "width": "256",
       "height": "256"
@@ -148,9 +170,11 @@
     {
       "name": "lena.png",
       "path": "d:\\My_programing\\python\\AI\\Analysis\\data\\test\\org_img\\lena.png",
+      "mode": "RGB",
       "channel": "3",
       "width": "256",
       "height": "256"
     }
-  ]
+  ],
+  "smoothing_img": []
 }

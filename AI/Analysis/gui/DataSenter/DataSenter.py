@@ -34,12 +34,23 @@ for f in files:
         datas = []
         img_path_list = glob(f + os.sep + "*.png", recursive=True)
         for path in img_path_list:
-            img = np.array(Image.open(path))
+            # img = np.array(Image.open(path))
+            img = Image.open(path)  # 画像読み出し
+
+            # もし、読み出した画像が "RGBA" の場合
+            if img.mode == "RGBA":
+                img = img.convert("RGB")  # RGBA -> RGB
+                img.save(path)  # 上書き保存
+
+            mode = img.mode
+            img = np.array(img)  # pillow -> np
             name = os.path.basename(path)
             path = path
             if len(img.shape) < 3:
                 ch = 1
                 w, h = img.shape
+            # elif img.shape[2] == 4:
+
             else:
                 w, h, ch = img.shape
 
@@ -47,6 +58,7 @@ for f in files:
                 {
                     "name": name,
                     "path": path,
+                    "mode": mode,
                     "channel": str(ch),
                     "width": str(w),
                     "height": str(h),
