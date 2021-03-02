@@ -2,18 +2,16 @@ import sys, os
 
 sys.path.append(".")
 sys.path.append("..")
+sys.path.append("../../")
 
 import cv2
 import numpy as np
 
-from ImageProcessing.GrayScale import GrayScale
+from ImageProcessing.GrayScale import AutoGrayScale
 
 
 def GlobalThreshold(
-    img: np.ndarray,
-    gaussian: bool = False,
-    threshold: int = 127,
-    Type=cv2.THRESH_BINARY,
+    img: np.ndarray, clearly: bool = False, threshold: int = 127, Type: str = "cv2",
 ) -> np.ndarray:
     """
     画素値が閾値より大きければある値(白色'255')を割り当て，そうでなければ別の値(黒色)を割り当てる。
@@ -22,24 +20,21 @@ def GlobalThreshold(
     Args:
         img (np.ndarray):
             変換前の画像
-        gaussian (bool):
-            ガウシアンフィルタを適用し，ノイズを除去する．
-            True: 適用する
-            False: 適用しない
-    threshold (int)
-        2値化するときの閾値
-        0 <= th <= 256
-    Type
-        閾値の処理方法
-        ・cv2.THRESH_BINARY
-        ・cv2.THRESH_BINARY_INV
-        ・cv2.THRESH_TRUNC
-        ・cv2.THRESH_TOZERO
-        ・cv2.THRESH_TOZERO_INV
+        clearly (bool optional):
+            ガウシアンフィルタを用いて入力画像のノイズを除去する．
+            * True: 適用する
+            * False: 適用しない: default
+        threshold (int optional):
+            2値化するときの閾値(0 <= th <= 256)
+            default: 127
+        Type (str optional):
+            閾値の処理方法
+            * "cv2": OpenCVの関数を用いて二値化を行う: default
+            * "Otsu: 大津の二値化処理
 
     Returns:
         dst (np.ndarray):
-            変換後の画像データ
+            変換後の画像データ(Errorが発生した場合: None)
         response (int):
             1: 変換できました。
             -1: 画像の元データが存在しません。
@@ -47,21 +42,29 @@ def GlobalThreshold(
     if type(img) is not np.ndarray:  # 画像の元データが存在しない場合
         return -1, None
 
-    # RGB画像を入力とする場合
-    if len(img.shape) == 3:
-        _, img = GrayScale(img)  # RGB -> Gray
     # ガウスフィルタをかけてノイズを除去する
-    if gaussian:
+    if clearly:
         img = cv2.GaussianBlur(img, (5, 5), 0)
 
-    ret, dst = cv2.threshold(img, threshold, 255, Type)
-    dst = np.array(dst)  # ndarray型に変換
-    return 1, dst
+    # RGB画像を入力とした場合は、グレー化
+    img = AutoGrayScale(img)  # RGB -> Gray
+
+    try:
+        if Type == "cv2":
+            ret, dst = cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)
+        elif Type == "Otsu":
+            dst = _OtsuThreshold(img)
+        else:
+            raise Exception("選択した処理方法が存在しません．")
+    except Exception as e:
+        print("大域的二値化処理中のエラー: ", e)
+        return None
+    else:
+        dst = np.array(dst)  # ndarray型に変換
+        return dst
 
 
-def OtsuThreshold(
-    img: np.ndarray, gaussian: bool = False, min_value: int = 0, max_value: int = 255
-):
+def _OtsuThreshold(img: np.ndarray, min_value: int = 0, max_value: int = 255):
     """
     入力画像が bimodal image (ヒストグラムが双峰性を持つような画像)であることを仮定すると、
     そのような画像に対して、二つのピークの間の値を閾値として選べば良いと考えることであろう。これが大津の二値化の手法である。
@@ -70,10 +73,6 @@ def OtsuThreshold(
     Args:
         img (np.ndarray):
             変換前の画像
-        gaussian (bool):
-            ガウシアンフィルタを適用し，ノイズを除去する．
-            True: 適用する
-            False: 適用しない
         min_value (int):
             二値化後に置き換えたピクセルの最小値
         max_value (int):
@@ -86,15 +85,6 @@ def OtsuThreshold(
             1: 変換できました。
             -1: 画像の元データが存在しません。
     """
-    if img is None:  # 画像の元データが存在しない場合
-        return -1, None
-    # RGB画像を入力とする場合
-    if len(img.shape) == 3:
-        _, img = GrayScale(img)  # RGB -> Gray
-    # ガウスフィルタをかけてノイズを除去する
-    if gaussian:
-        img = cv2.GaussianBlur(img, (5, 5), 0)
-
     # ヒストグラムの算出
     hist = [np.sum(img == i) for i in range(256)]
     s_max = (0, -10)
@@ -128,19 +118,29 @@ def OtsuThreshold(
     img[img < t] = min_value
     img[img >= t] = max_value
 
-    return 1, img
+    return img
 
 
 if __name__ == "__main__":
-    from DobotFunction.Camera import WebCam_OnOff, Snapshot, Preview
+    # from DobotFunction.Camera import WebCam_OnOff, Snapshot, Preview
+    # _, cam = WebCam_OnOff(0)
+    # _, img = Snapshot(cam)
+    # Preview(img, preview="plt")
 
-    _, cam = WebCam_OnOff(0)
-    _, img = Snapshot(cam)
+    from PIL import Image
+    from matplotlib import pyplot as plt
+    from src.config.config import cfg
+
+    # img_path = cfg.TEST_DIR + os.sep + "lena.png"
+    img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "SaltAndPepper.png"
+    img = np.array(Image.open(img_path))
 
     # 閾値を用いて大域的二値化を行う
-    # _, img = GlobalThreshold(img) # 大域的二値化処理
-    # _, img = GlobalThreshold(img, gaussian=True)  # ノイズ除去->二値化処理
-    # _, img = OtsuThreshold(img)  # 大津の二値化
-    _, img = OtsuThreshold(img, gaussian=True)  # ノイズ除去->大津の二値化
-    Preview(img, preview="plt")
+    img = GlobalThreshold(img)  # 大域的二値化処理
+    # img = GlobalThreshold(img, Type="Otsu")
+    # img = GlobalThreshold(img, clearly=True, Type="Otsu")
+    # img = GlobalThreshold(img, Type=1) # エラー
+
+    plt.imshow(img, cmap="gray")
+    plt.show()
 

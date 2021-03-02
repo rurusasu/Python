@@ -8,10 +8,12 @@ import cv2
 import numpy as np
 
 from ImageProcessing.GrayScale import AutoGrayScale
+from ImageProcessing.binarization import GlobalThreshold
 
 
 def ExtractContours(
     org_img,
+    clearly: bool = False,
     kernelShape=cv2.MORPH_RECT,
     RetrievalMode=cv2.RETR_LIST,
     ApproximateMode=cv2.CHAIN_APPROX_SIMPLE,
@@ -24,6 +26,10 @@ def ExtractContours(
     Args:
         org_img (np.ndarray):
             変換前の画像データ(二値)
+        clearly (bool optional):
+            ガウシアンフィルタを用いて入力画像のノイズを除去する．
+            * True: 適用する
+            * False: 適用しない: default
         kernelShape
             モルフォロジー変換で使用する入力画像と処理の性質を決める構造的要素
             カーネルの種類
@@ -52,7 +58,9 @@ def ExtractContours(
     if type(org_img) is np.ndarray:
         img_bin = org_img.copy()
         # 画像のチャンネル数が2より大きい場合 ⇒ グレー画像に変換
-        img_bin = AutoGrayScale(img_bin)
+        img_bin = AutoGrayScale(img_bin, clearly=clearly)
+        # 二値化処理
+        img_bin = GlobalThreshold(img_bin,clearly=False)
 
         """
         モルフォロジー変換
@@ -65,6 +73,8 @@ def ExtractContours(
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 10))
         # クロージング処理
         img_bin = cv2.morphologyEx(img_bin, cv2.MORPH_CLOSE, kernel)
+
+        # 二値化処理
 
         # 輪郭検出（Detection contours）
         # tmp_img, contours, _ = cv2.findContours(img_bin, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
