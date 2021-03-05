@@ -5,6 +5,21 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Electron Main",
+      "type": "pwa-node",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\main.js",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${env:APPDATA}\\npm",
+      "windows": {
+        "runtimeExecutable": "${env:APPDATA}\\npm\\electron.cmd"
+      },
+      "args": [
+        "src"
+      ]
+    },
+    {
       "name": "Python for linux", // デバッグ構成として表示する名前
       "type": "python",    // デバッカの種別
       "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
