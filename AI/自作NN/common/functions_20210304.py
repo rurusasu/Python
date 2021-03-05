@@ -9,6 +9,8 @@ import inspect
 import numpy as np
 import random
 
+from matplotlib import pyplot as plt
+
 # ステップ関数
 def StepFunction(x):
     return np.array(x > 0, dtype=np.int)
@@ -163,12 +165,11 @@ def Datafeature(x, feature=None):
 
 # 標準化
 def __data_std__(data):
-    # dim = data.ndim  # 受け取ったdataの次元を確認
+    dim = data.ndim  # 受け取ったdataの次元を確認
 
-    if len(data.shape) == 1:  # dataが1次元(配列)のとき
+    if dim == 1:  # dataが1次元(配列)のとき
         data_std = (data - data.mean()) / data.std()
-    elif len(data.shape) == 2:  # dataが2次元(行列)のとき
-
+    else:  # dataが2次元(行列)のとき
         data_std = np.empty_like(data)  # dataと同じ大きさの空の行列を作成
         # row = data.shape[0]  # dataの行数を取得
         col = data.shape[1]  # dataの列数を取得
@@ -177,16 +178,17 @@ def __data_std__(data):
         # for j in range(col):
         # data_std[i, j] =(data[i, j] - data[i, j].mean()) / data[i, j].std() #対応する列を標準化
 
-        # for i in range(row):
         for i in range(col):
             data_std[:, i] = (data[:, i] - data[:, i].mean()) / data[:, i].std()
+
+    
 
     print("標準化処理を行いました。")
     return data_std
 
 
 # 正規化
-def __data_nom__(data: np.ndarray, f_min=0, f_max=1.0):
+def __data_nom__(data: np.ndarray, f_min=-1.0, f_max=1.0):
     """
     正規化：
     特徴量の値を一定の範囲に収める変換

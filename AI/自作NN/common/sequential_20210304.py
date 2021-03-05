@@ -5,9 +5,7 @@ sys.path.append("..")
 
 import pickle
 import numpy as np
-from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
+import matplotlib.pyplot as plt
 from common.functions import _CallClass, _CallFunction
 from common.functions import __shuffle__, __sorting__
 from common.layers import Input, Dense
@@ -156,8 +154,7 @@ class Sequential:
                 grads = self.gradient(x_batch, t_batch)
                 self.func["optimizer"].update(self.params, grads)
                 # loss = self.gradient(x_batch, t_batch) # 誤差の計算
-                # loss_sum += self.history["loss"] / batch_size
-                loss_sum += self.history["loss"]
+                loss_sum += self.history["loss"] / batch_size
 
             loss_ave = loss_sum / loop  # 誤差の平均値の計算
             self.history["loss_ave"].append(loss_ave)  # 誤差の保存
@@ -303,9 +300,8 @@ class Sequential:
         関数の勾配を求める。
         """
         # forward
-        # self.history["loss"] = 0
-        loss = self.loss(x, t)
-        self.history["loss"] = loss / x.shape[0]
+        self.history["loss"] = 0
+        self.history["loss"] = self.loss(x, t)
 
         # backward
         # 逆伝播を行うためにレイヤを反転
@@ -412,7 +408,7 @@ if __name__ == "__main__":
         ndmin=2,  # 配列の最低次元
     )
 
-    feature = 1
+    feature = None
     # -------------------------------
     # DataFeature
     # -------------------------------
