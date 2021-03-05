@@ -303,15 +303,12 @@ class Sequential:
         関数の勾配を求める。
         """
         # forward
-        # self.history["loss"] = 0
         loss = self.loss(x, t)
         self.history["loss"] = loss / x.shape[0]
 
         # backward
         # 逆伝播を行うためにレイヤを反転
-        # layers = list(self.sequential.values())
         layers = list(self.sequential.values())
-        # layers = layers[0]
         layers.reverse()
 
         # 逆伝搬および重みの更新
