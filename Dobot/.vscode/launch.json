@@ -11,11 +11,11 @@
       "program": "${workspaceFolder}\\src\\main.js",
       "console": "integratedTerminal",
       "cwd": "${workspaceRoot}",
-      "runtimeExecutable": "${workspaceFolder}\\node_modules",
+      "runtimeExecutable": "${workspaceFolder}\\node_modules\\.bin\\electron",
       "windows": {
         "runtimeExecutable": "${workspaceFolder}\\node_modules\\.bin\\electron.cmd"
       },
-      "attachSimplePort": 0,
+      "nodeVersionHint": 12, //これがない場合，Electron Error (https://github.com/microsoft/vscode-js-debug/issues/865)
       "args": [
         "src"
       ]

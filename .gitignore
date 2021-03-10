@@ -2,3 +2,5 @@
 *.pyc
 *.csv
 *.zip
+AI/Analysis/node_modules/
+Dobot/node_modules/

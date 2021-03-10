@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Dobot Controller</title>
+  </head>
+
+  <body>
+    <h1>初めてのElectron</h1>
+    We are using node
+    <script>document.write(process.versions.node)</script>,
+    Chrome
+    <script>document.write(process.versions.chrome)</script>,
+    and Electron
+    <script>document.write(process.versions.electron)</script>.
+
+    <input type="text" id="input1" size="30">
+    <button type="button" id="button1">submit</button>
+    <script type="text/javascript" src="./app/lib.js"></script>
+  </body>
+</html>
