@@ -1,0 +1,70 @@
+{
+  // IntelliSense を使用して利用可能な属性を学べます。
+  // 既存の属性の説明をホバーして表示します。
+  // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Electron for windows Note PC",
+      "type": "pwa-node",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\main.js",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceFolder}\\node_modules",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}\\node_modules\\.bin\\electron.cmd"
+      },
+      "attachSimplePort": 0,
+      "args": [
+        "src"
+      ]
+    },
+    {
+      "name": "Electron for windows Desctop PC",
+      "type": "pwa-node",
+      "request": "launch",
+      "program": "${workspaceFolder}\\src\\main.js",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${env:APPDATA}\\npm",
+      "windows": {
+        "runtimeExecutable": "${env:APPDATA}\\npm\\electron.cmd"
+      },
+      "args": [
+        "src"
+      ]
+    },
+    {
+      "name": "Python for linux", // デバッグ構成として表示する名前
+      "type": "python",    // デバッカの種別
+      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
+      "program": "${file}",
+      "python": "/opt/conda/bin/python",
+      "console": "integratedTerminal",   // プログラムを起動するコンソールの種類を指定
+      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
+      "redirectOutput": true
+    },
+    {
+      "name": "Python for windows Note PC",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "python": "C:\\tools\\miniconda3\\python.exe",
+      "console": "integratedTerminal",
+      "cwd": "${fileDirname}",
+      "redirectOutput": true
+    },
+    {
+      "name": "Python for windows DeskTop",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      //"python": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
+      //"python": "${command:python.interpreterPath}",
+      "console": "integratedTerminal",
+      "cwd": "${fileDirname}",
+      "redirectOutput": true
+    }
+  ]
+}
