@@ -7,6 +7,9 @@ sys.path.append("../../")
 import cv2
 import numpy as np
 from ctypes import cdll
+import matplotlib.gridspec as gridspec
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 
 # from PIL import Image
 
@@ -44,6 +47,7 @@ class Dobot_APP:
         self.connection = 1  # Connect: 0, DisConnect: 1, Err: -1
         self.act_err = 0  # State: 0, Err: -1
         # --- 画像プレビュー画面の初期値 --- #
+        self.fig_agg = None     # 画像のヒストグラムを表示する用の変数
         self.Image_height = 240  # 画面上に表示する画像の高さ
         self.Image_width = 320  # 画面上に表示する画像の幅
         # --- GUIの初期化 ---#
@@ -170,6 +174,7 @@ class Dobot_APP:
                 # PCに接続されているカメラの選択
                 sg.InputCombo(
                     ("TOSHIBA_Web_Camera-HD", "Logicool_HD_Webcam_C270",),
+                    default_value="TOSHIBA_Web_Camera-HD",
                     size=(15, 1),
                     key="-WebCam_Name-",
                     readonly=True,
@@ -475,6 +480,20 @@ class Dobot_APP:
             imgbytes = cv2.imencode('.png', img)[1].tobytes()
             self.Window['-IMAGE-'].update(data=imgbytes)
 
+            # ------------------------------------------------
+            # 画面上に撮影した画像のヒストグラムを表示する
+            # ------------------------------------------------
+            canvas_elem = self.Window['-CANVAS-']
+            canvas = canvas_elem.TKCanvas
+            ticks = [0, 42, 84, 127, 169, 211, 255]
+            fig, ax = plt.subplots(figsize=(3, 2))
+            ax = Image_hist(img, ax, ticks)
+            if self.fig_agg:
+                # ** IMPORTANT ** Clean up previous drawing before drawing again
+                delete_figure_agg(self.fig_agg)
+            self.fig_agg = draw_figure(canvas, fig)
+            self.fig_agg.draw()
+
         #elif event == '-Contours-':
 
 
@@ -603,6 +622,37 @@ def Preview(
     else:
         return -1
 
+def Image_hist(img, ax, ticks=None):
+    """
+    rgb_img と matplotlib.axes を受け取り、
+    axes にRGBヒストグラムをplotして返す
+    """
+    if len(img.shape) == 2:
+        color = ['k']
+    elif len(img.shape) == 3:
+        color = ['r', 'g', 'b']
+    for (i, col) in enumerate(color):
+        hist = cv2.calcHist([img], [i], None, [256], [0, 256])
+        hist = np.sqrt(hist)
+        ax.plot(hist, color=col)
+
+    if ticks:
+        ax.set_xticks(ticks)
+    ax.set_title('histogram')
+    ax.set_xlim([0, 256])
+
+    return ax
+
+def draw_figure(canvas, figure, loc=(0, 0)):
+    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    figure_canvas_agg.draw()
+    figure_canvas_agg.get_tk_widget().pack(side='top', fill='both', expand=1)
+    return figure_canvas_agg
+
+
+def delete_figure_agg(figure_agg):
+    figure_agg.get_tk_widget().forget()
+    plt.close('all')
 
 if __name__ == "__main__":
     """
