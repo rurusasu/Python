@@ -25,8 +25,7 @@ from timeout_decorator import timeout, TimeoutError
 class Dobot_APP:
     def __init__(self):
         #dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
-        #self.api = cdll.LoadLibrary(dll_path)
-        self.api = cdll.LoadLibrary("D:\\DATA\\R2_Miki\\python\\AI\\Analysis\\gui\\DobotDLL\\DobotDll.dll")
+        #self.api = cdll.LoadLibrary(dll_path)dll")
         self.CON_STR = {
             dType.DobotConnect.DobotConnect_NoError:  'DobotConnect_NoError',
             dType.DobotConnect.DobotConnect_NotFound: 'DobotConnect_NotFound',

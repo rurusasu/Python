@@ -1,11 +1,12 @@
-import sys, os
+import sys
+import os
 
 sys.path.append(".")
 sys.path.append("..")
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from ImageProcessing.GrayScale import AutoGrayScale
 
@@ -170,10 +171,9 @@ def Preview(img: np.ndarray = None, window_name: str = "frame", preview: str = "
     else:
         return -1
 
-
-    def Color_Cvt(src: np.ndarray, color_type: str):
-        """画像の色空間を変換する関数
-            変換には OpenCV の関数を使用する。
+def Color_cvt(src: np.ndarray, color_type: str):
+    """画像の色空間を変換する関数
+        変換には OpenCV の関数を使用する。
 
         Args:
             src (np.ndarray): 変換前の画像
@@ -182,21 +182,22 @@ def Preview(img: np.ndarray = None, window_name: str = "frame", preview: str = "
             * HSV: HDV空間
 
         Return:
-
-        """
-        dst = src.copy()
-        try:
-            if color_type == 'Glay':
-                #dst = cv2.cvtColor(dst, cv2.COLOR_RGB2GRAY)
-                dst = AutoGrayScale(dst, clearly=True)
-            elif color_type == 'HSV':
-                dst = cv2.cvtColor(dst, cv2.COLOR_RGB2HSV)
-            else:
-                raise ValueError("選択された変換は存在しません。")
-        except Exception as e:
-            print(e)
+            det (np.ndarray): 変換後の画像
+    """
+    dst = src.copy()
+    try:
+        if color_type == 'Glay':
+            #dst = cv2.cvtColor(dst, cv2.COLOR_RGB2GRAY)
+            dst = AutoGrayScale(dst, clearly=True)
+        elif color_type == 'HSV':
+            dst = cv2.cvtColor(dst, cv2.COLOR_RGB2HSV)
         else:
-            return dst
+            raise ValueError("選択された変換は存在しません。")
+    except Exception as e:
+        print(e)
+    else:
+        return dst
+
 
 if __name__ == "__main__":
     response, cam = WebCam_OnOff(device_num=0)
@@ -204,4 +205,3 @@ if __name__ == "__main__":
         response, img = Snapshot(cam=cam)
         if response == 1:
             Preview(img, preview="plt")
-
