@@ -68,6 +68,7 @@
   "python.linting.mypyPath": "C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\mypy-script.py",
   "python.linting.pycodestyleEnabled": false,
   "python.linting.pylintEnabled": true,
-  "python.linting.enabled": true
+  "python.linting.enabled": true,
+  "python.pythonPath": "C:\\tools\\miniconda3\\python.exe"
   // Testの設定。
 }
