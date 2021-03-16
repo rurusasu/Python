@@ -60,7 +60,8 @@
       "type": "python",
       "request": "launch",
       "program": "${file}",
-      "python": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
+      //"python": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
+      //"python": "${command:python.interpreterPath}",
       "console": "integratedTerminal",
       "cwd": "${fileDirname}",
       "redirectOutput": true

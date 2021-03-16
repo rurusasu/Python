@@ -21,6 +21,7 @@ TestDataDir
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
 cfg.BINARY_IMG_DIR = os.path.join(cfg.TEST_DIR, "binary_img")
+cfg.CONTRAST_IMG_DIR = os.path.join(cfg.TEST_DIR, "contrast_img")
 cfg.EDGE_IMG_DIR = os.path.join(cfg.TEST_DIR, "edge_img")
 cfg.GRAY_IMG_DIR = os.path.join(cfg.TEST_DIR, "gray_img")
 cfg.TEST_IMG_ORG_DIR = os.path.join(cfg.TEST_DIR, "org_img")

@@ -7,6 +7,8 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+from ImageProcessing.GrayScale import AutoGrayScale
+
 
 def WebCamOption(device_name: str) -> int:
     """
@@ -66,7 +68,7 @@ def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None):
             return 1, cam
 
     else:  # カメラに接続されていたとき
-        capture.release()
+        cam.release()
         return 0, None
 
 
@@ -99,6 +101,26 @@ def Snapshot(cam: cv2.VideoCapture = None) -> np.ndarray:
     # 撮影できなかった場合
     else:
         return -1, None
+
+
+def scale_box(src: np.ndarray, width: int, height: int):
+    """
+    アスペクト比を固定して、指定した大きさに収まるようリサイズする。
+
+    Args:
+        src (np.ndarray):
+            入力画像
+        width (int):
+            サイズ変更後の画像幅
+        height (int):
+            サイズ変更後の画像高さ
+
+    Return:
+        dst (np.ndarray):
+            サイズ変更後の画像
+    """
+    scale = max(width / src.shape[1], height / src.shape[0])
+    return cv2.resize(src, dsize=None, fx=scale, fy=scale)
 
 
 def Preview(img: np.ndarray = None, window_name: str = "frame", preview: str = "cv2"):
@@ -148,6 +170,33 @@ def Preview(img: np.ndarray = None, window_name: str = "frame", preview: str = "
     else:
         return -1
 
+
+    def Color_Cvt(src: np.ndarray, color_type: str):
+        """画像の色空間を変換する関数
+            変換には OpenCV の関数を使用する。
+
+        Args:
+            src (np.ndarray): 変換前の画像
+            color_type (str): 変更後の色空間
+            * Glay: グレースケール
+            * HSV: HDV空間
+
+        Return:
+
+        """
+        dst = src.copy()
+        try:
+            if color_type == 'Glay':
+                #dst = cv2.cvtColor(dst, cv2.COLOR_RGB2GRAY)
+                dst = AutoGrayScale(dst, clearly=True)
+            elif color_type == 'HSV':
+                dst = cv2.cvtColor(dst, cv2.COLOR_RGB2HSV)
+            else:
+                raise ValueError("選択された変換は存在しません。")
+        except Exception as e:
+            print(e)
+        else:
+            return dst
 
 if __name__ == "__main__":
     response, cam = WebCam_OnOff(device_num=0)

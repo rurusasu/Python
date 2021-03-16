@@ -1,10 +1,10 @@
 # cording: utf-8
 
-from timeout_decorator import timeout, TimeoutError
+#from timeout_decorator import timeout, TimeoutError
 import time
 from PIL import Image
 import cv2
-import seaborn as sns
+#import seaborn as sns
 import matplotlib.gridspec as gridspec
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 from matplotlib import pyplot as plt
