@@ -69,6 +69,6 @@
   "python.linting.pycodestyleEnabled": false,
   "python.linting.pylintEnabled": false,
   "python.linting.enabled": true,
-  "python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe"
+  //"python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe"
   // Testの設定。
 }
