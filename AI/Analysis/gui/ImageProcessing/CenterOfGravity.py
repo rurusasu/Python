@@ -12,10 +12,10 @@ import numpy as np
 def ExtractContours(
     bin_img,
     kernelShape=cv2.MORPH_RECT,
-    RetrievalMode=cv2.RETR_LIST,
+    RetrievalMode=cv2.RETR_EXTERNAL,
     ApproximateMode=cv2.CHAIN_APPROX_SIMPLE,
     min_area=100,
-):
+) -> np.ndarray:
     """
     画像に含まれるオブジェクトの輪郭を抽出する関数。
     黒い背景（暗い色）から白い物体（明るい色）の輪郭を検出すると仮定。
@@ -23,7 +23,7 @@ def ExtractContours(
     Args:
         bin_img (np.ndarray):
             二値画像
-        kernelShape
+        kernelShape (optional)
             モルフォロジー変換で使用する入力画像と処理の性質を決める構造的要素
             カーネルの種類
             ・cv2.MORPH_RECT: 矩形カーネル
@@ -41,11 +41,12 @@ def ExtractContours(
             輪郭の近似方法
             cv2.CHAIN_APPROX_NONE: 中間点も保持する。
             cv2.CHAIN_APPROX_SIMPLE: 中間点は保持しない。
-        min_area : int
+        min_area (int):
             領域が占める面積の閾値を指定
 
     Returns:
-
+        dst (np.ndarray):
+            輪郭が描画された画像
     """
     # 入力が2値画像の場合
     if (type(bin_img) is np.ndarray) and (len(bin_img.shape) == 2):
@@ -63,11 +64,13 @@ def ExtractContours(
         dst = cv2.morphologyEx(dst, cv2.MORPH_CLOSE, kernel)
         # 輪郭検出（Detection contours）
         contours, hierarchy = cv2.findContours(dst, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        # 小さい輪郭は誤検出として削除する
+        contrours = list(filter(lambda x: cv2.contourArea(x) > 100, contours))
         # 輪郭近似（Contour approximation）
         approx = approx_contour(contours)
         # 等高線の描画（Contour line drawing）
         cp_org_img_for_draw = np.copy(dst)
-        dst = drawing_edge(cp_org_img_for_draw, approx, min_area)
+        dst = drawing_edge(cp_org_img_for_draw, approx)
 
         # return contours, cp_org_img_for_draw
         # return contours, tmp_img
@@ -76,46 +79,44 @@ def ExtractContours(
         return None
 
 
-def approx_contour(contours):
+def approx_contour(contours: list):
     """
     輪郭線の直線近似を行う関数
 
     Arg:
-        contours : OpenCV型
+        contours (list[int]):
             画像から抽出した輪郭情報
 
     Return:
-        approx (list):
+        approx (list[int]):
             近似した輪郭情報
     """
     approx = []
     for i in range(len(contours)):
         cnt = contours[i]
-        # 実際の輪郭と近似輪郭の最大距離を表し、近似の精度を表すパラメータ
-        epsilon = 0.001 * cv2.arcLength(cnt, True)
+        epsilon = 0.001 * cv2.arcLength(cnt, True) # 実際の輪郭と近似輪郭の最大距離を表し、近似の精度を表すパラメータ
         approx.append(cv2.approxPolyDP(cnt, epsilon, True))
     return approx
 
 
-def drawing_edge(src: np.ndarray, contours: list, min_area: int=10):
+def drawing_edge(src: np.ndarray, contours: list):
     """
     入力されたimgに抽出した輪郭線を描く関数
 
     Args:
         img (np.ndarray):
             輪郭線を描く元の画像データ
-        contours (list):
+        contours (list[int]):
             画像から抽出した輪郭情報
-        min_area (int)
-            領域が占める面積の閾値を指定
     Return:
         dst (np.ndarray):
             輪郭情報を描画した画像
     """
-    large_contours = [
-        cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
 
-    dst = cv2.drawContours(img, large_contours, -1, color=(0, 255, 0), thickness=1)
+    #large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
+
+    #dst = cv2.drawContours(img, large_contours, -1, color=(0, 255, 0), thickness=1)
+    dst = cv2.drawContours(img, contours, -1, color=(255, 0, 0), thickness=1)
     return dst
 
 
@@ -185,11 +186,18 @@ if __name__ == "__main__":
     img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "lena.png"
     img = np.array(Image.open(img_path)) # ロード
     img = AutoGrayScale(img, clearly=True) # RGB -> Gray
-    img = GlobalThreshold(img)
+    img = GlobalThreshold(img) # Gray -> Binary
     # ----- #
     # テスト #
     # ----  #
-    dst = ExtractContours(img)
+    """
+    cvt = [cv2.RETR_LIST, cv2.RETR_EXTERNAL, cv2.RETR_TREE]
+    for i, j in enumerate(cvt):
+        dst = ExtractContours(img, RetrievalMode=j)
 
-    plt.imshow(dst, cmap = "gray")
+        plt.figure(i)
+        plt.imshow(dst, cmap = "gray")
+    """
+    dst = ExtractContours(img)
+    plt.imshow(dst, cmap="gray")
     plt.show()
