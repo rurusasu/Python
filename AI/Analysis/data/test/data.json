@@ -1,5 +1,87 @@
 {
-  "contrast_img": [],
+  "binary_img": [],
+  "contrast_img": [
+    {
+      "name": "image1線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image1線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image2線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image2線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image3線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image3線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image4線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image4線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image5線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image5線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "3024",
+      "height": "4032"
+    },
+    {
+      "name": "image6線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image6線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "4032",
+      "height": "3024"
+    },
+    {
+      "name": "image7線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image7線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "4032",
+      "height": "3024"
+    },
+    {
+      "name": "image8線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\image8線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "128",
+      "height": "128"
+    },
+    {
+      "name": "im線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\im線形濃度変換.png",
+      "mode": "L",
+      "channel": "1",
+      "width": "256",
+      "height": "256"
+    },
+    {
+      "name": "lena線形濃度変換.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\contrast_img\\lena線形濃度変換.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "256",
+      "height": "256"
+    }
+  ],
   "edge_img": [
     {
       "name": "lena_gray_cv2canny.png",
@@ -100,56 +182,56 @@
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image1.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "3024",
-      "height": "4032"
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "image2.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image2.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "3024",
-      "height": "4032"
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "image3.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image3.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "3024",
-      "height": "4032"
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "image4.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image4.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "3024",
-      "height": "4032"
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "image5.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image5.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "3024",
-      "height": "4032"
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "image6.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image6.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "4032",
-      "height": "3024"
+      "width": "256",
+      "height": "156"
     },
     {
       "name": "image7.png",
       "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\image7.png",
       "mode": "RGB",
       "channel": "3",
-      "width": "4032",
-      "height": "3024"
+      "width": "256",
+      "height": "156"
     },
     {
       "name": "image8.png",
@@ -166,6 +248,22 @@
       "channel": "1",
       "width": "256",
       "height": "256"
+    },
+    {
+      "name": "IMG_1129.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\IMG_1129.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "256",
+      "height": "293"
+    },
+    {
+      "name": "IMG_1143.png",
+      "path": "d:\\DATA\\R2_Miki\\python\\AI\\Analysis\\data\\test\\org_img\\IMG_1143.png",
+      "mode": "RGB",
+      "channel": "3",
+      "width": "256",
+      "height": "293"
     },
     {
       "name": "lena.png",

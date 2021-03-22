@@ -64,7 +64,7 @@ def srgb_to_rgb(img: np.ndarray, max_value: int = 255):
     """
 
     # 入力画像がRGB画像でない場合
-    if img.shape[2] != 3:
+    if img.shape[2] != 4:
         raise ValueError("Channel Error: {}".format(img.shape[2]))
 
     dst = img.copy()

@@ -23,7 +23,7 @@ def GlobalThreshold(
         img (np.ndarray):
             変換前の画像
         threshold (int optional):
-            2値化するときの閾値(0 <= th <= 256)
+            2値化するときの閾値(0 <= th <= 255)
             default: 127
         Type (str optional):
             閾値の処理方法
@@ -126,30 +126,103 @@ def AdaptiveThreshold(
     img is NoneならNoneを、変換に成功すれば閾値処理された2値画像を返す。
 
     Args:
-        img (np.ndarray):
-            変換前の画像データ
-        method (optional):
-            小領域中での閾値の計算方法
+        img (np.ndarray): 変換前の画像データ
+        method (optional): 小領域中での閾値の計算方法
             * cv2.ADAPTIVE_THRESH_MEAN_C : 近傍領域の中央値を閾値とする。
             * cv2.ADAPTIVE_THRESH_GAUSSIAN_C : 近傍領域の重み付け平均値を閾値とする。
                                             重みの値はGaussian分布になるように計算。
-        Type (optional):
-            閾値の処理方法
+        Type (optional):  閾値の処理方法
             * cv2.THRESH_BINARY
             * cv2.THRESH_BINARY_INV
-        block_size (int optional):
-            閾値計算に使用する近傍領域のサイズ。
+        block_size (int optional): 閾値計算に使用する近傍領域のサイズ。
             ただし1より大きい奇数でなければならない。
-        C (int optional):
-            計算された閾値から引く定数。
+        C (int optional): 計算された閾値から引く定数。
+    Return:
+        dst (np.ndarray): 変換後の画像
     """
     if type(img) is not np.ndarray:  # 入力データがndarray型でない場合
         raise ValueError("入力型が異なります。")
     elif len(img.shape) != 2: # 入力データがグレースケール画像でない場合
         raise ValueError("入力はグレースケール画像でなければなりません。")
 
-    img = cv2.adaptiveThreshold(img, 255, method, Type, block_size, C)
-    return img
+    if method == "Mean":
+        method = cv2.ADAPTIVE_THRESH_MEAN_C
+        dst = cv2.adaptiveThreshold(
+        src=img,
+        maxValue=255,
+        adaptiveMethod=method,
+        thresholdType=cv2.THRESH_BINARY,
+        blockSize=block_size,
+        C=C
+        )
+    elif method == "Gaussian":
+        method = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
+        dst = cv2.adaptiveThreshold(
+        src=img,
+        maxValue=255,
+        adaptiveMethod=method,
+        thresholdType=cv2.THRESH_BINARY,
+        blockSize=block_size,
+        C=C
+        )
+    elif method == "Wellner":
+        dst = _WellnerMethod(img)
+    #elif method == "Bradley":
+
+    return dst
+
+
+def _WellnerMethod(
+    gray_img: np.ndarray,
+    t: int=15
+):
+    """Wellner の適応的二値化処理を行う関数
+
+    Args:
+        gray_img (np.ndarray): 変換前のグレースケール画像
+        t (int, optional): 二値化する際に使用する整数値。Defaults to 15.
+
+    Return:
+        dst (np.ndarray): 変換後の画像
+    Raises:
+        ValueError: 画像の幅が8で割り切れなかった場合はエラー
+    """
+
+    # 画像の高さ(height), 幅(width), チャネル数(channel)を取得
+    (height, width) = gray_img.shape
+
+    # 画素値を1行に整列
+    gray_array = gray_img.reshape((-1, 1))
+    try:
+        # もし画像の幅が8で割り切れない場合
+        if width % 8 != 0: raise ValueError("画像の幅が不正です！") # 例外を発生させる
+        else: s = int(width / 8)
+    except Exception as e:
+        print(e)
+        return None
+
+    dst = np.empty(0)
+    #移動平均(Moving average)を計算するためのlistを作成
+    MA_list = np.zeros((s))
+
+    for i, v in enumerate(gray_array):
+        # list内の移動平均を計算する
+        MA = MA_list.sum() / s
+        MA_list_2 = MA_list[:-1].copy()
+        MA_list = np.insert(MA_list_2, 0, v)
+        #---------------------
+        # 二値化処理する
+        #---------------------
+        if v < MA * ((100-t) / 100):
+            v = 255
+        else:
+            v = 0
+
+        v = np.array(v)
+        dst = np.r_[dst, v]
+    print('処理が終了しました。')
+    dst = dst.reshape((height, width)).astype(np.uint8)
+    return dst
 
 
 def TwoThreshold(
@@ -194,88 +267,170 @@ def TwoThreshold(
     r, g, b = cv2.split(img)
 
     # for Red
-    _, IMAGE_R_bw = GlobalThreshold(r, LowerThreshold, Type)
-    _, IMAGE_R__ = GlobalThreshold(r, UpperThreshold, Type)
+    IMAGE_R_bw = GlobalThreshold(r, UpperThreshold, Type)
+    IMAGE_R__ = GlobalThreshold(r, LowerThreshold, Type)
     IMAGE_R__ = cv2.bitwise_not(IMAGE_R__)
     # for Green
-    _, IMAGE_G_bw = GlobalThreshold(g, LowerThreshold, Type)
-    _, IMAGE_G__ = GlobalThreshold(g, UpperThreshold, Type)
+    IMAGE_G_bw = GlobalThreshold(g, UpperThreshold, Type)
+    IMAGE_G__ = GlobalThreshold(g, LowerThreshold, Type)
     IMAGE_G__ = cv2.bitwise_not(IMAGE_G__)
     # for Blue
-    _, IMAGE_B_bw = GlobalThreshold(b, LowerThreshold, Type)
-    _, IMAGE_B__ = GlobalThreshold(b, UpperThreshold, Type)
+    MAGE_B_bw = GlobalThreshold(b, UpperThreshold, Type)
+    IMAGE_B__ = GlobalThreshold(b, LowerThreshold, Type)
     IMAGE_B__ = cv2.bitwise_not(IMAGE_B__)
 
     if PickupColor == 0:
-        IMAGE_bw = IMAGE_R_bw*IMAGE_G__*IMAGE_B__   # 画素毎の積を計算　⇒　赤色部分の抽出
+        IMAGE_bw = IMAGE_R_bw*IMAGE_G__*IMAGE_B__   # 画素毎の積を計算 ⇒ 赤色部分の抽出
     elif PickupColor == 1:
-        IMAGE_bw = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算　⇒　緑色部分の抽出
+        IMAGE_bw = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算 ⇒ 緑色部分の抽出
     elif PickupColor == 2:
-        IMAGE_bw = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算　⇒　青色部分の抽出
+        IMAGE_bw = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算 ⇒ 青色部分の抽出
     elif PickupColor == 3:
-        IMAGE_bw = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
+        IMAGE_bw = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算 ⇒ 白色部分の抽出
     elif PickupColor == 4:
-        IMAGE_bw = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　黒色部分の抽出
+        IMAGE_bw = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算 ⇒ 黒色部分の抽出
     else:
-        return 5, None
+        raise ValueError("選択されたカラーはピックアップできません。")
+        return None
 
-    return 0, IMAGE_bw
+    return IMAGE_bw
 
 
 
 
 if __name__ == "__main__":
+    import json
     from PIL import Image
     from matplotlib import pyplot as plt
+
+    from ImageProcessing.GrayScale import AutoGrayScale, srgb_to_rgb
     from src.config.config import cfg
 
+    # テスト画像の保存先
+    #save_path = cfg.BINARY_IMG_DIR + os.sep + "gray_to_wellner"
+    save_path = cfg.BINARY_IMG_DIR + os.sep + "rgb_to_wellner"
+    method = "wellner"
+
+    # テストデータロード
+    json_path = cfg.TEST_DIR + os.sep + "data.json"
+    with open(json_path, mode="rt", encoding="utf_8") as f:
+        datas = json.load(f)
+
+    # テスト
+    for data in datas["org_img"]:
+        for key, value in data.items():
+            if key == "path":
+                img = np.array(Image.open(value)) # 画像を開いて numpy 配列に変換
+                #img = AutoGrayScale(img) # グレースケール化
+                # dst = AdaptiveThreshold(img, method="Wellner") # 適応的二値化処理
+                # if type(dst) == np.ndarray:
+                    # dst = Image.fromarray(dst)
+                    # dst.save(save_path + os.sep + name + ".png")
+                img = srgb_to_rgb(img)
+                
+                r, g, b = cv2.split(img)
+                IMAGE_R_bw = AdaptiveThreshold(r, method="Wellner")
+                IMAGE_R__ = cv2.bitwise_not(IMAGE_R_bw)
+                IMAGE_G_bw = AdaptiveThreshold(g, method="Wellner")
+                IMAGE_G__ = cv2.bitwise_not(IMAGE_G_bw)
+                IMAGE_B_bw = AdaptiveThreshold(b, method="Wellner")
+                IMAGE_B__ = cv2.bitwise_not(IMAGE_B_bw)
+
+                pickup_R = IMAGE_R_bw * IMAGE_G__ * IMAGE_B__
+                pickup_R_save = Image.fromarray(pickup_R)
+                pickup_R_save.save(save_path+ os.sep + "pickup_R" + ".png")
+
+                pickup_G = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算　⇒　緑色部分の抽出
+                pickup_G_save = Image.fromarray(pickup_G)
+                pickup_G_save.save(save_path + os.sep + "pickup_G" + ".png")
+
+                pickup_B = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算　⇒　青色部分の抽出
+                pickup_B_save = Image.fromarray(pickup_B)
+                pickup_B_save.save(save_path + os.sep + "pickup_B" + ".png")
+
+                pickup_W = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
+                pickup_W_save = Image.fromarray(pickup_W)
+                pickup_W_save.save(save_path + os.sep + "pickup_W" + ".png")
+
+                pickup_Bk = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　黒色部分の抽出
+                pickup_Bk_save = Image.fromarray(pickup_Bk)
+                pickup_Bk_save.save(save_path + os.sep + "pickup_Bk" + ".png")
+            elif key == "name":
+                name = value.rstrip(".png") + "_" + method + "_"
+
+    """
     img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "lena.png"
-    # img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "SaltAndPepper.png"
     img = np.array(Image.open(img_path))
-
-    save_dir = os.path.join(cfg.BINARY_IMG_DIR, "two_threshold")
-
-    LowerThreshold=0
-    UpperThreshold=128
-    Type="cv2"
+    img = AutoGrayScale(img)
     # 2つの閾値を用いた二値化
+    save_dir = os.path.join(cfg.BINARY_IMG_DIR, "two_threshold")
+    LowerThreshold=150
+    UpperThreshold=200
+    Type="cv2"
+
     r, g, b = cv2.split(img)
     # for Red
-    IMAGE_R_bw = GlobalThreshold(r, LowerThreshold, Type)
+    IMAGE_R_bw = GlobalThreshold(r, UpperThreshold, Type)
     IMAGE_R_bw_save = Image.fromarray(IMAGE_R_bw)
-    IMAGE_R_bw_save.save(save_dir + os.sep + "img_r_low" + ".png")
-    IMAGE_R__ = GlobalThreshold(r, UpperThreshold, Type)
+    IMAGE_R_bw_save.save(save_dir + os.sep + "img_r_up" + ".png")
+    IMAGE_R__ = GlobalThreshold(r, LowerThreshold, Type)
     IMAGE_R___save = Image.fromarray(IMAGE_R__)
-    IMAGE_R___save.save(save_dir + os.sep + "img_r_up" + ".png")
+    IMAGE_R___save.save(save_dir + os.sep + "img_r_low" + ".png")
     IMAGE_R__ = cv2.bitwise_not(IMAGE_R__)
     IMAGE_R__wb_save = Image.fromarray(IMAGE_R__)
-    IMAGE_R__wb_save.save(save_dir + os.sep + "img_r_up_bitwise" + ".png")
+    IMAGE_R__wb_save.save(save_dir + os.sep + "img_r_low_bitwise" + ".png")
     # for Green
-    IMAGE_G_bw = GlobalThreshold(g, LowerThreshold, Type)
+    IMAGE_G_bw = GlobalThreshold(g, UpperThreshold, Type)
     IMAGE_G_bw_save = Image.fromarray(IMAGE_G_bw)
-    IMAGE_G_bw_save.save(save_dir + os.sep + "img_g_low" + ".png")
-    IMAGE_G__ = GlobalThreshold(g, UpperThreshold, Type)
+    IMAGE_G_bw_save.save(save_dir + os.sep + "img_g_up" + ".png")
+    IMAGE_G__ = GlobalThreshold(g, LowerThreshold, Type)
     IMAGE_G___save = Image.fromarray(IMAGE_G__)
-    IMAGE_G___save.save(save_dir + os.sep + "img_g_up" + ".png")
+    IMAGE_G___save.save(save_dir + os.sep + "img_g_low" + ".png")
     IMAGE_G__ = cv2.bitwise_not(IMAGE_G__)
     IMAGE_G__wb_save = Image.fromarray(IMAGE_G__)
-    IMAGE_G__wb_save.save(save_dir + os.sep + "img_g_up_bitwise" + ".png")
+    IMAGE_G__wb_save.save(save_dir + os.sep + "img_g_low_bitwise" + ".png")
     # for Blue
-    IMAGE_B_bw = GlobalThreshold(b, LowerThreshold, Type)
+    IMAGE_B_bw = GlobalThreshold(b, UpperThreshold, Type)
     IMAGE_B_bw_save = Image.fromarray(IMAGE_B_bw)
-    IMAGE_B_bw_save.save(save_dir + os.sep + "img_b_low" + ".png")
-    IMAGE_B__ = GlobalThreshold(b, UpperThreshold, Type)
+    IMAGE_B_bw_save.save(save_dir + os.sep + "img_b_up" + ".png")
+    IMAGE_B__ = GlobalThreshold(b, LowerThreshold, Type)
     IMAGE_B___save = Image.fromarray(IMAGE_B__)
-    IMAGE_B___save.save(save_dir + os.sep + "img_b_up" + ".png")
+    IMAGE_B___save.save(save_dir + os.sep + "img_b_low" + ".png")
     IMAGE_B__ = cv2.bitwise_not(IMAGE_B__)
     IMAGE_B__wb_save = Image.fromarray(IMAGE_B__)
-    IMAGE_B__wb_save.save(save_dir + os.sep + "img_b_up_bitwise" + ".png")
+    IMAGE_B__wb_save.save(save_dir + os.sep + "img_b_low_bitwise" + ".png")
+
+    pickup_R = IMAGE_R_bw * IMAGE_G__ * IMAGE_B__
+    pickup_R_save = Image.fromarray(pickup_R)
+    pickup_R_save.save(save_dir + os.sep + "pickup_R" + ".png")
+
+    pickup_G = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算　⇒　緑色部分の抽出
+    pickup_G_save = Image.fromarray(pickup_G)
+    pickup_G_save.save(save_dir + os.sep + "pickup_G" + ".png")
+
+    pickup_B = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算　⇒　青色部分の抽出
+    pickup_B_save = Image.fromarray(pickup_B)
+    pickup_B_save.save(save_dir + os.sep + "pickup_B" + ".png")
+
+    pickup_W = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
+    pickup_W_save = Image.fromarray(pickup_W)
+    pickup_W_save.save(save_dir + os.sep + "pickup_W" + ".png")
+
+    pickup_Bk = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　黒色部分の抽出
+    pickup_Bk_save = Image.fromarray(pickup_Bk)
+    pickup_Bk_save.save(save_dir + os.sep + "pickup_Bk" + ".png")
+    """
 
     # 閾値を用いて大域的二値化を行う
-    #img = GlobalThreshold(img)  # 大域的二値化処理
-    # img = GlobalThreshold(img, Type="Otsu")
-    # img = GlobalThreshold(img, clearly=True, Type="Otsu")
-    # img = GlobalThreshold(img, Type=1) # エラー
-    #plt.imshow(img, cmap="gray")
-    #plt.show()
+    # dst = GlobalThreshold(img)  # 大域的二値化処理
+    # dst = GlobalThreshold(img, Type="Otsu")
+    # dst = GlobalThreshold(img, clearly=True, Type="Otsu")
+    # dst = GlobalThreshold(img, Type=1) # エラー
+
+    # img_path = cfg.TEST_IMG_ORG_DIR + os.sep + "lena.png"
+    # img = np.array(Image.open(img_path))
+    # img = AutoGrayScale(img)
+    # dst = AdaptiveThreshold(img, method="Wellner") # 適応的二値化処理
+    # plt.imshow(dst, cmap="gray")
+    # plt.show()
 

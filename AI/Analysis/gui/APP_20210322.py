@@ -12,10 +12,12 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 import PySimpleGUI as sg
 
-from ImageProcessing.Contrast import Contrast_cvt
-from DobotFunction.Camera import WebCam_OnOff, Snapshot, scale_box, Color_cvt
+from DobotFunction.Camera import WebCam_OnOff, Snapshot, scale_box, Preview, Color_cvt
 from DobotFunction.Communication import Connect_Disconnect, Operation, _OneAction
 from DobotDLL import DobotDllType as dType
+
+from ImageProcessing.Contrast import Contrast_cvt
+from ImageProcessing.Binarization import GlobalThreshold, AdaptiveThreshold, TwoThreshold
 from src.config.config import cfg
 #from ..DobotDLL
 
@@ -266,7 +268,7 @@ class Dobot_APP:
                 ),
             ],
             [
-                sg.Text('重心位置計算', size=(5, 1)),
+                sg.Text('重心位置計算', size=(10, 1)),
                 sg.InputCombo(
                     (
                         'なし',
@@ -276,9 +278,120 @@ class Dobot_APP:
                     ),
                     default_value="なし",
                     size=(10, 1),
-                    key='-Color_Filtering-',
+                    key='-COG-',
                     readonly=True
                 ),
+            ],
+        ]
+
+        # 二値化処理
+        Binary = [
+            [
+                sg.InputCombo(
+                    (
+                        'なし',
+                        'Global',
+                        'Otsu',
+                        'Adaptive',
+                        'Two'
+                    ),
+                    default_value="なし",
+                    size=(10, 1),
+                    enable_events=True,
+                    key='-Binarization-',
+                    readonly=True
+                ),
+                sg.InputCombo(
+                    (
+                        'MEAN_C',
+                        'GAUSSIAN_C'
+                    ),
+                    size=(12, 1),
+                    disabled=True,
+                    key='-AdaptiveThreshold_type-',
+                    readonly=True
+                )
+            ],
+            [
+                sg.Text('Lower', size=(4, 1)),
+                sg.Slider(
+                    range=(0, 127),
+                    default_value=10,
+                    orientation='horizontal',
+                    disabled=True,
+                    size=(12, 12),
+                    key='-LowerThreshold-'
+                ),
+                sg.Text('Block Size', size=(8, 1)),
+                sg.InputText(
+                    default_text='11',
+                    size=(4, 1),
+                    disabled=True,
+                    justification='right',
+                    key='-AdaptiveThreshold_BlockSize-',
+                ),
+            ],
+            [
+                sg.Text('Upper', size=(4, 1)),
+                sg.Slider(
+                    range=(128, 256),
+                    default_value=138,
+                    orientation='horizontal',
+                    disabled=True,
+                    size=(12, 12),
+                    key='-UpperThreshold-'
+                ),
+                sg.Text('Constant', size=(8, 1)),
+                sg.InputText(
+                    default_text='2',
+                    size=(4, 1),
+                    disabled=True,
+                    justification='right',
+                    key='-AdaptiveThreshold_constant-'
+                )
+            ],
+            [
+                sg.Radio(
+                    text='R',
+                    group_id='color',
+                    disabled=True,
+                    background_color='grey59',
+                    text_color='red',
+                    key='-color_R-'
+                ),
+                sg.Radio(
+                    text='G',
+                    group_id='color',
+                    disabled=True,
+                    background_color='grey59',
+                    text_color='green',
+                    key='-color_G-'
+                ),
+                sg.Radio(
+                    text='B',
+                    group_id='color',
+                    disabled=True,
+                    background_color='grey59',
+                    text_color='blue',
+                    key='-color_B-'
+                ),
+                sg.Radio(
+                    text='W',
+                    group_id='color',
+                    disabled=True,
+                    background_color='grey59',
+                    text_color='snow',
+                    key='-color_W-'
+                ),
+                sg.Radio(
+                    text='Bk',
+                    group_id='color',
+                    default=True,
+                    disabled=True,
+                    background_color='grey59',
+                    text_color='grey1',
+                    key='-color_Bk-'
+                )
             ],
         ]
 
@@ -345,47 +458,14 @@ class Dobot_APP:
                             '十字型'), size=(6, 1), key='-KernelShape-', readonly=True), ],
         ]
 
-        # 大域的二値化
-        Global_Threshold = [
-            [sg.Radio('Global Threshold', group_id='threshold',
-                      key='-GlobalThreshold-'), ],
-            [sg.Text('Threshold', size=(7, 1)), sg.InputText(
-                '127', size=(4, 1), justification='right', key='-threshold-')],
-            [sg.Checkbox('大津の二値化', key='-OTSU-')],
-        ]
-
-        # 適応的二値化
-        Adaptive_Threshold = [
-            [sg.Radio('Adaptive Threshold', group_id='threshold',
-                      key='-AdaptiveThreshold-'), ],
-            [sg.InputCombo(('MEAN_C', 'GAUSSIAN_C'), size=(
-                12, 1), key='-AdaptiveThreshold_type-', readonly=True)],
-            [sg.Text('Block Size', size=(8, 1)), sg.InputText('11', size=(
-                4, 1), justification='right', key='-AdaptiveThreshold_BlockSize-'), ],
-            [sg.Text('Constant', size=(8, 1)), sg.InputText('2', size=(
-                4, 1), justification='right', key='-AdaptiveThreshold_constant-')],
-        ]
-
-        # 2つの閾値を用いた二値化
-        TwoThreshold = [
-            [sg.Radio('TwoThreshold', group_id='threshold',
-                      default=True, key='-Twohreshold-'), ],
-            [sg.Text('Lower', size=(4, 1)), sg.Slider(range=(0, 127), default_value=10,
-                                                      orientation='horizontal', size=(12, 12), key='-LowerThreshold-'), ],
-            [sg.Text('Upper', size=(4, 1)),  sg.Slider(range=(128, 256), default_value=138,
-                                                       orientation='horizontal', size=(12, 12), key='-UpperThreshold-')]
-        ]
-
         layout = [
             Connect,
             [sg.Col(SetPose, size=(165, 136)), ],
-            [sg.Col(WebCamConnect),  sg.Frame('画像の重心計算', Contours), ],
-            [sg.Image(filename='', size=(self.Image_width, self.Image_height), key='-IMAGE-'),
-             sg.Canvas(size=(self.Image_width, self.Image_height), key='-CANVAS-')],
+            [sg.Col(WebCamConnect),  sg.Frame('画像の重心計算', Contours),],
+            [sg.Frame(title="二値化処理", layout=Binary)],
             [
-                sg.Col(Global_Threshold, size=(200, 115)),
-                sg.Col(Adaptive_Threshold, size=(200, 115)),
-                sg.Col(TwoThreshold, size=(200, 115)),
+                sg.Image(filename='', size=(self.Image_width, self.Image_height), key='-IMAGE-'),
+                sg.Canvas(size=(self.Image_width, self.Image_height), key='-CANVAS-')
             ],
             [sg.Quit()],
         ]
@@ -399,6 +479,24 @@ class Dobot_APP:
     """
 
     def Event(self, event, values):
+        #---------------------------------------------
+        # 操作時にウインドウが変化するイベント群
+        #---------------------------------------------
+        if event == "-Binarization-":
+            if values["-Binarization-"] != "なし":
+                self.Window['-LowerThreshold-'].update(disabled=False)
+
+            if values["-Binarization-"] == "Adaptive":
+                #self.Window[]
+            elif values["-Binarization-"] == "Two":
+                # 各色選択ボタンを有効化
+                self.Window['-color_R-'].update(disabled=False)
+                self.Window['-color_G-'].update(disabled=False)
+                self.Window['-color_B-'].update(disabled=False)
+                self.Window['-color_W-'].update(disabled=False)
+                self.Window['-color_Bk-'].update(disabled=False)
+                self.Window['-UpperThreshold-'].update(disabled=False)
+
         # Dobotの接続を行う
         if event == "-Connect-":
             # self.connection = self.Connect_Disconnect_click(self.connection, self.api)
@@ -524,7 +622,7 @@ class Dobot_APP:
             self.Window["-IMAGE_channel-"].update(str(img.shape[2]))
 
             # ---------------------------
-            #    撮影した画像を変換する。
+            # 撮影した画像を変換する。
             # ---------------------------
             # 色空間変換
             if values['-Color_Space-'] != 'RGB':
@@ -534,6 +632,31 @@ class Dobot_APP:
             # 濃度変換
             if values['-Color_Density-'] != 'なし':
                 img = Contrast_cvt(img, values['-Color_Density-'])
+
+            # ------------
+            # 画像処理
+            # ------------
+
+            if values['-Binarization-'] != 'なし':  # 二値化処理
+
+                if values['-Binarization-'] == 'Global':  # 大域的二値化処理
+                    img = GlobalThreshold(img, threshold=int(values["-LowerThreshold-"]))
+                elif values['-Binarization-'] == 'Otsu':  # 大津の二値化処理
+                    img = GlobalThreshold(img, Type=Otsu)
+                elif values['-Binarization-'] == 'Two':  # 2つの閾値を用いた二値化処理
+                    # ピックアップする色を番号に変換
+                    # 抽出したい色を選択
+                    if values['-color_R-']: color = 0
+                    elif values['-color_G-']: color = 1
+                    elif values['-color_B-']: color = 2
+                    elif values['-color_W-']: color = 3
+                    elif values['-color_Bk-']: color = 4
+                    img = TwoThreshold(
+                        img=img,
+                        LowerThreshold=int(values["-LowerThreshold-"]),
+                        UpperThreshold=int(values["-UpperThreshold-"]),
+                        PickupColor=color
+                    )
 
             # -----------------------------------
             # 画面上に撮影した画像を表示する
@@ -595,91 +718,6 @@ def WebCamOption(device_name: str) -> int:
         device_num = None
 
     return device_num
-
-
-def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None) -> cv2.VideoCapture:
-    """
-    WebCameraを読み込む関数
-
-    Args:
-        device_num (int):
-            カメラデバイスを番号で指定
-            0: PC内臓カメラ
-            1: 外部カメラ
-        cam (cv2.VideoCapture):
-            接続しているカメラ情報
-
-    Return:
-        response (int):
-            動作終了を表すフラグ
-            0: カメラを開放した
-            1: カメラに接続した
-            -1: エラー
-        cam (cv2.VideoCapture):
-            接続したデバイス情報を返す
-    """
-    if cam is None:  # カメラが接続されていないとき
-        cam = cv2.VideoCapture(device_num)
-        # カメラに接続できなかった場合
-        if not cam.isOpened():
-            return -1, None
-        # 接続できた場合
-        else:
-            return 1, cam
-
-    else:  # カメラに接続されていたとき
-        cam.release()
-        return 0, None
-
-
-def Preview(
-    img: np.ndarray = None, window_name: str = "frame", preview: str = "cv2"
-) -> int:
-    """
-    webカメラの画像を表示する関数
-
-    Parameters
-    ----------
-    img : ndarray型
-        画像のピクセル値配列
-        default : None
-    window_name : str
-        画像を表示する時のウインドウ名
-        default : "frame"
-    preview : str
-        画像をウインドウ上に表示するときに使用するパッケージ名
-        OpenCV の imshow を使用する場合 : "cv2" (default)
-        Matplotlib の plt.show を使用する場合: "plt"
-
-    Returns
-    -------
-    response : int
-        画像表示の可否を返す
-        1: 表示できた。
-        -1: 表示できない。
-    """
-    # 画像が入力されている場合
-    if type(img) is np.ndarray:
-        # 画像を OpenCV でウインドウ上に表示する
-        if preview == "cv2":
-            cv2.imshow(window_name, img)
-            return 1
-        # 画像を Matplotlib で ウインドウ上に表示する
-        elif preview == "plt":
-            # グレースケール画像の場合
-            if len(img.shape) == 2:
-                plt.imshow(img, cmap="gray")
-            # RGB画像の場合
-            elif len(img.shape) == 3:
-                plt.imshow(img)
-            plt.show()
-            return 1
-        # 表示に使うパッケージの選択が不適切な場合
-        else:
-            return -1
-    # 画像が入力されていない場合
-    else:
-        return -1
 
 
 def Image_hist(img, ax, ticks=None):
