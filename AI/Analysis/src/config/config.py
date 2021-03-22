@@ -79,7 +79,7 @@ cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 """
 Dobot
 """
-cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
+cfg.DOBOT_DLL_DIR = os.path.join(cfg.ROOT_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 
 

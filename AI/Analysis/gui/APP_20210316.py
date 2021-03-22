@@ -5,7 +5,7 @@ sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../../")
 
-from ctypes import cdll
+from ctypes import*
 
 import cv2
 import matplotlib.gridspec as gridspec
@@ -20,19 +20,16 @@ from DobotFunction.Camera import WebCam_OnOff, Snapshot, scale_box, Color_cvt
 from DobotFunction.Communication import Connect_Disconnect, Operation, _OneAction
 from DobotDLL import DobotDllType as dType
 from src.config.config import cfg
-
-
-
-
-
+#from ..DobotDLL
 
 # from PIL import Image
 
 
 class Dobot_APP:
     def __init__(self):
-        dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
+        #dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
         #self.api = cdll.LoadLibrary(dll_path)
+        self.api = dType.load()
         self.CON_STR = {
             dType.DobotConnect.DobotConnect_NoError: "DobotConnect_NoError",
             dType.DobotConnect.DobotConnect_NotFound: "DobotConnect_NotFound",

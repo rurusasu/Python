@@ -70,7 +70,7 @@
   //"python.linting.mypyPath": "C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\mypy-script.py",
   "python.linting.pycodestyleEnabled": false,
   "python.linting.pylintEnabled": false,
-  //"python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe"
+  "python.pythonPath": "C:\\Users\\PC-2020-3\\miniconda3\\python.exe",
   // Docstring のフォーマット
   "autoDocstring.docstringFormat": "google"
   // Testの設定。
