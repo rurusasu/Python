@@ -117,7 +117,6 @@ def _OtsuThreshold(
 def AdaptiveThreshold(
     img: np.ndarray,
     method=cv2.ADAPTIVE_THRESH_MEAN_C,
-    Type=cv2.THRESH_BINARY,
     block_size: int=11,
     C: int=2):
     """
@@ -131,9 +130,6 @@ def AdaptiveThreshold(
             * cv2.ADAPTIVE_THRESH_MEAN_C : 近傍領域の中央値を閾値とする。
             * cv2.ADAPTIVE_THRESH_GAUSSIAN_C : 近傍領域の重み付け平均値を閾値とする。
                                             重みの値はGaussian分布になるように計算。
-        Type (optional):  閾値の処理方法
-            * cv2.THRESH_BINARY
-            * cv2.THRESH_BINARY_INV
         block_size (int optional): 閾値計算に使用する近傍領域のサイズ。
             ただし1より大きい奇数でなければならない。
         C (int optional): 計算された閾値から引く定数。
@@ -223,6 +219,7 @@ def _WellnerMethod(
     print('処理が終了しました。')
     dst = dst.reshape((height, width)).astype(np.uint8)
     return dst
+
 
 
 def TwoThreshold(
@@ -326,35 +323,36 @@ if __name__ == "__main__":
                 # if type(dst) == np.ndarray:
                     # dst = Image.fromarray(dst)
                     # dst.save(save_path + os.sep + name + ".png")
-                img = srgb_to_rgb(img)
-                
-                r, g, b = cv2.split(img)
-                IMAGE_R_bw = AdaptiveThreshold(r, method="Wellner")
-                IMAGE_R__ = cv2.bitwise_not(IMAGE_R_bw)
-                IMAGE_G_bw = AdaptiveThreshold(g, method="Wellner")
-                IMAGE_G__ = cv2.bitwise_not(IMAGE_G_bw)
-                IMAGE_B_bw = AdaptiveThreshold(b, method="Wellner")
-                IMAGE_B__ = cv2.bitwise_not(IMAGE_B_bw)
+                #img = srgb_to_rgb(img)
 
-                pickup_R = IMAGE_R_bw * IMAGE_G__ * IMAGE_B__
-                pickup_R_save = Image.fromarray(pickup_R)
-                pickup_R_save.save(save_path+ os.sep + "pickup_R" + ".png")
+                if len(img.shape) == 3:
+                    r, g, b = cv2.split(img)
+                    IMAGE_R_bw = AdaptiveThreshold(r, method="Wellner")
+                    IMAGE_R__ = cv2.bitwise_not(IMAGE_R_bw)
+                    IMAGE_G_bw = AdaptiveThreshold(g, method="Wellner")
+                    IMAGE_G__ = cv2.bitwise_not(IMAGE_G_bw)
+                    IMAGE_B_bw = AdaptiveThreshold(b, method="Wellner")
+                    IMAGE_B__ = cv2.bitwise_not(IMAGE_B_bw)
 
-                pickup_G = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算　⇒　緑色部分の抽出
-                pickup_G_save = Image.fromarray(pickup_G)
-                pickup_G_save.save(save_path + os.sep + "pickup_G" + ".png")
+                    pickup_R = IMAGE_R_bw*IMAGE_G__*IMAGE_B__   # 画素毎の積を計算 ⇒ 赤色部分の抽出
+                    pickup_R_save = Image.fromarray(pickup_R)
+                    pickup_R_save.save(save_path+ os.sep + name + "pickup_R" + ".png")
 
-                pickup_B = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算　⇒　青色部分の抽出
-                pickup_B_save = Image.fromarray(pickup_B)
-                pickup_B_save.save(save_path + os.sep + "pickup_B" + ".png")
+                    pickup_G = IMAGE_G_bw*IMAGE_B__*IMAGE_R__   # 画素毎の積を計算 ⇒ 緑色部分の抽出
+                    pickup_G_save = Image.fromarray(pickup_G)
+                    pickup_G_save.save(save_path + os.sep + name + "pickup_G" + ".png")
 
-                pickup_W = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算　⇒　白色部分の抽出
-                pickup_W_save = Image.fromarray(pickup_W)
-                pickup_W_save.save(save_path + os.sep + "pickup_W" + ".png")
+                    pickup_B = IMAGE_B_bw*IMAGE_R__*IMAGE_G__   # 画素毎の積を計算 ⇒ 青色部分の抽出
+                    pickup_B_save = Image.fromarray(pickup_B)
+                    pickup_B_save.save(save_path + os.sep + name + "pickup_B" + ".png")
 
-                pickup_Bk = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算　⇒　黒色部分の抽出
-                pickup_Bk_save = Image.fromarray(pickup_Bk)
-                pickup_Bk_save.save(save_path + os.sep + "pickup_Bk" + ".png")
+                    pickup_W = IMAGE_R_bw*IMAGE_G_bw*IMAGE_B_bw  # 画素毎の積を計算 ⇒ 白色部分の抽出
+                    pickup_W_save = Image.fromarray(pickup_W)
+                    pickup_W_save.save(save_path + os.sep + name + "pickup_W" + ".png")
+
+                    pickup_Bk = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算 ⇒ 黒色部分の抽出
+                    pickup_Bk_save = Image.fromarray(pickup_Bk)
+                    pickup_Bk_save.save(save_path + os.sep + name + "pickup_Bk" + ".png")
             elif key == "name":
                 name = value.rstrip(".png") + "_" + method + "_"
 
