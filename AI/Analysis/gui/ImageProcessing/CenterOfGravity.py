@@ -15,7 +15,7 @@ def CenterOfGravity(
     ApproximateMode=cv2.CHAIN_APPROX_NONE,
     min_area=100,
     cal_Method: int=0,
-    drow_figure: bool=True
+    drawing_figure: bool=True
 ):
     """
     オブジェクトの図心を計算する関数
@@ -34,6 +34,7 @@ def CenterOfGravity(
         cal_Method (int optional): 重心計算を行う方法を選択する
             * 0: 画像から重心を計算
             * 1: オブジェクトの輪郭から重心を計算
+        drawing_figure (bool optional): 輪郭線と重心位置が示された図を描画する。default to True
     Return:
         cx, cy (int): オブジェクトの重心座標
     """
@@ -49,12 +50,18 @@ def CenterOfGravity(
 
     # 輪郭から重心を求める場合
     else:
-        _, contours = _ExtractContours(
+        contours = _ExtractContours(
             bin_img=dst,
             RetrievalMode=RetrievalMode,
             ApproximateMode=ApproximateMode,
             min_area=min_area
             )
+
+
+        # 等高線の描画（Contour line drawing）
+        if drawing_figure:
+            dst = __drawing_edge(dst, contours)
+
         maxCont = contours[0]
         for c in contours:
             if len(maxCont) < len(c):
@@ -69,7 +76,12 @@ def CenterOfGravity(
     except ZeroDivisionError:
         return None
 
-    return (cx, cy)
+    G = (cx, cy)
+    if drawing_figure:
+        cv2.circle(dst, G, 4, 100, 2, 4)  # 重心位置を円で表示
+        cv2.imshow('Convert', dst)  # 画像として出力
+
+    return G
 
 
 def _ExtractContours(
@@ -95,7 +107,6 @@ def _ExtractContours(
         min_area (int): 領域が占める面積の閾値を指定
 
     Returns:
-        dst (np.ndarray): 輪郭が描画された画像
         approx (list[int]): 近似した輪郭情報
     """
     # 輪郭検出（Detection contours）
@@ -104,11 +115,8 @@ def _ExtractContours(
     contrours = list(filter(lambda x: cv2.contourArea(x) > 100, contours))
     # 輪郭近似（Contour approximation）
     approx = __approx_contour(contours)
-    # 等高線の描画（Contour line drawing）
-    cp_org_img_for_draw = np.copy(bin_img)
-    dst = __drawing_edge(cp_org_img_for_draw, approx)
 
-    return dst, approx
+    return approx
 
 
 def __approx_contour(contours: list):

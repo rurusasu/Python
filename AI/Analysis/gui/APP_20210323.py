@@ -13,7 +13,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, FigureCanvasAgg
 import PySimpleGUI as sg
 
 from DobotFunction.Camera import WebCam_OnOff, Snapshot, scale_box, Preview, Color_cvt
-from DobotFunction.Communication import Connect_Disconnect, Operation, _OneAction
+from DobotFunction.Communication import Connect_Disconnect, Operation, _OneAction, GripperOpenClose
 from DobotDLL import DobotDllType as dType
 
 from ImageProcessing.Binarization import GlobalThreshold, AdaptiveThreshold, TwoThreshold
@@ -30,11 +30,6 @@ class Dobot_APP:
         dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
         #self.api = cdll.LoadLibrary(dll_path)
         self.api = dType.load(dll_path)
-        self.CON_STR = {
-            dType.DobotConnect.DobotConnect_NoError: "DobotConnect_NoError",
-            dType.DobotConnect.DobotConnect_NotFound: "DobotConnect_NotFound",
-            dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
-        }
         self.pose_key = [
             "x",
             "y",
@@ -45,13 +40,21 @@ class Dobot_APP:
             "joint3Angle",
             "joint4Angle",
         ]
+        self.connection = False #Dobotの接続状態
         self.current_pose = {}  # Dobotの現在の姿勢
         self.cam = None
         self.cam_num = None
         self.IMAGE_Org = None # スナップショットのオリジナル画像(RGB)
         self.IMAGE_bin = None # 二値画像
+        # --- エンドエフェクタ --- #
+        self.MotorON = False # 吸引用モータを制御
         # --- エラーフラグ --- #
-        self.connection = 1  # Connect: 0, DisConnect: 1, Err: -1
+        self.Dobot_err = {
+            0: "DobotAct_NoError",
+            1: "DobotConnect_NotFound",
+            2: "DobotConnect_Occupied",
+            3: "DobotAct_Timeout",
+        }
         self.act_err = 0  # State: 0, Err: -1
         # --- 画像プレビュー画面の初期値 --- #
         self.fig_agg = None     # 画像のヒストグラムを表示する用の変数
@@ -114,7 +117,70 @@ class Dobot_APP:
     """
 
     def Layout(self):
-        Connect = [sg.Button("Connect or Disconnect", key="-Connect-")]
+        Connect = [
+            [sg.Button("Connect or Disconnect", key="-Connect-")],
+        ]
+
+        EndEffector = [
+            [sg.Button('SuctionCup ON/OFF', key='-SuctionCup-')],
+            [sg.Button('Gripper Open/Close', key='-Gripper-')],
+        ]
+
+        GetPose = [
+            [sg.Button('Get Pose', size=(7, 1), key='-GetPose-')],
+            [sg.Text('J1', size=(2, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-JointPose1-',
+                          readonly=True,),
+             sg.Text('X', size=(1, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-CoordinatePose_X-',
+                          readonly=True),
+            ],
+            [sg.Text('J2', size=(2, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-JointPose2-',
+                          readonly=True),
+             sg.Text('Y', size=(1, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-CoordinatePose_Y-',
+                          readonly=True)
+            ],
+            [sg.Text('J3', size=(2, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-JointPose3-',
+                          readonly=True),
+             sg.Text('Z', size=(1, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-CoordinatePose_Z-',
+                          readonly=True),
+            ],
+            [sg.Text('J4', size=(2, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-JointPose4-',
+                          readonly=True),
+             sg.Text('R', size=(1, 1)),
+             sg.InputText(default_text='',
+                          size=(5, 1),
+                          disabled=True,
+                          key='-CoordinatePose_R-',
+                          readonly=True),
+            ],
+        ]
 
         SetPose = [
             [
@@ -423,8 +489,10 @@ class Dobot_APP:
         ]
 
         layout = [
-            Connect,
-            [sg.Col(SetPose, size=(165, 136)), ],
+            [sg.Col(Connect), sg.Col(EndEffector)],
+            [sg.Col(GetPose, size=(165, 140)),
+             sg.Col(SetPose, size=(165, 140)),
+             sg.Frame(title="キャリブレーション", layout=Alignment)],
             [sg.Col(WebCamConnect),],
             [sg.Frame(title="二値化処理", layout=Binary),
              sg.Frame(title='画像の重心計算', layout=ContourExtractionSettings),
@@ -467,13 +535,31 @@ class Dobot_APP:
         # Dobotの接続を行う
         if event == "-Connect-":
             # self.connection = self.Connect_Disconnect_click(self.connection, self.api)
-            self.connection = Connect_Disconnect(
-                self.connection, self.api, self.CON_STR
+            self.connection, err = Connect_Disconnect(
+                self.connection,
+                self.api,
             )
 
-            if self.connection == 0:
+            if self.connection:
                 # Dobotの現在の姿勢を画面上に表示
                 self.current_pose = self.GetPose_UpdateWindow()
+
+        # --------------------- #
+        # サクションカップを動作させる #
+        # --------------------- #
+        elif event == '-Gripper-':
+            if self.connection:
+                # グリッパを開く
+                err = GripperOpenClose(api=self.api,
+                                       MotorCtrl=True,
+                                       gripperCtrl=False)
+                # グリッパを閉じる
+                err = GripperOpenClose(api=self.api,
+                                       motorCtrl=True,
+                                       gripperCtrl=True)
+
+                if self.Dobot_err[err] != "DobotAct_NoError":
+                    raise Exception(self.Dobot_err[err])
 
         elif event == "-SetJointPose-":
             # 移動後の関節角度を指定
@@ -611,6 +697,12 @@ class Dobot_APP:
             self.Window['-CenterOfGravity_y-'].update(str(COG[1]))
 
 
+        # --------------------------------------------------- #
+        #  オブジェクトの重心位置に移動→掴む→退避 動作を実行する  #
+        # --------------------------------------------------- #
+        #elif event == '-task_1-':
+
+
     def main(self):
         return sg.Window(
             "Dobot",
@@ -630,6 +722,7 @@ class Dobot_APP:
 
     def SnapshotBtn(self, values: list) -> np.ndarray:
         """スナップショットの撮影から一連の画像処理を行う関数。
+
         Args:
             values (list): ウインドウ上のボタンの状態などを記録している変数
         Returns:

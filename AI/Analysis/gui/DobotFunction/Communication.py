@@ -6,8 +6,16 @@ sys.path.append("..")
 sys.path.append("../../")
 
 import csv
-from DobotDLL import DobotDllType as dType
 
+from DobotDLL import DobotDllType as dType
+from timeout_decorator import timeout, TimeoutError
+
+
+CON_STR = {
+            dType.DobotConnect.DobotConnect_NoError: "DobotConnect_NoError",
+            dType.DobotConnect.DobotConnect_NotFound: "DobotConnect_NotFound",
+            dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
+        }
 
 # 関節座標系における各モータの速度および加速度の初期値
 ptpJointParams = {
@@ -33,32 +41,29 @@ ptpCoordinateParams = {
 # -----------------
 # Dobotの初期化
 # -----------------
-def Connect_Disconnect(connection_flag, api, CON_STR):
+def Connect_Disconnect(connection_flag: bool, api, CON_STR: tuple=CON_STR):
+    """Dobotを接続状態を制御する関数
+
+    Args:
+        connection_flag(bool): 現在Dobotが接続されているか。
+        api(dType): Dobot API
+        CON_STR(tuple): 接続時のエラーテーブル
+
+    Returns:
+        connection(bool): 接続結果
+            True: 接続した
+            False: 接続していない
+        Dobot_Err(int): 処理結果
     """
-    Dobotを接続する関数
-
-    Returns
-    -------
-    result : int
-        0 : 接続した
-        1 : 接続していない
-        -1 : 接続できなかった
-
-    """
-    # Setup パラメータ
-    ch = ""
-
 
     # Dobotがすでに接続されていた場合
-    if connection_flag == 0:
-        # DobotDisconnect
-        dType.DisconnectDobot(api)
+    if connection_flag:
+        dType.DisconnectDobot(api) # DobotDisconnect
         print("Dobotとの接続を解除しました．")
-        return 1
+        return False, 1
 
     # Dobotが接続されていない場合
-    elif connection_flag != 0:
-
+    else:
         portName = dType.SearchDobot(api, maxLen=128)
 
         if "COM3" in portName:
@@ -67,15 +72,17 @@ def Connect_Disconnect(connection_flag, api, CON_STR):
             # 接続時にエラーが発生しなかった場合
             if CON_STR[state[0]] == "DobotConnect_NoError":
                 print("Dobotに通信速度 {} で接続されました．".format(char_size))
-                initDobot(api)
+                initDobot(api) # Dobotの初期設定を行う
+                return True, state[0]
 
-                return 0
             elif CON_STR[state[0]] == "DobotConnect_NotFound":
                 print("Dobot を見つけることができません！")
-                return -1  # Dobotに接続できた場合
+                return False, state[0]
+
             elif CON_STR[state[0]] == "DobotConnect_Occupied":
                 print(
                     "Dobot が占有されています。接続するには、アプリケーションを再起動する、Dobot 背面の Reset ボタンを押す、接続USBケーブルを再接続する、のどれかを行う必要があります。")
+                return False, state[0]
             else:
                 dType.DisconnectDobot(api)
                 raise Exception("接続時に予期せぬエラーが発生しました！！")
@@ -245,14 +252,14 @@ def _OneAction(api, pose, mode=dType.PTPMode.PTPMOVLXYZMode):
         lastIndex = dType.SetPTPCmd(
             api, mode, pose["x"], pose["y"], pose["z"], pose["r"], isQueued=1
         )[0]
-        _Act(api, lastIndex)
+        __Act(api, lastIndex)
     except TimeoutError:
         return -1
     else:
         return 0
 
 
-def _Act(api, lastIndex):
+def __Act(api, lastIndex):
     """Function to execute command"""
     # キューに入っているコマンドを実行
     dType.SetQueuedCmdStartExec(api)
@@ -263,6 +270,36 @@ def _Act(api, lastIndex):
 
     # キューに入っているコマンドを停止
     dType.SetQueuedCmdStopExec(api)
+
+
+def GripperOpenClose(api, motorCtrl: bool=False, gripperCtrl: bool=True, queue_index: int=0):
+    """グリッパーを開閉する関数
+
+    Args:
+        api : Dobot型
+            DobotAPIのコンストラクタ
+        motorCtrl(bool optional): 吸引モータを起動する。default to True
+            * True:  On
+            * False: Off
+        gripperCtrl(bool optional): グリッパを開閉する。default to True
+            True:  Close
+            False: Open
+        queue_index(int optional): データをQueueとして送るか。default to 0
+            * 0: 送らない
+            * 1: 送る
+
+    Return:
+        respomse (int): 動作結果
+            0: 動作した
+            3: 動作しなかった
+    """
+    response = 3
+    timeout(5)
+    try:
+        response = dType.SetEndEffectorGripper(api, MotorCtr, gripperCtr, queue_index)
+    except TimeoutError:
+        return response
+    return 0
 
 
 # ----------------------------------
