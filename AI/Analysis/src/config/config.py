@@ -49,7 +49,8 @@ cfg.IMAGE_ID_TEST_DIR = os.path.join(cfg.IMAGE_ID_DIR, "test")
 # Image label Dir
 cfg.IMAGE_LABEL_DIR = os.path.join(cfg.OPENIMAGE_DIR, "image_label")
 cfg.IMAGE_LABEL_TRAIN_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "train")
-cfg.IMAGE_LABEL_VALIDATION_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "validation")
+cfg.IMAGE_LABEL_VALIDATION_DIR = os.path.join(
+    cfg.IMAGE_LABEL_DIR, "validation")
 cfg.IMAGE_LABEL_TEST_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "test")
 # Images Dir
 cfg.IMAGES_DIR = os.path.join(cfg.OPENIMAGE_DIR, "images")
@@ -64,12 +65,14 @@ cfg.META_DATA_TEST_DIR = os.path.join(cfg.META_DATA_DIR, "test")
 # Relationship Dir
 cfg.RELATIONSHIP_DIR = os.path.join(cfg.OPENIMAGE_DIR, "relationship")
 cfg.RELATIONSHIP_TRAIN_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "train")
-cfg.RELATIONSHIP_VALIDATION_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "validation")
+cfg.RELATIONSHIP_VALIDATION_DIR = os.path.join(
+    cfg.RELATIONSHIP_DIR, "validation")
 cfg.RELATIONSHIP_TEST_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "test")
 # Segmentation Dir
 cfg.SEGMENTATION_DIR = os.path.join(cfg.OPENIMAGE_DIR, "segmentation")
 cfg.SEGMENTATION_TRAIN_DIR = os.path.join(cfg.SEGMENTATION_DIR, "train")
-cfg.SEGMENTATION_VALIDATION_DIR = os.path.join(cfg.SEGMENTATION_DIR, "validation")
+cfg.SEGMENTATION_VALIDATION_DIR = os.path.join(
+    cfg.SEGMENTATION_DIR, "validation")
 cfg.SEGMENTATION_TEST_DIR = os.path.join(cfg.SEGMENTATION_DIR, "test")
 """
 画像データ
@@ -79,7 +82,7 @@ cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 """
 Dobot
 """
-cfg.DOBOT_DLL_DIR = os.path.join(cfg.ROOT_DIR, "DobotDLL")
+cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 
 

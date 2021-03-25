@@ -5,11 +5,11 @@ import os
 def enum(**enums):
     return type("Enum", (), enums)
 
-EndType = enum(EndTypeCustom=0, 
-    EndTypeSuctionCup=1, 
-    EndTypeGripper=2, 
+EndType = enum(EndTypeCustom=0,
+    EndTypeSuctionCup=1,
+    EndTypeGripper=2,
     EndTypeLaser=3,
-    EndTypePen = 4,  
+    EndTypePen = 4,
     EndTypeMax=5)
 
 DevType = enum(Idle=0,
@@ -110,9 +110,9 @@ class AlarmsState(Structure):
 class HOMEParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("x", c_float), 
-        ("y", c_float), 
-        ("z", c_float), 
+        ("x", c_float),
+        ("y", c_float),
+        ("z", c_float),
         ("r", c_float)
         ]
 
@@ -121,45 +121,45 @@ class HOMECmd(Structure):
     _fields_ = [
         ("temp", c_float)
         ]
-        
+
 class AutoLevelingCmd(Structure):
     _pack_ = 1
     _fields_ = [
         ("controlFlag", c_ubyte),
         ("precision", c_float)
         ]
-        
+
 class EMotor(Structure):
     _pack_ = 1
     _fields_ = [
-        ("index", c_byte), 
-        ("isEnabled", c_byte), 
+        ("index", c_byte),
+        ("isEnabled", c_byte),
         ("speed", c_int32)
         ]
-        
+
 class EMotorS(Structure):
     _pack_ = 1
     _fields_ = [
-        ("index", c_byte), 
-        ("isEnabled", c_byte), 
-        ("speed", c_int32), 
+        ("index", c_byte),
+        ("isEnabled", c_byte),
+        ("speed", c_int32),
         ("distance", c_uint32)
         ]
-        
+
 ##################  Arm orientation定义   ##################
 ArmOrientation = enum(
-    LeftyArmOrientation=0, 
+    LeftyArmOrientation=0,
     RightyArmOrientation=1)
-    
+
 ##################  点动示教部分   ##################
 
 class JOGJointParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("joint1Velocity", c_float), 
-        ("joint2Velocity", c_float), 
-        ("joint3Velocity", c_float), 
-        ("joint4Velocity", c_float), 
+        ("joint1Velocity", c_float),
+        ("joint2Velocity", c_float),
+        ("joint3Velocity", c_float),
+        ("joint4Velocity", c_float),
         ("joint1Acceleration", c_float),
         ("joint2Acceleration", c_float),
         ("joint3Acceleration", c_float),
@@ -169,10 +169,10 @@ class JOGJointParams(Structure):
 class JOGCoordinateParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("xVelocity", c_float), 
-        ("yVelocity", c_float), 
-        ("zVelocity", c_float), 
-        ("rVelocity", c_float), 
+        ("xVelocity", c_float),
+        ("yVelocity", c_float),
+        ("zVelocity", c_float),
+        ("rVelocity", c_float),
         ("xAcceleration", c_float),
         ("yAcceleration", c_float),
         ("zAcceleration", c_float),
@@ -182,22 +182,22 @@ class JOGCoordinateParams(Structure):
 class JOGCommonParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocityRatio", c_float), 
+        ("velocityRatio", c_float),
         ("accelerationRatio", c_float)
         ]
 
 class JOGLParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocity",  c_float), 
+        ("velocity",  c_float),
         ("acceleration",  c_float)
     ]
 
 
-JC = enum(JogIdle=0, 
-    JogAPPressed=1, 
-    JogANPressed=2, 
-    JogBPPressed=3, 
+JC = enum(JogIdle=0,
+    JogAPPressed=1,
+    JogANPressed=2,
+    JogBPPressed=3,
     JogBNPressed=4,
     JogCPPressed=5,
     JogCNPressed=6,
@@ -209,7 +209,7 @@ JC = enum(JogIdle=0,
 class JOGCmd(Structure):
     _pack_ = 1
     _fields_ = [
-        ("isJoint", c_byte), 
+        ("isJoint", c_byte),
         ("cmd", c_byte)
         ]
 
@@ -217,42 +217,42 @@ class JOGCmd(Structure):
 
 class PTPJointParams(Structure):
     _fields_ = [
-        ("joint1Velocity", c_float), 
-        ("joint2Velocity", c_float), 
-        ("joint3Velocity", c_float), 
-        ("joint4Velocity", c_float), 
+        ("joint1Velocity", c_float),
+        ("joint2Velocity", c_float),
+        ("joint3Velocity", c_float),
+        ("joint4Velocity", c_float),
         ("joint1Acceleration", c_float),
         ("joint2Acceleration", c_float),
         ("joint3Acceleration", c_float),
         ("joint4Acceleration", c_float)
         ]
-        
+
 class PTPCoordinateParams(Structure):
     _fields_ = [
-        ("xyzVelocity", c_float), 
+        ("xyzVelocity", c_float),
         ("rVelocity", c_float),
-        ("xyzAcceleration", c_float), 
+        ("xyzAcceleration", c_float),
         ("rAcceleration", c_float)
         ]
 
 class PTPLParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocity",  c_float), 
+        ("velocity",  c_float),
         ("acceleration",  c_float)
     ]
 
 class PTPJumpParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("jumpHeight", c_float), 
+        ("jumpHeight", c_float),
         ("zLimit", c_float)
         ]
 
 class PTPCommonParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocityRatio", c_float), 
+        ("velocityRatio", c_float),
         ("accelerationRatio", c_float)
         ]
 
@@ -260,15 +260,15 @@ PTPMode = enum(
     PTPJUMPXYZMode=0,
     PTPMOVJXYZMode=1,
     PTPMOVLXYZMode=2,
-    
+
     PTPJUMPANGLEMode=3,
     PTPMOVJANGLEMode=4,
     PTPMOVLANGLEMode=5,
-    
+
     PTPMOVJANGLEINCMode=6,
-    PTPMOVLXYZINCMode=7, 
-    PTPMOVJXYZINCMode=8, 
-    
+    PTPMOVLXYZINCMode=7,
+    PTPMOVJXYZINCMode=8,
+
     PTPJUMPMOVLXYZMode=9)
 
 InputPin = enum( InputPinNone=0,
@@ -304,7 +304,7 @@ class PTPCmd(Structure):
         ("z", c_float),
         ("rHead", c_float)
         ]
-        
+
 class DeviceCountInfo(Structure):
     _pack_ = 1
     _fields_ = [
@@ -312,7 +312,7 @@ class DeviceCountInfo(Structure):
         ("devicePowerOn",  c_uint32),
         ("devicePowerOff", c_uint32)
         ]
-        
+
 class PTPWithLCmd(Structure):
     _pack_ = 1
     _fields_ = [
@@ -331,7 +331,7 @@ class CPParams(Structure):
     _fields_ = [
         ("planAcc", c_float),
         ("juncitionVel", c_float),
-        ("acc", c_float), 
+        ("acc", c_float),
         ("realTimeTrack",  c_byte)
         ]
 
@@ -358,11 +358,11 @@ class CP2Cmd(Structure):
         ("z", c_float),
         ("velocity", c_float)
         ]
-        
+
 class CPCommonParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocityRatio", c_float), 
+        ("velocityRatio", c_float),
         ("accelerationRatio", c_float)
         ]
 
@@ -375,13 +375,13 @@ class ARCPoint(Structure):
         ("z", c_float),
         ("rHead", c_float)
     ]
-        
+
 class ARCParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("xyzVelocity", c_float), 
+        ("xyzVelocity", c_float),
         ("rVelocity", c_float),
-        ("xyzAcceleration", c_float), 
+        ("xyzAcceleration", c_float),
         ("rAcceleration", c_float)
         ]
 
@@ -391,7 +391,7 @@ class ARCCmd(Structure):
         ("cirPoint", ARCPoint),
         ("toPoint", ARCPoint)
     ]
-    
+
 class CircleCmd(Structure):
     _pack_ = 1
     _fields_ = [
@@ -402,7 +402,7 @@ class CircleCmd(Structure):
 class ARCCommonParams(Structure):
     _pack_ = 1
     _fields_ = [
-        ("velocityRatio", c_float), 
+        ("velocityRatio", c_float),
         ("accelerationRatio", c_float)
         ]
 
@@ -423,68 +423,68 @@ class WAITCmd(Structure):
 TRIGMode = enum(
     TRIGInputIOMode = 0,
     TRIGADCMode=1)
-    
+
 TRIGInputIOCondition = enum(
     TRIGInputIOEqual = 0,
     TRIGInputIONotEqual=1)
-    
+
 TRIGADCCondition = enum(
     TRIGADCLT = 0,
-    TRIGADCLE=1, 
+    TRIGADCLE=1,
     TRIGADCGE = 2,
     TRIGADCGT=3)
-    
+
 class TRIGCmd(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
-        ("mode", c_byte), 
-        ("condition",  c_byte), 
+        ("address", c_byte),
+        ("mode", c_byte),
+        ("condition",  c_byte),
         ("threshold", c_uint16)
         ]
 
 GPIOType = enum(
-    GPIOTypeDummy = 0, 
+    GPIOTypeDummy = 0,
     GPIOTypeDO = 1,
     GPIOTypePWM=2,
-    GPIOTypeDI=3, 
-    GPIOTypeADC=4, 
-    GPIOTypeDIPU=5, 
+    GPIOTypeDI=3,
+    GPIOTypeADC=4,
+    GPIOTypeDIPU=5,
     GPIOTypeDIPD=6)
-    
+
 class IOMultiplexing(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
+        ("address", c_byte),
         ("multiplex", c_byte)
         ]
-        
+
 class IODO(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
+        ("address", c_byte),
         ("level", c_byte)
         ]
-        
+
 class IOPWM(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
-        ("frequency", c_float), 
+        ("address", c_byte),
+        ("frequency", c_float),
         ("dutyCycle", c_float)
         ]
-        
+
 class IODI(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
+        ("address", c_byte),
         ("level", c_byte)
         ]
-        
+
 class IOADC(Structure):
     _pack_ = 1
     _fields_ = [
-        ("address", c_byte), 
+        ("address", c_byte),
         ("value", c_int)
         ]
 
@@ -504,7 +504,7 @@ class UserParams(Structure):
 ZDFCalibStatus = enum(
     ZDFCalibNotFinished=0,
     ZDFCalibFinished=1)
-    
+
 
 class WIFIIPAddress(Structure):
     _pack_ = 1
@@ -515,7 +515,7 @@ class WIFIIPAddress(Structure):
         ("addr3", c_byte),
         ("addr4", c_byte),
         ]
-        
+
 class WIFINetmask(Structure):
     _pack_ = 1
     _fields_ = [
@@ -524,7 +524,7 @@ class WIFINetmask(Structure):
         ("addr3", c_byte),
         ("addr4", c_byte),
         ]
-        
+
 class WIFIGateway(Structure):
     _pack_ = 1
     _fields_ = [
@@ -533,7 +533,7 @@ class WIFIGateway(Structure):
         ("addr3", c_byte),
         ("addr4", c_byte),
         ]
-        
+
 class WIFIDNS(Structure):
     _pack_ = 1
     _fields_ = [
@@ -544,19 +544,19 @@ class WIFIDNS(Structure):
         ]
 
 ColorPort = enum(
-    PORT_GP1 = 0, 
+    PORT_GP1 = 0,
     PORT_GP2 = 1,
     PORT_GP4 = 2,
     PORT_GP5 = 3
     )
-    
+
 InfraredPort = enum(
-    PORT_GP1 = 0, 
+    PORT_GP1 = 0,
     PORT_GP2 = 1,
     PORT_GP4 = 2,
     PORT_GP5 = 3
     )
-    
+
 UART4PeripheralsType = enum(
     UART4PeripheralsUART = 0,
     UART4PeripheralsWIFI = 1,
@@ -584,11 +584,11 @@ isUsingLinearRail = False
 #parker add 2018 8 29 添加Wifi设置模块退出标志位
 QuitDobotApiFlag = True
 
-def load():
+def load(dll_path: str):
     if platform.system() == "Windows":
         print("您用的dll是64位，为了顺利运行，请保证您的python环境也是64位")
         print("python环境是：",platform.architecture())
-        return CDLL("./DobotDll.dll",  RTLD_GLOBAL)
+        return CDLL(dll_path,  RTLD_GLOBAL)
     elif platform.system() == "Darwin":
         return CDLL("./libDobotDll.dylib",  RTLD_GLOBAL)
     elif platform.system() == "Linux":
@@ -596,7 +596,7 @@ def load():
 
 
 def dSleep(ms):
-    time.sleep(ms / 1000)  
+    time.sleep(ms / 1000)
 
 def gettime():
     return [time.time()]
@@ -611,8 +611,8 @@ def SearchDobot(api,  maxLen=1000):
     l = api.SearchDobot(szPara,  maxLen)
     if l == 0:
         return []
-    ret = szPara.value.decode("utf-8") 
-    
+    ret = szPara.value.decode("utf-8")
+
     def fix(devices):
         for index in range(len(devices)):
             device = devices[index]
@@ -622,9 +622,9 @@ def SearchDobot(api,  maxLen=1000):
                 pass
             else:
                 yield device
-        
+
     return list(fix(ret.split(" ")))
-    
+
 masterId = 0
 slaveId = 0
 masterDevType = 0
@@ -635,7 +635,7 @@ def ConnectDobot(api, portName, baudrate):
     global masterId, slaveId, masterDevType, slaveDevType
 
     szPara = create_string_buffer(100)
-    szPara.raw = portName.encode("utf-8") 
+    szPara.raw = portName.encode("utf-8")
     connectInfo = ConnectInfo()
 
     result = api.ConnectDobot(szPara, baudrate, byref(connectInfo))
@@ -709,7 +709,7 @@ def GetQueuedCmdCurrentIndex(api):
                 dSleep(2)
                 continue
             break
-    elif masterDevType == DevType.Conntroller and slaveDevType == DevType.Idle: 
+    elif masterDevType == DevType.Conntroller and slaveDevType == DevType.Idle:
         while(True):
             result = api.GetQueuedCmdCurrentIndex(c_int(masterId), c_int(-1), byref(queuedCmdIndex1))
             if result != DobotCommunicate.DobotCommunicate_NoError:
@@ -817,8 +817,8 @@ def SetQueuedCmdStopExec(api):
                 continue
             break
 
-       
- 
+
+
 def SetQueuedCmdForceStopExec(api):
     # 滑轨特殊处理
     if slaveDevType == DevType.Magician:
@@ -856,7 +856,7 @@ def SetQueuedCmdForceStopExec(api):
                 continue
             break
 
-    
+
 
 def SetQueuedCmdStartDownload(api,  totalLoop, linePerLoop):
     while(True):
@@ -865,7 +865,7 @@ def SetQueuedCmdStartDownload(api,  totalLoop, linePerLoop):
             dSleep(5)
             continue
         break
-        
+
 
 def SetQueuedCmdStopDownload(api):
     while(True):
@@ -874,7 +874,7 @@ def SetQueuedCmdStopDownload(api):
             dSleep(5)
             continue
         break
-    
+
 
 def SetQueuedCmdClear(api):
     # 滑轨特殊处理
@@ -916,7 +916,7 @@ def SetQueuedCmdClear(api):
     return [result]
 
 
-def SetDeviceSN(api, str): 
+def SetDeviceSN(api, str):
     szPara = create_string_buffer(25)
     szPara.raw = str.encode("utf-8")
     while(True):
@@ -927,7 +927,7 @@ def SetDeviceSN(api, str):
         break
 
 
-def GetDeviceSN(api): 
+def GetDeviceSN(api):
     szPara = create_string_buffer(25)
     while(True):
         result = api.GetDeviceSN(c_int(masterId), c_int(slaveId), szPara,  25)
@@ -935,7 +935,7 @@ def GetDeviceSN(api):
             dSleep(5)
             continue
         break
-    ret = szPara.value.decode("utf-8") 
+    ret = szPara.value.decode("utf-8")
     return [ret]
 
 
@@ -948,9 +948,9 @@ def SetDeviceName(api, str):
             dSleep(5)
             continue
         break
-        
 
-def SetDeviceNumName(api, num): 
+
+def SetDeviceNumName(api, num):
     cNum = c_int(num)
     while(True):
         result = api.SetDeviceName(c_int(masterId), c_int(slaveId), cNum)
@@ -960,7 +960,7 @@ def SetDeviceNumName(api, num):
         break
 
 
-def GetDeviceName(api): 
+def GetDeviceName(api):
     szPara = create_string_buffer(66)
     while(True):
         result = api.GetDeviceName(c_int(masterId), c_int(slaveId), szPara,  100)
@@ -970,7 +970,7 @@ def GetDeviceName(api):
         break
     ret = szPara.value.decode("utf-8")
     return [ret]
-    
+
 
 def GetDeviceVersion(api):
     deviceVersion = DeviceVersion()
@@ -1143,7 +1143,7 @@ def GetKinematics(api):
 
 
 def GetAlarmsState(api,  maxLen=1000):
-    alarmsState = create_string_buffer(maxLen) 
+    alarmsState = create_string_buffer(maxLen)
     #alarmsState = c_byte(0)
     len = c_int(0)
     while(True):
@@ -1153,7 +1153,7 @@ def GetAlarmsState(api,  maxLen=1000):
             continue
         break
     return [alarmsState.raw, len.value]
-    
+
 
 def ClearAllAlarmsState(api):
     while(True):
@@ -1250,7 +1250,7 @@ def SetHOMECmd(api, temp, isQueued=0):
             break
 
     return [queuedCmdIndex.value, queuedCmdIndex1.value]
-    
+
 
 def SetAutoLevelingCmd(api, controlFlag, precision, isQueued=0):
     cmd = AutoLevelingCmd()
@@ -1286,7 +1286,7 @@ def SetArmOrientation(api,  armOrientation, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def GetArmOrientation(api):
     armOrientation = c_int32(0)
@@ -1297,7 +1297,7 @@ def GetArmOrientation(api):
             continue
         break
     return [armOrientation.value]
-    
+
 
 def SetHHTTrigMode(api, hhtTrigMode):
     while(True):
@@ -1306,7 +1306,7 @@ def SetHHTTrigMode(api, hhtTrigMode):
             dSleep(5)
             continue
         break
-        
+
 
 def GetHHTTrigMode(api):
     hhtTrigMode = c_int(0)
@@ -1346,7 +1346,7 @@ def GetHHTTrigOutput(api):
         return [False]
     return [True]
 
-   
+
 
 def SetEndEffectorParams(api, xBias, yBias, zBias, isQueued=0):
     param = EndTypeParams()
@@ -1361,7 +1361,7 @@ def SetEndEffectorParams(api, xBias, yBias, zBias, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-        
+
 
 def GetEndEffectorParams(api):
     param = EndTypeParams()
@@ -1372,7 +1372,7 @@ def GetEndEffectorParams(api):
             continue
         break
     return [param.xBias, param.yBias, param.zBias]
-    
+
 
 def SetEndEffectorLaser(api, enableCtrl,  on, isQueued=0):
     queuedCmdIndex = c_uint64(0)
@@ -1383,7 +1383,7 @@ def SetEndEffectorLaser(api, enableCtrl,  on, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-        
+
 
 def GetEndEffectorLaser(api):
     isCtrlEnabled = c_int(0)
@@ -1395,7 +1395,7 @@ def GetEndEffectorLaser(api):
             continue
         break
     return [isCtrlEnabled.value, isOn.value]
-    
+
 
 def SetEndEffectorSuctionCup(api, enableCtrl,  on, isQueued=0):
     queuedCmdIndex = c_uint64(0)
@@ -1406,7 +1406,7 @@ def SetEndEffectorSuctionCup(api, enableCtrl,  on, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-        
+
 
 def GetEndEffectorSuctionCup(api):
     enableCtrl = c_int(0)
@@ -1418,7 +1418,7 @@ def GetEndEffectorSuctionCup(api):
             continue
         break
     return [isOn.value]
-    
+
 
 def SetEndEffectorGripper(api, enableCtrl,  on, isQueued=0):
     queuedCmdIndex = c_uint64(0)
@@ -1429,7 +1429,7 @@ def SetEndEffectorGripper(api, enableCtrl,  on, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-        
+
 
 def GetEndEffectorGripper(api):
     enableCtrl = c_int(0)
@@ -1525,7 +1525,7 @@ def SetJOGLParams(api, velocity, acceleration, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def GetJOGLParams(api):
     # 滑轨的特殊处理
@@ -1698,7 +1698,7 @@ def GetPTPCoordinateParams(api):
             continue
         break
     return [pbParam.xyzVelocity, pbParam.rVelocity, pbParam.xyzAcceleration, pbParam.rAcceleration]
-    
+
 
 def SetPTPLParams(api, velocity, acceleration, isQueued=0):
     # 滑轨的特殊处理
@@ -1720,7 +1720,7 @@ def SetPTPLParams(api, velocity, acceleration, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def GetPTPLParams(api):
     # 滑轨的特殊处理
@@ -1738,14 +1738,14 @@ def GetPTPLParams(api):
             continue
         break
     return [param.velocity,  param.acceleration]
-    
+
 
 def SetPTPJumpParams(api, jumpHeight, zLimit, isQueued=0):
     pbParam = PTPJumpParams()
     pbParam.jumpHeight = jumpHeight
     pbParam.zLimit = zLimit
     queuedCmdIndex = c_uint64(0)
-        
+
     while(True):
         result = api.SetPTPJumpParams(c_int(masterId), c_int(slaveId), byref(pbParam), isQueued, byref(queuedCmdIndex))
         if result != DobotCommunicate.DobotCommunicate_NoError:
@@ -1771,7 +1771,7 @@ def SetPTPCommonParams(api, velocityRatio, accelerationRatio, isQueued=0):
     pbParam.velocityRatio = velocityRatio
     pbParam.accelerationRatio = accelerationRatio
     queuedCmdIndex = c_uint64(0)
-    
+
     # 滑轨的特殊处理
     if slaveDevType == DevType.Magician:
         while(True):
@@ -1813,7 +1813,7 @@ def GetPTPCommonParams(api):
             continue
         break
     return [pbParam.velocityRatio, pbParam.accelerationRatio]
-    
+
 
 def SetPTPCmd(api, ptpMode, x, y, z, rHead, isQueued=0):
     cmd = PTPCmd()
@@ -1830,7 +1830,7 @@ def SetPTPCmd(api, ptpMode, x, y, z, rHead, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetPTPWithLCmd(api, ptpMode, x, y, z, rHead, l, isQueued=0):
     cmd = PTPWithLCmd()
@@ -1878,7 +1878,7 @@ def SetPTPWithLCmd(api, ptpMode, x, y, z, rHead, l, isQueued=0):
                 continue
             break
     return [queuedCmdIndex.value]
-    
+
 
 def SetCPRHoldEnable(api, isEnable):
     while(True):
@@ -1898,7 +1898,7 @@ def GetCPRHoldEnable(api):
             continue
         break
     return [isEnable.value]
-    
+
 
 def SetCPParams(api, planAcc, juncitionVel, acc, realTimeTrack = 0,  isQueued=0):
     parm = CPParams()
@@ -1961,7 +1961,7 @@ def SetCP2Cmd(api, cpMode, x, y, z, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetCPCommonParams(api, velocityRatio, accelerationRatio, isQueued=0):
     pbParam = CPCommonParams()
@@ -1986,7 +1986,7 @@ def GetCPCommonParams(api):
             continue
         break
     return [pbParam.velocityRatio, pbParam.accelerationRatio]
-    
+
 
 def SetCPLECmd(api, cpMode, x, y, z, power, isQueued=0):
     cmd = CPCmd()
@@ -2003,7 +2003,7 @@ def SetCPLECmd(api, cpMode, x, y, z, power, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetARCParams(api,  xyzVelocity, rVelocity, xyzAcceleration, rAcceleration,  isQueued=0):
     param = ARCParams()
@@ -2029,7 +2029,7 @@ def GetARCParams(api):
             continue
         break
     return [parm.xyzVelocity, parm.rVelocity, parm.xyzAcceleration, parm.rAcceleration]
-    
+
 
 def SetARCCmd(api, cirPoint, toPoint,  isQueued=0):
     cmd = ARCCmd()
@@ -2043,7 +2043,7 @@ def SetARCCmd(api, cirPoint, toPoint,  isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetCircleCmd(api, cirPoint, toPoint,  isQueued=0):
     cmd = CircleCmd()
@@ -2057,7 +2057,7 @@ def SetCircleCmd(api, cirPoint, toPoint,  isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetARCCommonParams(api, velocityRatio, accelerationRatio, isQueued=0):
     pbParam = ARCCommonParams()
@@ -2244,7 +2244,7 @@ def GetIODI(api, addr):
             continue
         break
     return [param.level]
-    
+
 
 def SetEMotor(api, index, isEnabled, speed,  isQueued=0):
     emotor = EMotor()
@@ -2265,7 +2265,7 @@ def SetEMotor(api, index, isEnabled, speed,  isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def SetEMotorS(api, index, isEnabled, speed, distance,  isQueued=0):
     emotorS = EMotorS()
@@ -2316,7 +2316,7 @@ def SetAngleSensorStaticError(api,  rearArmAngleError, frontArmAngleError):
             dSleep(5)
             continue
         break
-        
+
 
 def GetAngleSensorStaticError(api):
     rearArmAngleError = c_float(0)
@@ -2328,7 +2328,7 @@ def GetAngleSensorStaticError(api):
             continue
         break
     return [rearArmAngleError.value, frontArmAngleError.value]
-    
+
 
 def SetAngleSensorCoef(api,  rearArmAngleCoef, frontArmAngleCoef):
     c_rearArmAngleCoef = c_float(rearArmAngleCoef)
@@ -2339,7 +2339,7 @@ def SetAngleSensorCoef(api,  rearArmAngleCoef, frontArmAngleCoef):
             dSleep(5)
             continue
         break
-        
+
 
 def GetAngleSensorCoef(api):
     rearArmAngleCoef = c_float(0)
@@ -2361,7 +2361,7 @@ def SetBaseDecoderStaticError(api,  baseDecoderError):
             dSleep(5)
             continue
         break
-    
+
 
 def GetBaseDecoderStaticError(api):
     baseDecoderError = c_float(0)
@@ -2396,7 +2396,7 @@ def SetWIFIConfigMode(api,  enable):
             dSleep(5)
             continue
         break
-    
+
 
 def GetWIFIConfigMode(api):
     isEnabled = c_bool(0)
@@ -2409,7 +2409,7 @@ def GetWIFIConfigMode(api):
             continue
         break
     return [isEnabled.value]
-    
+
 
 def SetWIFISSID(api,  ssid):
     szPara = create_string_buffer(len(ssid))
@@ -2422,7 +2422,7 @@ def SetWIFISSID(api,  ssid):
             dSleep(5)
             continue
         break
-    
+
 
 def GetWIFISSID(api):
     szPara = create_string_buffer(100)
@@ -2434,9 +2434,9 @@ def GetWIFISSID(api):
             dSleep(5)
             continue
         break
-    ssid = szPara.value.decode("utf-8") 
+    ssid = szPara.value.decode("utf-8")
     return [ssid]
-    
+
 
 def SetWIFIPassword(api,  password):
     szPara = create_string_buffer(25)
@@ -2449,10 +2449,10 @@ def SetWIFIPassword(api,  password):
             dSleep(5)
             continue
         break
-        
+
 
 def GetWIFIPassword(api):
-    szPara = create_string_buffer(25)  
+    szPara = create_string_buffer(25)
     while(True):
         if not QuitDobotApiFlag:
             break
@@ -2461,9 +2461,9 @@ def GetWIFIPassword(api):
             dSleep(5)
             continue
         break
-    password = szPara.value.decode("utf-8") 
+    password = szPara.value.decode("utf-8")
     return [password]
-    
+
 
 def SetWIFIIPAddress(api,  dhcp,  addr1,  addr2,  addr3,  addr4):
     wifiIPAddress = WIFIIPAddress()
@@ -2481,7 +2481,7 @@ def SetWIFIIPAddress(api,  dhcp,  addr1,  addr2,  addr3,  addr4):
             dSleep(5)
             continue
         break
-        
+
 
 def GetWIFIIPAddress(api):
     wifiIPAddress = WIFIIPAddress()
@@ -2494,7 +2494,7 @@ def GetWIFIIPAddress(api):
             continue
         break
     return [c_uint8(wifiIPAddress.dhcp).value,  c_uint8(wifiIPAddress.addr1).value,  c_uint8(wifiIPAddress.addr2).value,   c_uint8(wifiIPAddress.addr3).value,  c_uint8(wifiIPAddress.addr4).value]
-    
+
 
 def SetWIFINetmask(api, addr1,  addr2,  addr3,  addr4):
     wifiNetmask = WIFINetmask()
@@ -2510,7 +2510,7 @@ def SetWIFINetmask(api, addr1,  addr2,  addr3,  addr4):
             dSleep(5)
             continue
         break
-        
+
 
 def GetWIFINetmask(api):
     wifiNetmask = WIFINetmask()
@@ -2523,7 +2523,7 @@ def GetWIFINetmask(api):
             continue
         break
     return [c_uint8(wifiNetmask.addr1).value,  c_uint8(wifiNetmask.addr2).value,  c_uint8(wifiNetmask.addr3).value,  c_uint8(wifiNetmask.addr4).value]
-    
+
 
 def SetWIFIGateway(api, addr1,  addr2,  addr3,  addr4):
     wifiGateway = WIFIGateway()
@@ -2552,7 +2552,7 @@ def GetWIFIGateway(api):
             continue
         break
     return [c_uint8(wifiGateway.addr1).value,  c_uint8(wifiGateway.addr2).value,  c_uint8(wifiGateway.addr3).value,  c_uint8(wifiGateway.addr4).value]
-    
+
 
 def SetWIFIDNS(api, addr1,  addr2,  addr3,  addr4):
     wifiDNS = WIFIDNS()
@@ -2600,7 +2600,7 @@ def SetColorSensor(api, isEnable, colorPort, version=0):
             dSleep(5)
             continue
         break
-    
+
 
 def GetColorSensor(api):
     r = c_ubyte(0)
@@ -2619,7 +2619,7 @@ def GetColorSensor(api):
             continue
         break
     return [r.value, g.value, b.value]
-    
+
 
 def SetInfraredSensor(api,  isEnable, infraredPort, version=0):
     enable = c_bool(isEnable)
@@ -2638,7 +2638,7 @@ def SetInfraredSensor(api,  isEnable, infraredPort, version=0):
             dSleep(5)
             continue
         break
-    
+
 
 def GetInfraredSensor(api, infraredPort):
     port = c_uint8(infraredPort)
@@ -2682,7 +2682,7 @@ def SetLostStepCmd(api, isQueued=0):
             continue
         break
     return [queuedCmdIndex.value]
-    
+
 
 def GetUART4PeripheralsType(api):
     type = c_uint8(0)
@@ -2692,7 +2692,7 @@ def GetUART4PeripheralsType(api):
             if result != DobotCommunicate.DobotCommunicate_NoError:
                 dSleep(5)
                 continue
-            break 
+            break
     elif masterDevType == DevType.Magician:
         while(True):
             result = api.GetUART4PeripheralsType(c_int(masterId), c_int(slaveId), byref(type))
@@ -2701,7 +2701,7 @@ def GetUART4PeripheralsType(api):
                 continue
             break
     return [type.value]
-    
+
 
 def GetDeviceVersionEx(api):       #2019.6.25 song 控制盒+Magician Lite时，获取控制盒的版本
     # majorVersion = c_byte(0)
@@ -2730,7 +2730,7 @@ def GetDeviceVersionEx(api):       #2019.6.25 song 控制盒+Magician Lite时，
                                     deviceVersion2.hw_majorVersion, deviceVersion2.hw_minorVersion, deviceVersion2.hw_revision, deviceVersion2.hw_alphaVersion]
         return [list_MagicBoxVersion, list_MagicianLiteVersion]
 
-        
+
 ##################  Ex扩展函数，该套函数会检测每一条指令运行完毕  ##################
 def GetPoseEx(api,  index):
     if index == 0:
@@ -2738,19 +2738,19 @@ def GetPoseEx(api,  index):
         if not ret:
             print("Dobot is not in L model")
             return
-            
+
         lr = GetPoseL(api)
         return round(lr[0],  4)
-        
+
     pos = GetPose(api)
     return round(pos[index-1],  4)
-    
+
 def SetHOMECmdEx(api,  temp,  isQueued=0):
     ret = SetHOMECmd(api, temp,  isQueued)
     queuedCmdIndex = c_uint64(0)
     queuedCmdIndex1 = c_uint64(0)
     if masterDevType == DevType.Conntroller and slaveDevType == DevType.MagicianLite:
-        if isUsingLinearRail:        
+        if isUsingLinearRail:
             while(True):
                 result = api.GetQueuedCmdCurrentIndex(c_int(masterId), c_int(-1), byref(queuedCmdIndex1))
                 if result == DobotCommunicate.DobotCommunicate_NoError and ret[1] <= queuedCmdIndex1.value:
@@ -2767,7 +2767,7 @@ def SetHOMECmdEx(api,  temp,  isQueued=0):
                 if result == DobotCommunicate.DobotCommunicate_NoError and ret[0] <= queuedCmdIndex.value:
                     break
                 dSleep(100)
-    elif masterDevType == DevType.Conntroller and slaveDevType == DevType.Idle: 
+    elif masterDevType == DevType.Conntroller and slaveDevType == DevType.Idle:
         while(True):
             result = api.GetQueuedCmdCurrentIndex(c_int(masterId), c_int(-1), byref(queuedCmdIndex1))
             if result == DobotCommunicate.DobotCommunicate_NoError and ret[1] <= queuedCmdIndex1.value:
@@ -2779,7 +2779,7 @@ def SetHOMECmdEx(api,  temp,  isQueued=0):
             if result == DobotCommunicate.DobotCommunicate_NoError and ret[0] <= queuedCmdIndex.value:
                 break
             dSleep(100)
-        
+
 def SetWAITCmdEx(api, waitTime, isQueued=0):
     ret = SetWAITCmd(api, waitTime, isQueued)
     while(True):
@@ -2788,21 +2788,21 @@ def SetWAITCmdEx(api, waitTime, isQueued=0):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
            break
     # dSleep(waitTime * 1000)
-    
+
 def SetEndEffectorParamsEx(api, xBias, yBias, zBias, isQueued=0):
     ret = SetEndEffectorParams(api, xBias, yBias, zBias, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-        
+
 def SetPTPJointParamsEx(api, j1Velocity, j1Acceleration, j2Velocity, j2Acceleration, j3Velocity, j3Acceleration, j4Velocity, j4Acceleration, isQueued=0):
     ret = SetPTPJointParams(api, j1Velocity, j1Acceleration, j2Velocity, j2Acceleration, j3Velocity, j3Acceleration, j4Velocity, j4Acceleration, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-        
+
 def SetPTPCoordinateParamsEx(api, xyzVelocity, xyzAcceleration, rVelocity,  rAcceleration,  isQueued=0):
     ret = SetPTPCoordinateParams(api, xyzVelocity, xyzAcceleration, rVelocity,  rAcceleration,  isQueued)
     while(True):
@@ -2815,34 +2815,34 @@ def SetPTPLParamsEx(api, lVelocity, lAcceleration, isQueued=0):
     if not ret:
         print("Dobot is not in L model")
         return
-    
+
     ret = SetPTPLParams(api, lVelocity, lAcceleration, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-        
+
 def SetPTPCommonParamsEx(api, velocityRatio, accelerationRatio, isQueued=0):
     ret = SetPTPCommonParams(api, velocityRatio, accelerationRatio, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-        
+
 def SetPTPJumpParamsEx(api, jumpHeight, maxJumpHeight, isQueued=0):
     ret = SetPTPJumpParams(api, jumpHeight, maxJumpHeight, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-        
+
 def SetPTPCmdEx(api, ptpMode, x, y, z, rHead, isQueued=0):
     ret = SetPTPCmd(api, ptpMode, x, y, z, rHead, isQueued)
     while(True):
         if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
             break
         dSleep(5)
-    
+
 def SetIOMultiplexingEx(api, address, multiplex, isQueued=0):
     ret = SetIOMultiplexing(api, address, multiplex, isQueued)
     if masterDevType == DevType.Magician:
@@ -2855,7 +2855,7 @@ def SetIOMultiplexingEx(api, address, multiplex, isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[1]:
                 break
             dSleep(5)
-        
+
 def SetEndEffectorSuctionCupEx(api, enableCtrl,  on, isQueued=0):
     ret = SetEndEffectorSuctionCup(api, enableCtrl,  on, isQueued)
     if masterDevType == DevType.Magician:
@@ -2881,7 +2881,7 @@ def SetEndEffectorGripperEx(api, enableCtrl,  on, isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[0]:
                 break
             dSleep(5)
-        
+
 def SetEndEffectorLaserEx(api, enableCtrl, power, isQueued=0):
     SetIOMultiplexingEx(api, 2,  1, isQueued)
     SetIOMultiplexingEx(api, 4,  2, isQueued)
@@ -2900,7 +2900,7 @@ def SetIODOEx(api, address, level, isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[1]:
                 break
             dSleep(5)
-        
+
 def SetEMotorEx(api, index, isEnabled, speed,  isQueued=0):
     ret = SetEMotor(api, index, isEnabled, speed,  isQueued)
     if masterDevType == DevType.Magician:
@@ -2913,7 +2913,7 @@ def SetEMotorEx(api, index, isEnabled, speed,  isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[1]:
                 break
             dSleep(5)
-    
+
 def SetEMotorSEx(api, index, isEnabled, speed, distance,  isQueued=0):
     ret = SetEMotorS(api, index, isEnabled, speed, distance,   isQueued)
     if masterDevType == DevType.Magician:
@@ -2926,7 +2926,7 @@ def SetEMotorSEx(api, index, isEnabled, speed, distance,  isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[1]:
                 break
             dSleep(5)
-    
+
 def SetIOPWMEx(api, address, frequency, dutyCycle,  isQueued=0):
     ret = SetIOPWM(api, address, frequency, dutyCycle,  isQueued)
     if masterDevType == DevType.Magician:
@@ -3019,7 +3019,7 @@ def GetColorSensorEx(api,  index):
     result = GetColorSensor(api)
     return result[index]
 
-    
+
 def SetAutoLevelingCmdEx(api, controlFlag, precision, isQueued=1):
     index = SetAutoLevelingCmd(api, controlFlag, precision, isQueued)[0]
     while(True):
@@ -3027,7 +3027,7 @@ def SetAutoLevelingCmdEx(api, controlFlag, precision, isQueued=1):
             break
         dSleep(5)
 
-   
+
 def SetLostStepCmdEx(api, isQueued=1):
     ret = SetLostStepCmd(api, isQueued)
     while(True):
@@ -3123,7 +3123,7 @@ def SetMotorMode(api, mode):
         if result != DobotCommunicate.DobotCommunicate_NoError:
             dSleep(5)
             continue
-        break 
+        break
 
 
 def GetMotorMode(api):
@@ -3133,7 +3133,7 @@ def GetMotorMode(api):
         if result != DobotCommunicate.DobotCommunicate_NoError:
             dSleep(5)
             continue
-        break 
+        break
     return [mode.value]
 
 
@@ -3305,7 +3305,7 @@ def SetInfraredSensorExt(api,  isEnable, infraredPort, version=0, isQueued=0):
 def GetInfraredSensorExt(api, infraredPort):
     port = c_uint8(infraredPort)
     value = c_ubyte(0)
-    
+
     while(True):
         result = api.GetInfraredSensor(c_int(masterId), c_int(-1), port,  byref(value))
         if result != DobotCommunicate.DobotCommunicate_NoError:
@@ -3426,7 +3426,7 @@ def SetInfraredSensorExtEx(api,  isEnable, infraredPort, version=0, isQueued=0):
             dSleep(5)
 
 
-#2019.08.21 by song add Seeed Sensor API    
+#2019.08.21 by song add Seeed Sensor API
 
 def GetSeeedColorSensorExt(api):
     r = c_ushort(0)
@@ -3629,7 +3629,7 @@ def SetSeeedRgbExtEx(api, SeeedPort, Rgb, isQueued=0):
             if ret[0] <= GetQueuedCmdCurrentIndex(api)[1]:
                 break
             dSleep(5)
-    
+
 
 def RestartMagicBox(api):
     while(True):
@@ -3674,7 +3674,7 @@ def SetEndEffectorType(api, endType=0, isQueued=0):
         if result != DobotCommunicate.DobotCommunicate_NoError:
             dSleep(5)
             continue
-        break  
+        break
     return[queuedCmdIndex.value]
 
 
@@ -3696,7 +3696,7 @@ def SetServoAngle(api, servoId, angle, isQueued=0):
         if result != DobotCommunicate.DobotCommunicate_NoError:
             dSleep(5)
             continue
-        break 
+        break
     return [queuedCmdIndex.value]
 
 
@@ -3718,7 +3718,7 @@ def SetArmSpeedRatio(api, paramsMode, speedRatio, isQueued=0):
         if result != DobotCommunicate.DobotCommunicate_NoError:
             dSleep(5)
             continue
-        break 
+        break
     return [queuedCmdIndex.value]
 
 

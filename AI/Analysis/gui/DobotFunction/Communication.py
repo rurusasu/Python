@@ -1,15 +1,33 @@
 # cording: ustf-8
-
 import sys, os
 
 sys.path.append(".")
 sys.path.append("..")
+sys.path.append("../../")
 
 import csv
 from DobotDLL import DobotDllType as dType
 
 
-#def SearchDobot():
+# 関節座標系における各モータの速度および加速度の初期値
+ptpJointParams = {
+    "j1Velocity": 200,
+    "j1Acceleration": 200,
+    "j2Velocity": 200,
+    "j2Acceleration": 200,
+    "j3Velocity": 200,
+    "j3Acceleration": 200,
+    "j4Velocity": 200,
+    "j4Acceleration": 200
+}
+
+# デカルト座標系における各モータの速度および加速度の初期値
+ptpCoordinateParams = {
+    "xyzVelocity": 200,
+    "xyzAcceleration": 200,
+    "rVelocity": 200,
+    "rAcceleration": 200,
+}
 
 
 # -----------------
@@ -29,7 +47,7 @@ def Connect_Disconnect(connection_flag, api, CON_STR):
     """
     # Setup パラメータ
     ch = ""
-    char_size = 115200
+
 
     # Dobotがすでに接続されていた場合
     if connection_flag == 0:
@@ -40,29 +58,38 @@ def Connect_Disconnect(connection_flag, api, CON_STR):
 
     # Dobotが接続されていない場合
     elif connection_flag != 0:
-        state = dType.ConnectDobot(api, ch, char_size)[0]
-        # 接続時にエラーが発生しなかった場合
-        if CON_STR[state] == "DobotConnect_NoError":
-            # dType.SetCmdTimeout(api, 3000)
-            initDobot(api)
-            print("Dobotに接続されました．")
-            return 0
-        elif CON_STR[state] == "DobotConnect_NotFound":
-            print("Dobot を見つけることができません！")
-            return -1  # Dobotに接続できた場合
+
+        portName = dType.SearchDobot(api, maxLen=128)
+
+        if "COM3" in portName:
+            char_size = 115200
+            state = dType.ConnectDobot(api, 'COM3', char_size)
+            # 接続時にエラーが発生しなかった場合
+            if CON_STR[state[0]] == "DobotConnect_NoError":
+                print("Dobotに通信速度 {} で接続されました．".format(char_size))
+                initDobot(api)
+
+                return 0
+            elif CON_STR[state[0]] == "DobotConnect_NotFound":
+                print("Dobot を見つけることができません！")
+                return -1  # Dobotに接続できた場合
+            elif CON_STR[state[0]] == "DobotConnect_Occupied":
+                print(
+                    "Dobot が占有されています。接続するには、アプリケーションを再起動する、Dobot 背面の Reset ボタンを押す、接続USBケーブルを再接続する、のどれかを行う必要があります。")
+            else:
+                dType.DisconnectDobot(api)
+                raise Exception("接続時に予期せぬエラーが発生しました！！")
         else:
-            dType.DisconnectDobot(api)
-            print("接続時に予期せぬエラーが発生しました！！")
-            return -1
+            raise Exception("Dobotがハードウェア上で接続されていない可能性があります。接続されている場合は、portNameに格納されている変数を確認してください。")
 
 
 def initDobot(api):
     dType.SetCmdTimeout(api, 3000)  # TimeOut Setup
     dType.SetQueuedCmdClear(api)  # Clean Command Queued
     dSN = dType.GetDeviceSN(api)  # デバイスのシリアルナンバーを取得する
-    # print(dSN)
-    # dName = dType.GetDeviceName(api)  # デバイス名を取得する
-    # print(dName)
+    print(dSN)
+    dName = dType.GetDeviceName(api)  # デバイス名を取得する
+    print(dName)
     # majorV, minorV, revision = dType.GetDeviceVersion(api)  # デバイスのバージョンを取得する
     # print(majorV, minorV, revision)
 
@@ -82,12 +109,67 @@ def initDobot(api):
     # JOG動作の速度、加速度の比率を設定
     dType.SetJOGCommonParams(api, 100, 100, isQueued=1)
 
-    # PTPパラメータの設定
+    # ----------------------- #
+    # PTPパラメータの設定 #
+    # ----------------------- #
+    # 関節座標系の各モータの速度および加速度を設定
     dType.SetPTPJointParams(
-        api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1
-    )  # 関節座標系の各モータの速度および加速度を設定
+        api=api,
+        j1Velocity=ptpJointParams["j1Velocity"],
+        j1Acceleration=ptpJointParams["j1Acceleration"],
+        j2Velocity=ptpJointParams["j2Velocity"],
+        j2Acceleration=ptpJointParams["j2Acceleration"],
+        j3Velocity=ptpJointParams["j3Velocity"],
+        j3Acceleration=ptpJointParams["j3Acceleration"],
+        j4Velocity=ptpJointParams["j4Velocity"],
+        j4Acceleration=ptpJointParams["j4Acceleration"],
+        isQueued=1
+    )
+
+    params = dType.GetPTPJointParams(api)
+    s = '''\
+    起動直後のMagicianの関節座標系における各モータの速度および加速度
+    j1Velocity = {}
+    j1Acceleration = {}
+    j2Velocity = {}
+    j2Acceleration = {}
+    j3Velocity = {}
+    j3Acceleration = {}
+    j4Velocity = {}
+    j4Acceleration = {}
+    '''
+    print(s.format(params[0],
+                         params[1],
+                         params[2],
+                         params[3],
+                         params[4],
+                         params[5],
+                         params[6],
+                         params[7]))
+
     # デカルト座標系での各方向への速度および加速度の設定
-    dType.SetPTPCoordinateParams(api, 200, 200, 200, 200, isQueued=1)
+    dType.SetPTPCoordinateParams(
+        api=api,
+        xyzVelocity=ptpCoordinateParams["xyzVelocity"],
+        xyzAcceleration=ptpCoordinateParams["xyzAcceleration"],
+        rVelocity=ptpCoordinateParams["rVelocity"],
+        rAcceleration=ptpCoordinateParams["rAcceleration"],
+        isQueued=1
+    )
+
+    params = dType.GetPTPCoordinateParams(api)
+    s = '''\
+    起動直後のMagicianのデカルト座標系における各モータの速度および加速度
+    xyzVelocity = {}
+    xyzAcceleration = {}
+    rVelocity = {}
+    rAcceleration = {}
+    '''
+    print(s.format(params[0],
+                         params[1],
+                         params[2],
+                         params[3]))
+
     # PTP動作の速度、加速度の比率を設定
     dType.SetPTPCommonParams(api, 100, 100, isQueued=1)
 
@@ -194,7 +276,8 @@ def csv_write(filename, data):
     with open(filename, "a", encoding="utf_8", errors="", newline="") as f:
         # ファイルへの書き込みを行う
         if _wirte(f, array) == None:
-            print("x=%f,  y=%f,  z=%f,  r=%f" % (data[0], data[1], data[2], data[3]))
+            print("x=%f,  y=%f,  z=%f,  r=%f" %
+                  (data[0], data[1], data[2], data[3]))
             # print('書き込みが完了しました。')
         else:
             print("ファイルの書き込みに失敗しました。")
@@ -207,3 +290,18 @@ def _wirte(f, data):
     error = witer.writerows([data])
 
     return error  # エラーが無ければNoneを返す
+
+
+if __name__ == "__main__":
+    from DobotDLL import DobotDllType as dType
+    from src.config.config import cfg
+
+    dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
+    api = dType.load(dll_path)
+    CON_STR = {
+        dType.DobotConnect.DobotConnect_NoError: "DobotConnect_NoError",
+        dType.DobotConnect.DobotConnect_NotFound: "DobotConnect_NotFound",
+        dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
+    }
+
+    ref = Connect_Disconnect(1, api, CON_STR)
