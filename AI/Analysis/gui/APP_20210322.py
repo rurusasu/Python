@@ -570,6 +570,9 @@ class Dobot_APP:
         elif event == '-Snapshot-':
             self.SnapshotBtn(values)
 
+        # ------------------- #
+        #  COGを計算するイベント  #
+        # ------------------- #
         elif event == '-Contours-':
             # 輪郭情報
             RetrievalMode = {
