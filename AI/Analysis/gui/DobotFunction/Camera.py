@@ -40,68 +40,58 @@ def WebCam_OnOff(device_num: int, cam: cv2.VideoCapture = None):
     """
     WebCameraを読み込む関数
 
-    Parameter
-    ---------
-    device_num : int
-        カメラデバイスを番号で指定
-        0:PC内臓カメラ
-        1:外部カメラ
-    cam : OpenCV型
-        接続しているカメラ情報
+    Args:
+        device_num(int): カメラデバイスを番号で指定
+            0:PC内臓カメラ
+            1:外部カメラ
+        cam(cv2.VideoCapture optional): 接続しているカメラ情報
 
-    Return
-    ------
-    response: int
-        動作終了を表すフラグ
-        0: カメラを開放した
-        1: カメラに接続した
-        -1: エラー
-    capture : OpenCV型
-        接続したデバイス情報を返す
+    Returns:
+        response(int): 動作終了を表すフラグ
+            0: connect
+            1: release
+            2: NotFound
+        capture(cv2.VideoCapture): 接続したデバイス情報を返す
+            cv2.VideoCapture: connect
+            None: release or NotFound
     """
     if cam is None:  # カメラが接続されていないとき
         cam = cv2.VideoCapture(device_num)
         # カメラに接続できなかった場合
         if not cam.isOpened():
-            return -1, None
+            return 2, None
         # 接続できた場合
         else:
-            return 1, cam
+            return 0, cam
 
     else:  # カメラに接続されていたとき
         cam.release()
-        return 0, None
+        return 1, None
 
 
-def Snapshot(cam: cv2.VideoCapture = None) -> np.ndarray:
+def Snapshot(cam: cv2.VideoCapture) -> np.ndarray:
+    """WebCameraでスナップショットを撮影する関数
+
+    Arg:
+        cam(cv2.VideoCapture): 接続しているカメラ情報
+
+    Return:
+        response(int):
+            3: 撮影できました。
+            4: 撮影できませんでした。
+        img(np.ndarray): 撮影した画像
+            np.ndarray: 撮影成功
+            None: 撮影失敗
     """
-    WebCameraでスナップショットを撮影する関数
-    cam : cv2.VideoCapture
-        接続しているカメラ情報
-        default : None
-
-    Return
-    ------
-    response : int
-        1: 撮影できました。
-        -1: 撮影できませんでした。
-
-    img : np.ndarray
-        撮影した画像
-    """
-    # カメラが接続されていない場合
-    if cam == None:
-        return -1, None
-
     ret, img = cam.read()  # 静止画像をGET
     # 静止画が撮影できた場合
     if ret:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # BGR -> RGB
-        img = np.array(img)
-        return 1, img
+        dst = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # BGR -> RGB
+        dst = np.array(dst)
+        return 3, dst
     # 撮影できなかった場合
     else:
-        return -1, None
+        return 4, None
 
 
 def scale_box(src: np.ndarray, width: int, height: int):
@@ -178,7 +168,7 @@ def Color_cvt(src: np.ndarray, color_type: str):
         Args:
             src (np.ndarray): 変換前の画像
             color_type (str): 変更後の色空間
-            * Glay: グレースケール
+            * Gray: グレースケール
             * HSV: HDV空間
 
         Return:
@@ -186,7 +176,7 @@ def Color_cvt(src: np.ndarray, color_type: str):
     """
     dst = src.copy()
     try:
-        if color_type == 'Glay':
+        if color_type == 'Gray':
             #dst = cv2.cvtColor(dst, cv2.COLOR_RGB2GRAY)
             dst = AutoGrayScale(dst, clearly=True)
         elif color_type == 'HSV':

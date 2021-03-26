@@ -16,7 +16,7 @@ def CenterOfGravity(
     min_area=100,
     cal_Method: int=0,
     drawing_figure: bool=True
-):
+) -> list:
     """
     オブジェクトの図心を計算する関数
 
@@ -36,7 +36,7 @@ def CenterOfGravity(
             * 1: オブジェクトの輪郭から重心を計算
         drawing_figure (bool optional): 輪郭線と重心位置が示された図を描画する。default to True
     Return:
-        cx, cy (int): オブジェクトの重心座標
+        G(list): G=[x, y], オブジェクトの重心座標
     """
 
     # 入力が2値画像以外の場合
@@ -76,12 +76,11 @@ def CenterOfGravity(
     except ZeroDivisionError:
         return None
 
-    G = (cx, cy)
     if drawing_figure:
-        cv2.circle(dst, G, 4, 100, 2, 4)  # 重心位置を円で表示
+        cv2.circle(dst, (cx, cy), 4, 100, 2, 4)  # 重心位置を円で表示
         cv2.imshow('Convert', dst)  # 画像として出力
 
-    return G
+    return [cx, cy]
 
 
 def _ExtractContours(

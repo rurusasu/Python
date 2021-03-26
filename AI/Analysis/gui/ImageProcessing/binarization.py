@@ -116,7 +116,7 @@ def _OtsuThreshold(
 
 def AdaptiveThreshold(
     img: np.ndarray,
-    method=cv2.ADAPTIVE_THRESH_MEAN_C,
+    method: str="Mean",
     block_size: int=11,
     C: int=2):
     """
@@ -126,16 +126,18 @@ def AdaptiveThreshold(
 
     Args:
         img (np.ndarray): 変換前の画像データ
-        method (optional): 小領域中での閾値の計算方法
-            * cv2.ADAPTIVE_THRESH_MEAN_C : 近傍領域の中央値を閾値とする。
-            * cv2.ADAPTIVE_THRESH_GAUSSIAN_C : 近傍領域の重み付け平均値を閾値とする。
-                                            重みの値はGaussian分布になるように計算。
+        method (str optional): 小領域中での閾値の計算方法
+            * Mean: 近傍領域の中央値を閾値とする。
+            * Gaussian: 近傍領域の重み付け平均値を閾値とする。
+                              重みの値はGaussian分布になるように計算。
+            * Wellner:
         block_size (int optional): 閾値計算に使用する近傍領域のサイズ。
             ただし1より大きい奇数でなければならない。
         C (int optional): 計算された閾値から引く定数。
     Return:
         dst (np.ndarray): 変換後の画像
     """
+    dst = None
     if type(img) is not np.ndarray:  # 入力データがndarray型でない場合
         raise ValueError("入力型が異なります。")
     elif len(img.shape) != 2: # 入力データがグレースケール画像でない場合
@@ -305,8 +307,9 @@ if __name__ == "__main__":
 
     # テスト画像の保存先
     #save_path = cfg.BINARY_IMG_DIR + os.sep + "gray_to_wellner"
-    save_path = cfg.BINARY_IMG_DIR + os.sep + "rgb_to_wellner"
-    method = "wellner"
+    #save_path = cfg.BINARY_IMG_DIR + os.sep + "rgb_to_wellner"
+    save_path = cfg.BINARY_IMG_DIR + os.sep + "gray_to_mean"
+    method = "mean"
 
     # テストデータロード
     json_path = cfg.TEST_DIR + os.sep + "data.json"
@@ -318,20 +321,20 @@ if __name__ == "__main__":
         for key, value in data.items():
             if key == "path":
                 img = np.array(Image.open(value)) # 画像を開いて numpy 配列に変換
-                #img = AutoGrayScale(img) # グレースケール化
-                # dst = AdaptiveThreshold(img, method="Wellner") # 適応的二値化処理
-                # if type(dst) == np.ndarray:
-                    # dst = Image.fromarray(dst)
-                    # dst.save(save_path + os.sep + name + ".png")
-                #img = srgb_to_rgb(img)
+                img = AutoGrayScale(img) # グレースケール化
+                dst = AdaptiveThreshold(img) # 適応的二値化処理
+                if type(dst) == np.ndarray:
+                    dst = Image.fromarray(dst)
+                dst.save(save_path + os.sep + name + ".png")
 
+                """
                 if len(img.shape) == 3:
                     r, g, b = cv2.split(img)
-                    IMAGE_R_bw = AdaptiveThreshold(r, method="Wellner")
+                    IMAGE_R_bw = AdaptiveThreshold(r, method=method)
                     IMAGE_R__ = cv2.bitwise_not(IMAGE_R_bw)
-                    IMAGE_G_bw = AdaptiveThreshold(g, method="Wellner")
+                    IMAGE_G_bw = AdaptiveThreshold(g, method=method)
                     IMAGE_G__ = cv2.bitwise_not(IMAGE_G_bw)
-                    IMAGE_B_bw = AdaptiveThreshold(b, method="Wellner")
+                    IMAGE_B_bw = AdaptiveThreshold(b, method=method)
                     IMAGE_B__ = cv2.bitwise_not(IMAGE_B_bw)
 
                     pickup_R = IMAGE_R_bw*IMAGE_G__*IMAGE_B__   # 画素毎の積を計算 ⇒ 赤色部分の抽出
@@ -353,6 +356,7 @@ if __name__ == "__main__":
                     pickup_Bk = IMAGE_R__*IMAGE_G__*IMAGE_B__    # 画素毎の積を計算 ⇒ 黒色部分の抽出
                     pickup_Bk_save = Image.fromarray(pickup_Bk)
                     pickup_Bk_save.save(save_path + os.sep + name + "pickup_Bk" + ".png")
+                """
             elif key == "name":
                 name = value.rstrip(".png") + "_" + method + "_"
 

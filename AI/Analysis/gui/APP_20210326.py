@@ -1,9 +1,8 @@
-import sys
-import os
-
+import sys,os
 sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../../")
+import traceback
 
 import cv2
 import matplotlib.gridspec as gridspec
@@ -30,6 +29,7 @@ class Dobot_APP:
         dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
         #self.api = cdll.LoadLibrary(dll_path)
         self.api = dType.load(dll_path)
+        self.connection = False #Dobotの接続状態
         self.CurrentPose = {
             "x": 0.0,
             "y": 0.0,
@@ -40,8 +40,9 @@ class Dobot_APP:
             "joint3Angle": 0.0,
             "joint4Angle": 0.0,
         }
-        self.connection = False #Dobotの接続状態
-        self.current_pose = {}  # Dobotの現在の姿勢
+        self.RecordPose = {} # Dobotがオブジェクトを退避させる位置
+        self.Alignment_1 = {}
+        self.Alignment_2 = {}
         self.cam = None
         self.cam_num = None
         self.IMAGE_Org = None # スナップショットのオリジナル画像(RGB)
@@ -56,6 +57,13 @@ class Dobot_APP:
             3: "DobotAct_Timeout",
         }
         self.act_err = 0  # State: 0, Err: -1
+        self.WebCam_err = {
+            0: "WebCam_Connect",
+            1: "WebCam_Release",
+            2: "WebCam_NotFound",
+            3: "WebCam_GetImage",
+            4: "WebCam_NotGetImage"
+        }
         # --- 画像プレビュー画面の初期値 --- #
         self.fig_agg = None     # 画像のヒストグラムを表示する用の変数
         self.Image_height = 240  # 画面上に表示する画像の高さ
@@ -63,53 +71,6 @@ class Dobot_APP:
         # --- GUIの初期化 ---#
         self.layout = self.Layout()
         self.Window = self.main()
-
-    """
-    ----------------------
-    Button Function
-    ----------------------
-    """
-
-    def SetJointPose_click(self, pose: dict):
-        """
-        指定された作業座標系にアームの先端を移動させる関数
-        関節座標系で移動
-
-        Args:
-            pose (dict):
-                デカルト座標系もしくは関節座標系での移動先を示したリスト
-                パラメータ数4個
-
-        Returns:
-            response (int):
-                0 : 応答なし
-                1 : 応答あり
-        """
-        return _OneAction(self.api, pose)
-
-    def GetPose_UpdateWindow(self) -> dict:
-        """
-        姿勢を取得し、ウインドウを更新する関数
-
-        Return:
-            pose (dict):
-                Dobotの現在の姿勢
-        """
-
-        pose = dType.GetPose(self.api)  # 現在のDobotの位置と関節角度を取得
-        for num, key in  enumerate(self.CurrentPose.keys()):
-            self.CurrentPose[key] = pose[num]
-
-        self.Window["-JointPose1-"].update(str(self.CurrentPose["joint1Angle"]))
-        self.Window["-JointPose2-"].update(str(self.CurrentPose["joint2Angle"]))
-        self.Window["-JointPose3-"].update(str(self.CurrentPose["joint3Angle"]))
-        self.Window["-JointPose4-"].update(str(self.CurrentPose["joint4Angle"]))
-        self.Window["-CoordinatePose_X-"].update(str(self.CurrentPose["x"]))
-        self.Window["-CoordinatePose_Y-"].update(str(self.CurrentPose["y"]))
-        self.Window["-CoordinatePose_Z-"].update(str(self.CurrentPose["z"]))
-        self.Window["-CoordinatePose_R-"].update(str(self.CurrentPose["r"]))
-
-        return pose
 
     """
     ----------------------
@@ -127,58 +88,71 @@ class Dobot_APP:
             [sg.Button('Gripper Open/Close', key='-Gripper-')],
         ]
 
+        # タスク1
+        Task = [
+            [sg.Button("タスク実行", size=(9, 1), key='-Task-'),
+             sg.InputCombo(
+                (
+                    "Task_1",
+                ),
+                default_value="Task_1",
+                size=(9, 1),
+                key='-TaskNum-'),
+            ],
+        ]
+
         GetPose = [
             [sg.Button('Get Pose', size=(7, 1), key='-GetPose-')],
             [sg.Text('J1', size=(2, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-JointPose1-',
+                          key='-Get_JointPose1-',
                           readonly=True,),
              sg.Text('X', size=(1, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-CoordinatePose_X-',
+                          key='-Get_CoordinatePose_X-',
                           readonly=True),
             ],
             [sg.Text('J2', size=(2, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-JointPose2-',
+                          key='-Get_JointPose2-',
                           readonly=True),
              sg.Text('Y', size=(1, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-CoordinatePose_Y-',
+                          key='-Get_CoordinatePose_Y-',
                           readonly=True)
             ],
             [sg.Text('J3', size=(2, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-JointPose3-',
+                          key='-Get_JointPose3-',
                           readonly=True),
              sg.Text('Z', size=(1, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-CoordinatePose_Z-',
+                          key='-Get_CoordinatePose_Z-',
                           readonly=True),
             ],
             [sg.Text('J4', size=(2, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-JointPose4-',
+                          key='-Get_JointPose4-',
                           readonly=True),
              sg.Text('R', size=(1, 1)),
              sg.InputText(default_text='',
                           size=(5, 1),
                           disabled=True,
-                          key='-CoordinatePose_R-',
+                          key='-Get_CoordinatePose_R-',
                           readonly=True),
             ],
         ]
@@ -216,23 +190,62 @@ class Dobot_APP:
 
         # 画像上の位置とDobotの座標系との位置合わせを行うGUI
         Alignment = [
-            [sg.Button('MoveToThePoint', size=(
-                16, 1), key='-MoveToThePoint-'), ],
+            [sg.Button(button_text='MoveToThePoint',
+                            size=(16, 1),
+                            key='-MoveToThePoint-'),
+            ],
             [sg.Button('Set', size=(8, 1), key='-Record-'),
-             sg.Button('Set', size=(8, 1), key='-Set_x1-'),
-             sg.Button('Set', size=(8, 1), key='-Set_x2-'), ],
-            [sg.Text('X0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-x0-'),
-             sg.Text('X1', size=(2, 1)), sg.InputText(
-                 '', size=(5, 1), disabled=True, key='-x1-'),
-             sg.Text('X2', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-x2-'), ],
-            [sg.Text('Y0', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-y0-'),
-             sg.Text('Y1', size=(2, 1)), sg.InputText(
-                 '', size=(5, 1), disabled=True, key='-y1-'),
-             sg.Text('Y2', size=(2, 1)), sg.InputText('', size=(5, 1), disabled=True, key='-y2-'), ],
-            [sg.Text('Z0', size=(2, 1)), sg.InputText(
-                '', size=(5, 1), disabled=True, key='-z0-'), ],
-            [sg.Text('R0', size=(2, 1)), sg.InputText(
-                '', size=(5, 1), disabled=True, key='-r0-'), ]
+             sg.Button(button_text='Set LeftUp',
+                            size=(8, 1),
+                            key='-Set_x1-'),
+             sg.Button(button_text='Set RightDown',
+                            size=(10, 1),
+                            key='-Set_x2-'),
+            ],
+            [sg.Text('X0', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-x0-'),
+             sg.Text('X1', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-x1-'),
+             sg.Text('X2', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-x2-'),
+            ],
+            [sg.Text('Y0', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-y0-'),
+             sg.Text('Y1', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-y1-'),
+             sg.Text('Y2', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-y2-'),
+            ],
+            [sg.Text('Z0', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-z0-'),
+            ],
+            [sg.Text('R0', size=(2, 1)),
+             sg.InputText(default_text='',
+                                size=(5, 1),
+                                disabled=True,
+                                key='-r0-'),
+            ]
         ]
 
         WebCamConnect = [
@@ -301,7 +314,7 @@ class Dobot_APP:
                 sg.InputCombo(
                     (
                         'RGB',
-                        'Glay',
+                        'Gray',
                     ),
                     default_value='RGB',
                     size=(4, 1),
@@ -447,23 +460,28 @@ class Dobot_APP:
                        key='-Contours-'),
             ],
             [sg.Text('輪郭', size=(3, 1)),
-             sg.InputCombo(('親子関係を無視する',
-                            '最外の輪郭を検出する',
-                            '2つの階層に分類する',
-                            '全階層情報を保持する',),
-                            default_value='全階層情報を保持する',
-                            size=(20, 1),
-                            key='-RetrievalMode-',
-                            readonly=True),
+             sg.InputCombo(
+                ('親子関係を無視する',
+                 '最外の輪郭を検出する',
+                 '2つの階層に分類する',
+                 '全階層情報を保持する',
+                ),
+                default_value='全階層情報を保持する',
+                size=(20, 1),
+                key='-RetrievalMode-',
+                readonly=True),
             ],
             # 近似方法を指定する
             [sg.Text('近似方法', size=(7, 1)),
-             sg.InputCombo(('中間点を保持する',
-                            '中間点を保持しない'),
-                            default_value='中間点を保持する',
-                            size=(18, 1),
-                            key='-ApproximateMode-',
-                            readonly=True),
+             sg.InputCombo(
+                (
+                    '中間点を保持する',
+                    '中間点を保持しない',
+                ),
+                default_value='中間点を保持する',
+                size=(18, 1),
+                key='-ApproximateMode-',
+                readonly=True),
             ],
             [sg.Text('Gx', size=(2, 1)),
              sg.InputText(default_text='0',
@@ -480,17 +498,8 @@ class Dobot_APP:
             ],
         ]
 
-        # タスク1
-        task_1 = [
-            [sg.Text("タスク 1", size=(5, 1)),
-             sg.Button(button_text="タスク 1",
-                            size=(5, 1),
-                            key='-task_1-'),
-            ]
-        ]
-
         layout = [
-            [sg.Col(Connect), sg.Col(EndEffector)],
+            [sg.Col(Connect), sg.Col(EndEffector), sg.Col(Task),],
             [sg.Col(GetPose, size=(165, 140)),
              sg.Col(SetPose, size=(165, 140)),
              sg.Frame(title="キャリブレーション", layout=Alignment)],
@@ -518,10 +527,11 @@ class Dobot_APP:
         #---------------------------------------------
         if event == "-Binarization-":
             if values["-Binarization-"] != "なし":
+                self.Window['-Color_Space-'].update("Glay")
                 self.Window['-LowerThreshold-'].update(disabled=False)
 
             if values["-Binarization-"] == "Adaptive":
-                self.Window['-AdaptiveThreshold_type-'].update(disabled=False)
+                self.Window['-AdaptiveThreshold_type-'].update(disabled=False, readonly=True)
                 self.Window['-AdaptiveThreshold_BlockSize-'].update(disabled=False)
                 self.Window['-AdaptiveThreshold_Constant-'].update(disabled=False)
             elif values["-Binarization-"] == "Two":
@@ -571,6 +581,45 @@ class Dobot_APP:
             response = self.SetJointPose_click()
             print(response)
 
+        # ---------------------------------- #
+        # Dobotの動作終了位置を設定する #
+        # ---------------------------------- #
+        elif event == '-Record-':
+            if self.connection:
+                self.GetPose_UpdateWindow()
+
+                self.Window['-x0-'].update(str(self.CurrentPose["x"]))
+                self.Window['-y0-'].update(str(self.CurrentPose["y"]))
+                self.Window['-z0-'].update(str(self.CurrentPose["z"]))
+                self.Window['-r0-'].update(str(self.CurrentPose["r"]))
+
+                self.RecordPose = self.CurrentPose # 現在の姿勢を記録
+
+        # ----------------------------------------------------------- #
+        # 画像とDobotの座標系の位置合わせ用変数_1をセットする #
+        # ----------------------------------------------------------- #
+        elif event == '-Set_x1-':
+            if self.connection:
+                self.GetPose_UpdateWindow()
+
+                self.Alignment_1["x"] = self.CurrentPose["x"]
+                self.Alignment_1["y"] = self.CurrentPose["y"]
+                self.Window['-x1-'].update(str(self.Alignment_1["x"]))
+                self.Window['-y1-'].update(str(self.Alignment_1["y"]))
+
+        # -------------------------------------------------- #
+        #  画像とDobotの座標系の位置合わせ用変数_2をセットする   #
+        # -------------------------------------------------- #
+        elif event == '-Set_x2-':
+            if self.connection:
+                self.GetPose_UpdateWindow()
+
+                self.Alignment_2["x"] = self.CurrentPose["x"]
+                self.Alignment_2["y"] = self.CurrentPose["y"]
+                self.Window['-x2-'].update(str(self.Alignment_2["x"]))
+                self.Window['-y2-'].update(str(self.Alignment_2["y"]))
+
+
         # ------------------------------------ #
         # WebCamを選択&接続するイベント #
         # ------------------------------------ #
@@ -585,48 +634,27 @@ class Dobot_APP:
             # ----------------------------#
             # カメラを接続するイベント #
             # --------------------------- #
-            # カメラを初めて接続する場合
-            if (cam_num != None) and (self.cam_num == None):
+            # カメラを初めて接続する場合 -> カメラを新規接続
+            # 接続したいカメラが接続していカメラと同じ場合 -> カメラを解放
+            if (self.cam_num == None) or (self.cam_num == cam_num):
                 response, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
-                if response == -1:  # カメラが接続されていない場合
-                    sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
-                elif response == 0:  # カメラを開放した場合
-                    sg.popup("WebCameraを開放しました。", title="Camの接続")
-                else:
-                    sg.popup("WebCameraに接続しました。", title="Camの接続")
+                sg.popup(self.WebCam_err[response], title="Camの接続")
 
-            # 接続したいカメラが接続していカメラと同じ場合
-            elif (cam_num != None) and (self.cam_num == cam_num):
-                response, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
-                if response == -1:  # カメラが接続されていない場合
-                    sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
-                elif response == 0:  # カメラを開放した場合
-                    sg.popup("WebCameraを開放しました。", title="Camの接続")
-                else:
-                    sg.popup("WebCameraに接続しました。", title="Camの接続")
-
-            # 接続したいカメラと接続しているカメラが違う場合
-            elif (cam_num != None) and (self.cam_num != cam_num):
+            # 接続したいカメラと接続しているカメラが違う場合 -> 接続しているカメラを解放し、新規接続
+            elif (self.cam_num != None) and (self.cam_num != cam_num):
                 # まず接続しているカメラを開放する．
-                ch_1, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                response, self.cam = WebCam_OnOff(self.cam_num, cam=self.cam)
                 # 開放できた場合
-                if ch_1 == 0:
-                    sg.popup("WebCameraを開放しました。", title="Camの接続")
+                if response == 1:
+                    sg.popup(self.WebCam_err[response], title="Camの接続")
                     # 次に新しいカメラを接続する．
-                    ch_2, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
-                    # カメラが接続されていない場合
-                    if ch_2 == -1:
-                        sg.popup("WebCameraに接続できません．", title="カメラ接続エラー")
-                    else:
-                        sg.popup("WebCameraに接続しました．", title="Camの接続")
-                # 新しいカメラを接続した場合
-                elif ch_1 == 1:
-                    sg.popup("新しくWebCameraに接続しました．", title="Camの接続")
-                # カメラの接続に失敗した場合
-                else:
-                    self.cam = None
+                    response, self.cam = WebCam_OnOff(cam_num, cam=self.cam)
+                    sg.popup(self.WebCam_err[response], title="Camの接続")
 
-            self.cam_num = cam_num
+            # カメラが問題なく見つかった場合
+            if response != 2: self.cam_num = cam_num
+            else: self.cam_num = None
+
 
         #---------------------------------#
         # プレビューを表示するイベント #
@@ -662,44 +690,41 @@ class Dobot_APP:
         #  スナップショットを撮影するイベント  #
         # ---------------------------- #
         elif event == '-Snapshot-':
-            self.IMAGE_Org, self.IMAGE_bin = self.SnapshotBtn(values)
+            if type(self.cam) == cv2.VideoCapture:
+                self.IMAGE_Org, self.IMAGE_bin = self.SnapshotBtn(values)
+            else:
+                sg.popup(self.WebCam_err[2], title="カメラ接続エラー")
 
         # ------------------- #
         #  COGを計算するイベント  #
         # ------------------- #
         elif event == '-Contours-':
-            # スナップショットを撮影する
-            self.IMAGE_Org, self.IMAGE_bin = self.SnapshotBtn(values)
-            # 輪郭情報
-            RetrievalMode = {
-                '親子関係を無視する': cv2.RETR_LIST,
-                '最外の輪郭を検出する': cv2.RETR_EXTERNAL,
-                '2つの階層に分類する': cv2.RETR_CCOMP,
-                '全階層情報を保持する': cv2.RETR_TREE
-            }
-            # 輪郭の中間点情報
-            ApproximateMode = {
-                '中間点を保持する': cv2.CHAIN_APPROX_NONE,
-                '中間点を保持しない': cv2.CHAIN_APPROX_SIMPLE
-            }
+            if type(self.cam) == cv2.VideoCapture:
+                self.ContoursBtn(values)
+            else:
+                sg.popup(self.WebCam_err[2], title="カメラ接続エラー")
 
-            if type(self.IMAGE_bin) != np.ndarray:
-                raise TypeError('入力はnumpy配列を使用してください。')
-
-            COG = CenterOfGravity(bin_img=self.IMAGE_bin,
-                                  RetrievalMode=RetrievalMode[str(values['-RetrievalMode-'])],
-                                  ApproximateMode=ApproximateMode[str(values['-ApproximateMode-'])],
-                                  min_area=100,
-                                  cal_Method=1)
-
-            self.Window['-CenterOfGravity_x-'].update(str(COG[0]))
-            self.Window['-CenterOfGravity_y-'].update(str(COG[1]))
-
-
-        # --------------------------------------------------- #
-        #  オブジェクトの重心位置に移動→掴む→退避 動作を実行する  #
-        # --------------------------------------------------- #
-        #elif event == '-task_1-':
+        # -------------------------------------------------------------- #
+        # オブジェクトの重心位置に移動→掴む→退避 動作を実行する #
+        # -------------------------------------------------------------- #
+        elif event == '-Task-':
+            if values['-TaskNum-'] == "Task_1":
+                if (self.connection == True) and (type(self.cam) == cv2.VideoCapture):
+                    if (not self.Alignment_1) or \
+                       (not self.Alignment_2) or \
+                       (not self.RecordPose):
+                        sg.popup("キャリブレーション座標 x1 および x2, \n もしくは 退避位置 がセットされていません。")
+                    else:
+                        # 画像を撮影 & 重心位置を計算
+                        COG = self.ContoursBtn(values)
+                        # 現在のDobotの姿勢を取得
+                        self.GetPose_UpdateWindow() # pose -> self.CurrentPose
+                        # ------------------------------ #
+                        # Dobotの移動後の姿勢を計算 #
+                        # ------------------------------ #
+                        #try:
+                        #    x = self.Alignment_1
+                else: sg.popup("Dobotかカメラが接続されていません。")
 
 
     def main(self):
@@ -718,6 +743,52 @@ class Dobot_APP:
             if event != "__TIMEOUT__":
                 self.Event(event, values)
 
+    """
+    ----------------------
+    Button Function
+    ----------------------
+    """
+    def SetJointPose_click(self, pose: dict):
+        """
+        指定された作業座標系にアームの先端を移動させる関数
+        関節座標系で移動
+
+        Args:
+            pose (dict):
+                デカルト座標系もしくは関節座標系での移動先を示したリスト
+                パラメータ数4個
+
+        Returns:
+            response (int):
+                0 : 応答なし
+                1 : 応答あり
+        """
+        return _OneAction(self.api, pose)
+
+    def GetPose_UpdateWindow(self) -> dict:
+        """
+        姿勢を取得し、ウインドウを更新する関数
+
+        Return:
+            pose (dict):
+                Dobotの現在の姿勢
+        """
+
+        pose = dType.GetPose(self.api)  # 現在のDobotの位置と関節角度を取得
+        for num, key in  enumerate(self.CurrentPose.keys()):
+            self.CurrentPose[key] = pose[num]
+
+        self.Window["-Get_JointPose1-"].update(str(self.CurrentPose["joint1Angle"]))
+        self.Window["-Get_JointPose2-"].update(str(self.CurrentPose["joint2Angle"]))
+        self.Window["-Get_JointPose3-"].update(str(self.CurrentPose["joint3Angle"]))
+        self.Window["-Get_JointPose4-"].update(str(self.CurrentPose["joint4Angle"]))
+        self.Window["-Get_CoordinatePose_X-"].update(str(self.CurrentPose["x"]))
+        self.Window["-Get_CoordinatePose_Y-"].update(str(self.CurrentPose["y"]))
+        self.Window["-Get_CoordinatePose_Z-"].update(str(self.CurrentPose["z"]))
+        self.Window["-Get_CoordinatePose_R-"].update(str(self.CurrentPose["r"]))
+
+        return pose
+
 
     def SnapshotBtn(self, values: list) -> np.ndarray:
         """スナップショットの撮影から一連の画像処理を行う関数。
@@ -729,12 +800,10 @@ class Dobot_APP:
             dst_bin (np.ndarray): 二値化処理後の画像
         """
         dst_org = dst_bin = None
-
-
         response, img = Snapshot(self.cam)
-        if response != 1:
-            sg.popup("スナップショットを撮影できませんでした。", title="撮影エラー")
-            raise Exception("スナップショットを撮影できませんでした。")
+        if response != 3:
+            sg.popup(self.WebCam_err[response], title="撮影エラー")
+            return
 
         dst_org = img.copy()
         #--------------------------- #
@@ -808,6 +877,49 @@ class Dobot_APP:
         self.fig_agg.draw()
 
         return dst_org, dst_bin
+
+    def ContoursBtn(self, values: list):
+        """スナップショットの撮影からオブジェクトの重心位置計算までの一連の画像処理を行う関数。
+
+        Args:
+            values (list): ウインドウ上のボタンの状態などを記録している変数
+        Returns:
+            COG(list): COG=[x, y], オブジェクトの重心位置
+        """
+        COG = []
+        # 輪郭情報
+        RetrievalMode = {
+            '親子関係を無視する': cv2.RETR_LIST,
+            '最外の輪郭を検出する': cv2.RETR_EXTERNAL,
+            '2つの階層に分類する': cv2.RETR_CCOMP,
+            '全階層情報を保持する': cv2.RETR_TREE
+        }
+        # 輪郭の中間点情報
+        ApproximateMode = {
+            '中間点を保持する': cv2.CHAIN_APPROX_NONE,
+            '中間点を保持しない': cv2.CHAIN_APPROX_SIMPLE
+        }
+
+        # スナップショットを撮影する
+        self.IMAGE_Org, self.IMAGE_bin = self.SnapshotBtn(values)
+        try:
+            if type(self.IMAGE_bin) != np.ndarray:
+                raise TypeError('入力はnumpy配列を使用してください。')
+
+            COG = CenterOfGravity(
+                bin_img=self.IMAGE_bin,
+                RetrievalMode=RetrievalMode[str(values['-RetrievalMode-'])],
+                ApproximateMode=ApproximateMode[str(values['-ApproximateMode-'])],
+                min_area=100,
+                cal_Method=1
+            )
+        except Exception as e:
+            traceback.print_exc()
+        else:
+            self.Window['-CenterOfGravity_x-'].update(str(COG[0]))
+            self.Window['-CenterOfGravity_y-'].update(str(COG[1]))
+        finally:
+            return COG
 
 
 def WebCamOption(device_name: str) -> int:
