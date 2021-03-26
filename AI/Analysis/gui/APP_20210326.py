@@ -527,7 +527,7 @@ class Dobot_APP:
         #---------------------------------------------
         if event == "-Binarization-":
             if values["-Binarization-"] != "なし":
-                self.Window['-Color_Space-'].update("Glay")
+                self.Window['-Color_Space-'].update("Gray")
                 self.Window['-LowerThreshold-'].update(disabled=False)
 
             if values["-Binarization-"] == "Adaptive":
@@ -713,7 +713,7 @@ class Dobot_APP:
                     if (not self.Alignment_1) or \
                        (not self.Alignment_2) or \
                        (not self.RecordPose):
-                        sg.popup("キャリブレーション座標 x1 および x2, \n もしくは 退避位置 がセットされていません。")
+                        sg.popup("キャリブレーション座標 x1 および x2, \nもしくは 退避位置 がセットされていません。")
                     else:
                         # 画像を撮影 & 重心位置を計算
                         COG = self.ContoursBtn(values)
