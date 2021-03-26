@@ -2,6 +2,7 @@ import sys,os
 sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../../")
+import time
 import traceback
 
 import cv2
@@ -19,6 +20,7 @@ from ImageProcessing.Binarization import GlobalThreshold, AdaptiveThreshold, Two
 from ImageProcessing.Contrast import Contrast_cvt
 from ImageProcessing.CenterOfGravity import CenterOfGravity
 from src.config.config import cfg
+from timeout_decorator import timeout, TimeoutError
 #from ..DobotDLL
 
 # from PIL import Image
@@ -686,18 +688,18 @@ class Dobot_APP:
                     sg.popup("カメラが接続されていません．", title="カメラ接続エラー")
                     break
 
-        # ---------------------------- #
-        #  スナップショットを撮影するイベント  #
-        # ---------------------------- #
+        # --------------------------------------- #
+        # スナップショットを撮影するイベント #
+        # --------------------------------------- #
         elif event == '-Snapshot-':
             if type(self.cam) == cv2.VideoCapture:
                 self.IMAGE_Org, self.IMAGE_bin = self.SnapshotBtn(values)
             else:
                 sg.popup(self.WebCam_err[2], title="カメラ接続エラー")
 
-        # ------------------- #
-        #  COGを計算するイベント  #
-        # ------------------- #
+        # -------------------------- #
+        # COGを計算するイベント #
+        # ------------------------- #
         elif event == '-Contours-':
             if type(self.cam) == cv2.VideoCapture:
                 self.ContoursBtn(values)
@@ -718,12 +720,37 @@ class Dobot_APP:
                         # 画像を撮影 & 重心位置を計算
                         COG = self.ContoursBtn(values)
                         # 現在のDobotの姿勢を取得
-                        self.GetPose_UpdateWindow() # pose -> self.CurrentPose
+                        pose = self.GetPose_UpdateWindow() # pose -> self.CurrentPose
                         # ------------------------------ #
                         # Dobotの移動後の姿勢を計算 #
                         # ------------------------------ #
-                        #try:
-                        #    x = self.Alignment_1
+                        try:
+                            pose["x"] = self.Alignment_1["x"] + COG[0] * \
+                                (self.Alignment_2["x"]-self.Alignment_1["x"]) / float(self.Image_height)
+                            pose["y"] = self.Alignment_1["y"] + COG[1] * \
+                                (self.Alignment_2["y"]-self.Alignment_1["y"]) / float(self.Image_width)
+                        except ZeroDivisionError: # ゼロ割が発生した場合
+                            sg.popup('画像のサイズが計測されていません', title='エラー')
+                            return
+
+                        # Dobotをオブジェクト重心の真上まで移動させる。
+                        self.SetCoordinatePose_click(pose)
+                        # グリッパーを開く。
+                        GripperAutoCtrl(self.api)
+                        # DobotをZ=-35の位置まで降下させる。
+                        pose["z"]=-35
+                        self.SetCoordinatePose_click(pose)
+                        # グリッパを閉じる。
+                        GripperAutoCtrl(self.api)
+                        # Dobotを上昇させる。
+                        pose["z"] = self.CurrentPose["z"]
+                        self.SetCoordinatePose_click(pose)
+                        # 退避位置まで移動させる。
+                        self.SetCoordinatePose_click(self.RecordPose)
+
+
+
+
                 else: sg.popup("Dobotかカメラが接続されていません。")
 
 
@@ -765,13 +792,35 @@ class Dobot_APP:
         """
         return _OneAction(self.api, pose)
 
+    def SetCoordinatePose_click(self, pose: dict, queue_index: int=1):
+        """デカルト座標系で指定された位置にアームの先端を移動させる関数
+
+        Arg:
+            pose(dict): デカルト座標系および関節座標系で指定された姿勢データ
+
+        Return:
+            response(int):
+                0 : 応答あり
+                1 : 応答なし
+        """
+        dType.SetPTPCmd(self.api,
+                                   dType.PTPMode.PTPMOVJXYZMode,
+                                   pose["x"],
+                                   pose["y"],
+                                   pose["z"],
+                                   pose["r"],
+                                   queue_index
+        )
+        time.sleep(5)
+        return 0
+
+
     def GetPose_UpdateWindow(self) -> dict:
         """
         姿勢を取得し、ウインドウを更新する関数
 
         Return:
-            pose (dict):
-                Dobotの現在の姿勢
+            CurrentPose (dict): Dobotの現在の姿勢
         """
 
         pose = dType.GetPose(self.api)  # 現在のDobotの位置と関節角度を取得
@@ -787,7 +836,7 @@ class Dobot_APP:
         self.Window["-Get_CoordinatePose_Z-"].update(str(self.CurrentPose["z"]))
         self.Window["-Get_CoordinatePose_R-"].update(str(self.CurrentPose["r"]))
 
-        return pose
+        return self.CurrentPose
 
 
     def SnapshotBtn(self, values: list) -> np.ndarray:
