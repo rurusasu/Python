@@ -30,16 +30,16 @@ class Dobot_APP:
         dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
         #self.api = cdll.LoadLibrary(dll_path)
         self.api = dType.load(dll_path)
-        self.pose_key = [
-            "x",
-            "y",
-            "z",
-            "r",
-            "joint1Angle",
-            "joint2Angle",
-            "joint3Angle",
-            "joint4Angle",
-        ]
+        self.CurrentPose = {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "r": 0.0,
+            "joint1Angle": 0.0,
+            "joint2Angle": 0.0,
+            "joint3Angle": 0.0,
+            "joint4Angle": 0.0,
+        }
         self.connection = False #Dobotの接続状態
         self.current_pose = {}  # Dobotの現在の姿勢
         self.cam = None
@@ -97,16 +97,17 @@ class Dobot_APP:
         """
 
         pose = dType.GetPose(self.api)  # 現在のDobotの位置と関節角度を取得
-        pose = dict(zip(self.pose_key, pose))  # 辞書形式に変換
+        for num, key in  enumerate(self.CurrentPose.keys()):
+            self.CurrentPose[key] = pose[num]
 
-        self.Window["-JointPose1-"].update(str(pose["joint1Angle"]))
-        self.Window["-JointPose2-"].update(str(pose["joint2Angle"]))
-        self.Window["-JointPose3-"].update(str(pose["joint3Angle"]))
-        self.Window["-JointPose4-"].update(str(pose["joint4Angle"]))
-        self.Window["-CoordinatePose_X-"].update(str(pose["x"]))
-        self.Window["-CoordinatePose_Y-"].update(str(pose["y"]))
-        self.Window["-CoordinatePose_Z-"].update(str(pose["z"]))
-        self.Window["-CoordinatePose_R-"].update(str(pose["r"]))
+        self.Window["-JointPose1-"].update(str(self.CurrentPose["joint1Angle"]))
+        self.Window["-JointPose2-"].update(str(self.CurrentPose["joint2Angle"]))
+        self.Window["-JointPose3-"].update(str(self.CurrentPose["joint3Angle"]))
+        self.Window["-JointPose4-"].update(str(self.CurrentPose["joint4Angle"]))
+        self.Window["-CoordinatePose_X-"].update(str(self.CurrentPose["x"]))
+        self.Window["-CoordinatePose_Y-"].update(str(self.CurrentPose["y"]))
+        self.Window["-CoordinatePose_Z-"].update(str(self.CurrentPose["z"]))
+        self.Window["-CoordinatePose_R-"].update(str(self.CurrentPose["r"]))
 
         return pose
 
@@ -551,6 +552,13 @@ class Dobot_APP:
             if self.connection:
                 # グリッパを開く
                 GripperAutoCtrl(self.api)
+
+        # ------------------------------------------- #
+        # 現在の姿勢を取得し、画面上のに表示する #
+        # ------------------------------------------- #
+        elif event == "-GetPose-":
+            if self.connection:
+                self.GetPose_UpdateWindow(self.api)
 
         elif event == "-SetJointPose-":
             # 移動後の関節角度を指定

@@ -6,6 +6,7 @@ sys.path.append("..")
 sys.path.append("../../")
 
 import csv
+import time
 
 from DobotDLL import DobotDllType as dType
 from timeout_decorator import timeout, TimeoutError
@@ -105,7 +106,7 @@ def initDobot(api):
         api, 150, -200, 100, 0, isQueued=1
     )  # Async Motion Params Setting
     dType.SetHOMECmd(api, temp=0, isQueued=1)  # Async Home
-
+    time.sleep(20) # 初期位置への移動待ち
     # JOGパラメータの設定
     dType.SetJOGJointParams(
         api, 200, 200, 200, 200, 200, 200, 200, 200, isQueued=1
@@ -272,7 +273,47 @@ def __Act(api, lastIndex):
     dType.SetQueuedCmdStopExec(api)
 
 
-def GripperOpenClose(api, motorCtrl: bool=False, gripperCtrl: bool=True, queue_index: int=0):
+def GripperAutoCtrl(api) -> None:
+    """DobotAPIの出力に基づいてグリッパを自動的に開閉制御する関数
+
+    Args:
+        api (dType): Dobot API
+
+    Return:
+        None
+    """
+    sleep_time = 2 #[second]
+    [value] = dType.GetEndEffectorGripper(api)
+    # --------------------------- #
+    # グリッパが閉じている場合 #
+    # --------------------------- #
+    if value:
+        # モータを起動する
+        _GripperOpenClose(api, motorCtrl=True, gripperCtrl=True)
+        # グリッパを開く
+        _GripperOpenClose(api, motorCtrl=True, gripperCtrl=False)
+        time.sleep(sleep_time)
+        # モータを停止する
+        _GripperOpenClose(api, motorCtrl=False, gripperCtrl=False)
+    # --------------------------- #
+    # グリッパが開いている場合 #
+    # --------------------------- #
+    else:
+        # モータを起動する
+        _GripperOpenClose(api, motorCtrl=True, gripperCtrl=False)
+        # グリッパを閉じる
+        _GripperOpenClose(api, motorCtrl=True, gripperCtrl=True)
+        time.sleep(sleep_time)
+        # モータを停止する
+        _GripperOpenClose(api, motorCtrl=False, gripperCtrl=True)
+
+
+def _GripperOpenClose(
+    api,
+    motorCtrl: bool=False,
+    gripperCtrl: bool=True,
+    queue_index: int=0
+) -> None:
     """グリッパーを開閉する関数
 
     Args:
@@ -288,18 +329,9 @@ def GripperOpenClose(api, motorCtrl: bool=False, gripperCtrl: bool=True, queue_i
             * 0: 送らない
             * 1: 送る
 
-    Return:
-        respomse (int): 動作結果
-            0: 動作した
-            3: 動作しなかった
+    Return: None
     """
-    response = 3
-    timeout(5)
-    try:
-        response = dType.SetEndEffectorGripper(api, MotorCtr, gripperCtr, queue_index)
-    except TimeoutError:
-        return response
-    return 0
+    dType.SetEndEffectorGripper(api, motorCtrl, gripperCtrl, queue_index)
 
 
 # ----------------------------------
@@ -341,4 +373,36 @@ if __name__ == "__main__":
         dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
     }
 
-    ref = Connect_Disconnect(1, api, CON_STR)
+    connection_flag = False
+
+    connection_flag, result = Connect_Disconnect(connection_flag, api, CON_STR)
+    if connection_flag:
+        [value] = dType.GetEndEffectorSuctionCup(api)
+        print(value)
+
+        """
+        # グリッパ: 閉、モータ: OFF -> 1
+        [value] = dType.GetEndEffectorGripper(api)
+        print("Gripper CLOSE, Motor OFF: {}".format(value))
+        # グリッパ: 開、モータ: ON -> 0
+        result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=False)
+        time.sleep(5)
+        [value] = dType.GetEndEffectorGripper(api)
+        print("Gripper OPEN Motor ON: {}".format(value))
+        # グリッパ: 開、モータ: OFF -> 0
+        result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=False)
+        [value] = dType.GetEndEffectorGripper(api)
+        print("Gripper OPEN Motor OFF: {}".format(value))
+        # グリッパ: 閉、モータ: ON -> 1
+        result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=True)
+        time.sleep(5)
+        [value] = dType.GetEndEffectorGripper(api)
+        print("Gripper CLOSE Motor ON: {}".format(value))
+        # グリッパ: 閉、モータ: OFF -> 1
+        result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=True)
+        [value] = dType.GetEndEffectorGripper(api)
+        print("Gripper CLOSE Motor OFF: {}".format(value))
+        """
+
+        GripperAutoCtrl(api)
+        GripperAutoCtrl(api)
