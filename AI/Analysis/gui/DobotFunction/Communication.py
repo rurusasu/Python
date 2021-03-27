@@ -7,6 +7,7 @@ sys.path.append("../../")
 
 import csv
 import time
+import traceback
 
 from DobotDLL import DobotDllType as dType
 from timeout_decorator import timeout, TimeoutError
@@ -36,6 +37,12 @@ ptpCoordinateParams = {
     "xyzAcceleration": 200,
     "rVelocity": 200,
     "rAcceleration": 200,
+}
+
+ptpMoveModeDict = {
+    "JumpCoordinate": dType.PTPMode.PTPJUMPXYZMode,
+    "MoveJCoordinate": dType.PTPMode.PTPMOVJXYZMode,
+    "MoveLCoordinate": dType.PTPMode.PTPMOVLXYZMode
 }
 
 
@@ -273,11 +280,50 @@ def __Act(api, lastIndex):
     dType.SetQueuedCmdStopExec(api)
 
 
+def SetPoseAct(api,  pose: dict, ptpMoveMode: str, queue_index: int=1):
+        """デカルト座標系で指定された位置にアームの先端を移動させる関数
+
+        Arg:
+            api(dtype): DobotAPIのコンストラクタ
+            pose(dict): デカルト座標系および関節座標系で指定された姿勢データ
+            ptpMoveMode(str): 各座標系におけるDobotの制御方法
+            queue_index(int): データをQueueとして送るか。default to 0
+            * 0: 送らない
+            * 1: 送る
+
+        Return:
+            response(int):
+                0 : 応答あり
+                1 : 応答なし
+        """
+        response = ''
+        try:
+            for ptpmode in ptpMoveModeDict:
+                if ptpMoveMode in ptpmode:
+                    response = ptpMoveModeDict[ptpMoveMode]
+                    break
+            if (not response) and (response != 0):
+                raise ValueError("指定された制御方法は存在しません。")
+        except (ValueError, TypeError) as e:
+            traceback.print_exc()
+        else:
+            dType.SetPTPCmd(api,
+                                        ptpMoveModeDict[ptpMoveMode],
+                                        pose["x"],
+                                        pose["y"],
+                                        pose["z"],
+                                        pose["r"],
+                                        queue_index
+                )
+            time.sleep(2)
+        return 0
+
+
 def GripperAutoCtrl(api) -> None:
     """DobotAPIの出力に基づいてグリッパを自動的に開閉制御する関数
 
     Args:
-        api (dType): Dobot API
+        api (dType): DobotAPIのコンストラクタ
 
     Return:
         None
@@ -317,8 +363,7 @@ def _GripperOpenClose(
     """グリッパーを開閉する関数
 
     Args:
-        api : Dobot型
-            DobotAPIのコンストラクタ
+        api(dType): DobotAPIのコンストラクタ
         motorCtrl(bool optional): 吸引モータを起動する。default to True
             * True:  On
             * False: Off
@@ -404,5 +449,21 @@ if __name__ == "__main__":
         print("Gripper CLOSE Motor OFF: {}".format(value))
         """
 
-        GripperAutoCtrl(api)
-        GripperAutoCtrl(api)
+        #GripperAutoCtrl(api)
+        #GripperAutoCtrl(api)
+
+        pose = {
+        "x": 193,
+        "y": -20,
+        "z": 21,
+        "r": 46,
+        "joint1Angle": 0.0,
+        "joint2Angle": 0.0,
+        "joint3Angle": 0.0,
+        "joint4Angle": 0.0,
+        }
+
+        ptpMoveMode = "JumpCoordinate"
+        #ptpMoveMode = "MoveJCoordinate"
+
+        SetPoseAct(api, pose, ptpMoveMode)

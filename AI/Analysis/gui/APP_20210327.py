@@ -82,7 +82,19 @@ class Dobot_APP:
 
     def Layout(self):
         Connect = [
-            [sg.Button("Connect or Disconnect", key="-Connect-")],
+            [sg.Button("Connect or Disconnect", key="-Connect-"),],
+            [sg.Text("ptpMoveMode", size=(10, 1)),
+             sg.Combo(
+                (
+                    "JumpCoordinate",
+                    "MoveJCoordinate",
+                    "MoveLCoordinate"
+                ),
+                default_value="MoveJCoordinate",
+                size=(15, 1),
+                key='-MoveMode-',
+                readonly=True),
+            ],
         ]
 
         EndEffector = [
@@ -583,6 +595,39 @@ class Dobot_APP:
             response = self.SetJointPose_click()
             print(response)
 
+        # ----------------------------------------- #
+        # デカルト座標系で指定位置に動作させる #
+        # ----------------------------------------- #
+        elif event == '-SetCoordinatePose-':
+            if self.connection:
+                if ((values['-CoordinatePose_X-'] is '') and
+                    (values['-CoordinatePose_Y-'] is '') and
+                    (values['-CoordinatePose_Z-'] is '') and
+                        (values['-CoordinatePose_R-'] is '')):  # 移動先が1つも入力場合
+                    sg.popup('移動先が入力されていません。', title='入力不良')
+                    self.Input_err = 1
+                    return
+
+                pose = self.GetPose_UpdateWindow()
+                if values['-CoordinatePose_X-'] is '':
+                    values['-CoordinatePose_X-'] = pose["x"]
+                if values['-CoordinatePose_Y-'] is '':
+                    values['-CoordinatePose_Y-'] = pose["y"]
+                if values['-CoordinatePose_Z-'] is '':
+                    values['--CoordinatePose_Z-'] = pose["z"]
+                if values['-CoordinatePose_R-'] is '':
+                    values['-CoordinatePose_R-'] = pose["r"]
+
+                # 移動後の関節角度を指定
+                pose["x"] = float(values['-CoordinatePose_X-'])
+                pose["y"] = float(values['-CoordinatePose_Y-'])
+                pose["z"] = float(values['--CoordinatePose_Z-'])
+                pose["r"] = float(values['-CoordinatePose_R-'])
+
+                SetPoseAct(self.api, pose=pose, ptpMoveMode=values["-MoveMode-"])
+                time.sleep(2)
+            return
+
         # ---------------------------------- #
         # Dobotの動作終了位置を設定する #
         # ---------------------------------- #
@@ -733,23 +778,31 @@ class Dobot_APP:
                             sg.popup('画像のサイズが計測されていません', title='エラー')
                             return
 
+                        pose = {
+                        "x": 193,
+                        "y": -20,
+                        "z": 21,
+                        "r": 46,
+                        "joint1Angle": 0.0,
+                        "joint2Angle": 0.0,
+                        "joint3Angle": 0.0,
+                        "joint4Angle": 0.0,
+                        }
+
                         # Dobotをオブジェクト重心の真上まで移動させる。
-                        self.SetCoordinatePose_click(pose)
+                        SetPoseAct(self.api, pose=pose, ptpMoveMode=values["-MoveMode-"])
                         # グリッパーを開く。
                         GripperAutoCtrl(self.api)
                         # DobotをZ=-35の位置まで降下させる。
                         pose["z"]=-35
-                        self.SetCoordinatePose_click(pose)
+                        SetPoseAct(self.api, pose=pose, ptpMoveMode=values["-MoveMode-"])
                         # グリッパを閉じる。
                         GripperAutoCtrl(self.api)
                         # Dobotを上昇させる。
                         pose["z"] = self.CurrentPose["z"]
-                        self.SetCoordinatePose_click(pose)
+                        SetPoseAct(self.api, pose=pose, ptpMoveMode=values["-MoveMode-"])
                         # 退避位置まで移動させる。
-                        self.SetCoordinatePose_click(self.RecordPose)
-
-
-
+                        SetPoseAct(self.api, pose=self.RecordPose, ptpMoveMode=values["-MoveMode-"])
 
                 else: sg.popup("Dobotかカメラが接続されていません。")
 
