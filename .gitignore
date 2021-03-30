@@ -3,4 +3,5 @@
 *.csv
 *.zip
 AI/Analysis/node_modules/
+AI/Analysis/data/DataScienceBowl/*
 Dobot/node_modules/

@@ -32,6 +32,11 @@ cifar10
 """
 cfg.CIFAR10_DIR = os.path.join(cfg.DATA_DIR, "cifar10")
 
+"""DataScienceBowl
+"""
+cfg.DATA_SCIENCE_BOWL_DIR = os.path.join(cfg.DATA_DIR, "DataScienceBowl")
+cfg.DSB2018_96_DIR = os.path.join(cfg.DATA_SCIENCE_BOWL_DIR, "dsb2018_96")
+
 """
 OpenImage
 """

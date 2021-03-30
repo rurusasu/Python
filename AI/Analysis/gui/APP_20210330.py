@@ -1081,8 +1081,30 @@ def delete_figure_agg(figure_agg):
 
 
 if __name__ == "__main__":
+    debug = True
+
     if debug:
-        
+        dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
+        api = dType.load(dll_path)
+
+        connection_flag = False
+        connection_flag, result = Connect_Disconnect(connection_flag, api)
+
+        if connection_flag:
+            pose = {
+            "x": 193,
+            "y": -20,
+            "z": 21,
+            "r": 46,
+            "joint1Angle": 0.0,
+            "joint2Angle": 0.0,
+            "joint3Angle": 0.0,
+            "joint4Angle": 0.0,
+            }
+
+            ptpMoveMode = "JumpCoordinate"
+            SetPoseAct(api, pose, ptpMoveMode)
+
     else:
         window = Dobot_APP()
         window.loop()
