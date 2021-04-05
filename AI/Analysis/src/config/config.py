@@ -27,8 +27,8 @@ cfg.GRAY_IMG_DIR = os.path.join(cfg.TEST_DIR, "gray_img")
 cfg.TEST_IMG_ORG_DIR = os.path.join(cfg.TEST_DIR, "org_img")
 cfg.NOISE_IMG_DIR = os.path.join(cfg.TEST_DIR, "noise_img")
 cfg.SMOOTHING_IMG_DIR = os.path.join(cfg.TEST_DIR, "smoothing_img")
-"""
-cifar10
+
+"""cifar10
 """
 cfg.CIFAR10_DIR = os.path.join(cfg.DATA_DIR, "cifar10")
 

@@ -2,8 +2,6 @@ import os
 import sys
 sys.path.append(".")
 sys.path.append("..")
-from glob import glob
-import shutil
 
 import cv2
 import numpy as np
@@ -80,28 +78,10 @@ class Dataset(torch.utils.data.Dataset):
         return img, mask, {'img_id': img_id}
 
 
-def MoveImage(parent_path: str, curent_path: str):
-    # 移動前のパス
-
-    #list_file_and_dir_name = os.listdir(curent_path)
-    list_file_and_dir_path = glob(os.path.join(curent_path, '*'))
-
-    for p in list_file_and_dir_path:
-        if os.path.isdir(p):
-            # 置き換える直前のディレクトリまでを削除
-            # 移動先のディレクトリパスのディレクトリが存在するか確認
-            if 
-            break
-        else:
-            list_dir.append(p)
-
-    print(p.replace(curent_path, ''))
-
-
 if __name__=="__main__":
+    from arg_utils import parse_args
     from src.config.config import cfg
 
+    config = vars(parse_args())
     curent_path = cfg.DSB2018_96_DIR
     parent_path = cfg.DATA_SCIENCE_BOWL_DIR + os.sep + "dsb2018_96_copy"
-
-    MoveImage(parent_path, curent_path)

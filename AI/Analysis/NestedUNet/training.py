@@ -15,143 +15,17 @@ from albumentations.core.composition import Compose, OneOf
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-import argparse
 import archs
 import losses
+from arg_utils import parse_args
 from dataset import Dataset
 from src.config.config import cfg
-from utils import AverageMeter ,str2bool
+from utils import AverageMeter
 
 
-ARCH_NAMES = archs.__all__
-LOSS_NAMES = losses.__all__
-LOSS_NAMES.append('BCEWithLogitsLoss')
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--name',
-                       default=None,
-                       help='model name: (default: arch+timestamp)'
-                    )
-    parser.add_argument('--epochs',
-                        default=100,
-                        type=int,
-                        metavar='N',
-                        help='number of total epoch to run (default: 100)')
-    parser.add_argument('-b', '--batch_size',
-                        default=16,
-                        type=int,
-                        metavar='N',
-                        help='mini-batch size (default: 16)')
-
-    # model
-    parser.add_argument('-a', '--arch',
-                        metavar='ARCH',
-                        default='NestedUNet',
-                        choices=ARCH_NAMES,
-                        help='model architecture: ' +
-                        '|'.join(ARCH_NAMES) +
-                        ' (default: NestedUNet)')
-    parser.add_argument('--deep_supervision',
-                        default=False,
-                        type=str2bool)
-    parser.add_argument('--input_channels',
-                        default=1,
-                        type=int,
-                        help='input channel')
-    parser.add_argument('--num_classes',
-                        default=1,
-                        type=int,
-                        help='number of classes')
-    parser.add_argument('--input_w',
-                        default=96,
-                        type=int,
-                        help='image width')
-    parser.add_argument('--input_h',
-                        default=96,
-                        type=int,
-                        help='image height')
-
-    # loss
-    parser.add_argument('--loss',
-                        default='BCEDiceLoss',
-                        choices=LOSS_NAMES,
-                        help='loss: '+
-                        '|'.join(LOSS_NAMES)+
-                        '(default: BCEDiceLoss)')
-
-    # dataset
-    parser.add_argument('--dataset',
-                        default='dsb2018_96',
-                        help='dataset name')
-    parser.add_argument('--img_ext',
-                        default='.png',
-                        help='image file extension')
-    parser.add_argument('--mask_ext',
-                        default='.png',
-                        help='mask file extension')
-
-    # optimizer
-    parser.add_argument('--optimizer',
-                        default='SGD',
-                        choices=['Adam', 'SGD'],
-                        help='loss: '+
-                        '|'.join(['Adam', 'SGD'])+
-                        '(default: Adam)')
-    parser.add_argument('--lr', '--learning_rate',
-                        default=1e-3,
-                        type=float,
-                        metavar='LR',
-                        help='initial learning rate')
-    parser.add_argument('--momentum',
-                        default=0.9,
-                        type=float,
-                        help='momentum')
-    parser.add_argument('--weight_decay',
-                        default=1e-4,
-                        type=float,
-                        help='weight decay')
-    parser.add_argument('--nesterov',
-                        default=False,
-                        type=str2bool,
-                        help='nesterov')
-
-    # scheduler
-    parser.add_argument('--scheduler',
-                        default='CosineAnnealingLR',
-                        choices=['CosineAnnealingLR',
-                                 'ReduceLROnPlateau',
-                                 'MultiStepLR',
-                                 'ConstantLR'])
-    parser.add_argument('--min_lr',
-                        default=1e-5,
-                        type=float,
-                        help='minimun learning rate')
-    parser.add_argument('--factor',
-                        default=0.1,
-                        type=float)
-    parser.add_argument('--patience',
-                        default=2,
-                        type=int)
-    parser.add_argument('--milestones',
-                        default='1,2',
-                        type=str)
-    parser.add_argument('--gamma',
-                        default=2/3,
-                        type=float)
-    parser.add_argument('--early_stopping',
-                        default=1,
-                        type=int,
-                        metavar='N',
-                        help='early stopping (default: -1)')
-
-    parser.add_argument('--num_workers',
-                        default=4,
-                        type=int)
-
-    config = parser.parse_args()
-    return config
+#ARCH_NAMES = archs.__all__
+#LOSS_NAMES = losses.__all__
+#LOSS_NAMES.append('BCEWithLogitsLoss')
 
 
 def train(config, train_loader, model, criterion, optimizer):
@@ -290,10 +164,27 @@ def main():
     # Data loading code
     if config['dataset'] == "dsb2018_96":
         input_dir = cfg.DSB2018_96_DIR
-        img_ids = glob(os.path.join(input_dir, '*' , 'images', '*' + config['img_ext']))
+        img_ids = glob(os.path.join(input_dir, 'images', '*' + config['img_ext']))
         img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
 
         train_img_ids, val_img_ids = train_test_split(img_ids, test_size=0.2, random_state=41)
+
+        train_transform = Compose([
+            transforms.RandomRotate90(),
+            transforms.Flip(),
+            OneOf([
+                transforms.HueSaturationValue(),
+                transforms.RandomBrightness(),
+                transforms.RandomContrast(),
+            ], p=1),
+            transforms.Resize(config['input_h'], config['input_w']),
+            transforms.Normalize()
+        ])
+
+        val_transform = Compose([
+            transforms.Resize(config['input_h'], config['input_w']),
+            transforms.Normalize(),
+        ])
 
         train_dataset = Dataset(
             img_ids = train_img_ids,
@@ -303,6 +194,7 @@ def main():
             mask_ext = config['mask_ext'],
             num_classes=config['num_classes'],
             transform=train_transform)
+
         val_dataset = Dataset(
             img_ids = val_img_ids,
             img_dir = os.path.join('inputs', config['dataset'], 'images'),
@@ -324,23 +216,6 @@ def main():
         shuffle=False,
         num_workers=config['num_workers'],
         drop_last=False)
-
-    train_transform = Compose([
-        transforms.RandomRotate90(),
-        transforms.Flip(),
-        OneOf([
-            transforms.HueSaturationValue(),
-            transforms.RandomBrightness(),
-            transforms.RandomContrast(),
-        ], p=1),
-        transforms.Resize(config['input_h'], config['input_w']),
-        transforms.Normalize()
-    ])
-
-    val_transform = Compose([
-        transforms.Resize(config['input_h'], config['input_w']),
-        transforms.Normalize(),
-    ])
 
     log = OrderedDict([
         ('epoch', []),
