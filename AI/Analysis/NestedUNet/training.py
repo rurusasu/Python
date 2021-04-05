@@ -5,6 +5,7 @@ sys.path.append("..")
 from collections import OrderedDict
 from glob import glob
 
+import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -13,12 +14,14 @@ import yaml
 from albumentations.augmentations import transforms
 from albumentations.core.composition import Compose, OneOf
 from sklearn.model_selection import train_test_split
+from torch.optim import lr_scheduler
 from tqdm import tqdm
 
 import archs
 import losses
 from arg_utils import parse_args
 from dataset import Dataset
+from metrics import iou_score
 from src.config.config import cfg
 from utils import AverageMeter
 
@@ -103,7 +106,7 @@ def validate(config, val_loader, model, criterion):
 
             postfix = OrderedDict([
                 ('loss', avg_meters['loss'].avg),
-                ('iou', avg_meters.update['iou'].avg),
+                ('iou', avg_meters['iou'].avg),
             ])
 
             pbar.set_postfix(postfix)
@@ -143,8 +146,8 @@ def main():
     # create model
     print("=> creating model %s" % config['arch'])
     model = archs.__dict__[config['arch']](config['num_classes'],
-                                           config['input_channels'],
-                                           config['deep_supervision'])
+                                                             config['input_channels'],
+                                                             config['deep_supervision'])
 
     model = model.cuda()
 
@@ -158,6 +161,32 @@ def main():
             params, lr=config['lr'], momentum=config['momentum'],
             nesterov=config['nesterov'], weight_decay=config['weight_decay']
         )
+    else:
+        raise NotImplementedError
+
+    # scheduler
+    if config['scheduler'] == 'CosineAnnealingLR':
+        scheduler = lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer,
+            T_max=config['epochs'],
+            eta_min=config['min_lr']
+        )
+    elif config['scheduler'] == 'ReduceLROnPlateau':
+        scheduler = lr_scheduler(
+            optimizer=optimizer,
+            factor=config['factor'],
+            patience=config['patience'],
+            verbose=1,
+            min_lr=config['min_lr']
+        )
+    elif config['scheduler'] == 'MultiStepLR':
+        scheduler = lr_scheduler.MultiStepLR(
+            optimizer=optimizer,
+            milestones=[int(e) for e in config['milestones'].split(',')],
+            gamma=config['gamma']
+        )
+    elif config['scheduler'] == 'ConstantLR':
+        scheduler = None
     else:
         raise NotImplementedError
 
@@ -189,7 +218,7 @@ def main():
         train_dataset = Dataset(
             img_ids = train_img_ids,
             img_dir = os.path.join(input_dir, 'images'),
-            mask_dir = os.path.join('inputs', config['dataset'], 'masks'),
+            mask_dir = os.path.join(input_dir, 'masks'),
             img_ext = config['img_ext'],
             mask_ext = config['mask_ext'],
             num_classes=config['num_classes'],
@@ -197,8 +226,8 @@ def main():
 
         val_dataset = Dataset(
             img_ids = val_img_ids,
-            img_dir = os.path.join('inputs', config['dataset'], 'images'),
-            mask_dir = os.path.join('inputs', config['dataset'], 'masks'),
+            img_dir = os.path.join(input_dir, 'images'),
+            mask_dir = os.path.join(input_dir, 'masks'),
             img_ext = config['img_ext'],
             mask_ext = config['mask_ext'],
             num_classes=config['num_classes'],

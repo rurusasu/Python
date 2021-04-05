@@ -2,12 +2,12 @@ arch: NestedUNet
 batch_size: 16
 dataset: dsb2018_96
 deep_supervision: false
-early_stopping: 1
+early_stopping: -1
 epochs: 100
 factor: 0.1
 gamma: 0.6666666666666666
 img_ext: .png
-input_channels: 1
+input_channels: 3
 input_h: 96
 input_w: 96
 loss: BCEDiceLoss
