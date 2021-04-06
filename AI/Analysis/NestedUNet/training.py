@@ -15,6 +15,7 @@ from albumentations.augmentations import transforms
 from albumentations.core.composition import Compose, OneOf
 from sklearn.model_selection import train_test_split
 from torch.optim import lr_scheduler
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 import archs
@@ -23,7 +24,7 @@ from arg_utils import parse_args
 from dataset import Dataset
 from metrics import iou_score
 from src.config.config import cfg
-from utils import AverageMeter
+from utils import AverageMeter, makedir
 
 
 #ARCH_NAMES = archs.__all__
@@ -120,6 +121,10 @@ def validate(config, val_loader, model, criterion):
 def main():
     config = vars(parse_args())
 
+    # Tensorboad 用のログを記録するディレクトリパス
+    log_dir = makedir(cfg.NESTED_UNET_DIR, 'log')
+    writer = SummaryWriter(log_dir=log_dir)
+
     if config['name'] is None:
         if config['deep_supervision']:
             config['name'] = '%s_%s_wDS' % (config['dataset'], config['arch'])
@@ -150,6 +155,10 @@ def main():
                                                              config['deep_supervision'])
 
     model = model.cuda()
+
+    # モデルを TensorBorad で表示するため，ログに保存
+    #image = torch.randn(1, 3, 2224, 224)
+    #writer.add_graph(model, image)
 
     params = filter(lambda p: p.requires_grad, model.parameters())
     if config['optimizer'] == 'Adam':
@@ -257,7 +266,7 @@ def main():
 
     best_iou = 0
     trigger = 0
-    for epoch in range(config['epochs']):
+    for epoch in range(config['epochs']+1):
         print('Epoch [%d/%d]' % (epoch, config['epochs']))
 
         # train for one epoch
@@ -280,6 +289,14 @@ def main():
         log['val_loss'].append(val_log['loss'])
         log['val_iou'].append(val_log['iou'])
 
+        # Tensorboard用のデータ
+        writer.add_scalar('training loss',
+                                  train_log['loss'],
+                                  epoch)
+        writer.add_scalar('validation loss',
+                                  val_log['loss'],
+                                  epoch)
+
         pd.DataFrame(log).to_csv('models/%s/log.csv' %
                                  config['name'], index=False)
 
@@ -298,6 +315,9 @@ def main():
             break
 
         torch.cuda.empty_cache()
+
+    # summary writer を必要としない場合，close()メソッドを呼び出す
+    writer.close()
 
 
 if __name__ == '__main__':
