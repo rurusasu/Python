@@ -6,3 +6,6 @@ AI/Analysis/node_modules/
 AI/Analysis/data/DataScienceBowl/original
 AI/Analysis/data/DataScienceBowl/dsb2018_96
 Dobot/node_modules/
+AI/Analysis/data/FashionMNIST/
+AI/Analysis/NestedUNet/models/
+AI/Analysis/NestedUNet/log/

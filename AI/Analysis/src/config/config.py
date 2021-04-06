@@ -12,12 +12,14 @@ Path Setting
 cfg.CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 cfg.SRC_DIR = os.path.dirname(cfg.CONFIG_DIR)
 cfg.ROOT_DIR = os.path.dirname(cfg.SRC_DIR)
+
 cfg.DATA_DIR = os.path.join(cfg.ROOT_DIR, "data")
-cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
 cfg.EVAL_INDEXES_DIR = os.path.join(cfg.SRC_DIR, "eval_indexes")
+cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
+cfg.NESTED_UNET_DIR = os.path.join(cfg.ROOT_DIR, "NestedUNet")
 
 """
-TestDataDir
+DataDir
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
 cfg.BINARY_IMG_DIR = os.path.join(cfg.TEST_DIR, "binary_img")
@@ -37,8 +39,7 @@ cfg.CIFAR10_DIR = os.path.join(cfg.DATA_DIR, "cifar10")
 cfg.DATA_SCIENCE_BOWL_DIR = os.path.join(cfg.DATA_DIR, "DataScienceBowl")
 cfg.DSB2018_96_DIR = os.path.join(cfg.DATA_SCIENCE_BOWL_DIR, "dsb2018_96")
 
-"""
-OpenImage
+"""OpenImage
 """
 cfg.OPENIMAGE_DIR = os.path.join(cfg.DATA_DIR, "OpenImage")
 # Box Dir
@@ -79,13 +80,16 @@ cfg.SEGMENTATION_TRAIN_DIR = os.path.join(cfg.SEGMENTATION_DIR, "train")
 cfg.SEGMENTATION_VALIDATION_DIR = os.path.join(
     cfg.SEGMENTATION_DIR, "validation")
 cfg.SEGMENTATION_TEST_DIR = os.path.join(cfg.SEGMENTATION_DIR, "test")
+
+"""FashionMNIST
 """
-画像データ
+cfg.FASHION_MNIST_DIR = os.path.join(cfg.DATA_DIR, "FashionMNIST")
+
+"""画像データ
 """
 cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 
-"""
-Dobot
+"""Dobot
 """
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
