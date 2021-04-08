@@ -27,11 +27,6 @@ from src.config.config import cfg
 from utils import AverageMeter, makedir
 
 
-#ARCH_NAMES = archs.__all__
-#LOSS_NAMES = losses.__all__
-#LOSS_NAMES.append('BCEWithLogitsLoss')
-
-
 def train(config, train_loader, model, criterion, optimizer):
     avg_meters = {'loss': AverageMeter(),
                   'iou': AverageMeter()}
