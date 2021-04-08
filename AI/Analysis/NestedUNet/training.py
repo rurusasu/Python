@@ -300,17 +300,21 @@ def main():
         pd.DataFrame(log).to_csv('models/%s/log.csv' %
                                  config['name'], index=False)
 
+        if epoch == 0: best_loss = val_log['loss']
         trigger += 1
 
-        if val_log['iou'] > best_iou:
+        # Best Model Save
+        #if val_log['iou'] > best_iou:
+        if (val_log['iou'] > best_iou) and (val_log['loss'] <= best_loss):
             torch.save(model.state_dict(), 'models/%s/model.pth' %
                        config['name'])
             best_iou = val_log['iou']
+            best_loss = val_log['loss']
             print("=> saved best model")
             trigger = 0
 
         # early stopping
-        if config['early_stopping'] >= 0 and trigger >= config['early_stopping']:
+        if (config['early_stopping'] >= 0 and trigger >= config['early_stopping']) or val_log['loss'] < 1e-4:
             print("=> early stopping")
             break
 

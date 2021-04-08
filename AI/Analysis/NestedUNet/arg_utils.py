@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument('--name', default=None,
                         help='model name: (default: arch+timestamp)')
     parser.add_argument('--epochs',
-                                    default=50,
+                                    default=1000,
                                     type=int,
                                     metavar='N',
                                     help='number of total epochs to run')
@@ -53,7 +53,7 @@ def parse_args():
                         help='mask file extension')
 
     # optimizer
-    parser.add_argument('--optimizer', default='SGD',
+    parser.add_argument('--optimizer', default='Adam',
                         choices=['Adam', 'SGD'],
                         help='loss: ' +
                         ' | '.join(['Adam', 'SGD']) +

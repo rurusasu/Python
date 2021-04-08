@@ -94,6 +94,11 @@ cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 
+"""NestedUNet
+"""
+cfg.UNET_MODELS_DIR = os.path.join(cfg.NESTED_UNET_DIR, 'models')
+cfg.UNET_RESULTS_DIR = os.path.join(cfg.NESTED_UNET_DIR, 'results')
+
 
 def add_path():
     """システムのファイルパスを設定するための関数"""
