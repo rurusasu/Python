@@ -1081,7 +1081,7 @@ def delete_figure_agg(figure_agg):
 
 
 if __name__ == "__main__":
-    debug = True
+    debug = False
 
     if debug:
         dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
