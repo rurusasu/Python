@@ -56,6 +56,14 @@ def Download_images_from_csv(csv_path, dst_path):
         except:
             pass
 
+def unpack(file_name: str, create_dir: bool=True):
+    """originalディレクトリ内のzipファイルを展開するための関数
+    Arg:
+        file_name(str): original ディレクトリ内の zip ファイル名,
+        create_dir(bool optional): 解凍するときに、解凍前のファイル名と同じ名前のディレクトリを作成する。default to True.
+    """
+    z_pth = os.path.join()
+
 
 class Download_GOI(object):
     # ROOT_DIR = cfg.DATA_DIR + os.sep

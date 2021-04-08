@@ -7,7 +7,7 @@ AI/Analysis/data/DataScienceBowl/original
 AI/Analysis/data/DataScienceBowl/dsb2018_96
 Dobot/node_modules/
 AI/Analysis/data/FashionMNIST/
-AI/Analysis/data/NetstedUNetResults/dsb2018_96_NestedUNet_woDS_20210407/images/
-AI/Analysis/data/NetstedUNetResults/dsb2018_96_NestedUNet_woDS_20210408/images/
+AI/Analysis/data/NestedUNetResults/dsb2018_96_NestedUNet_woDS_20210407/images/
+AI/Analysis/data/NestedUNetResults/dsb2018_96_NestedUNet_woDS_20210408/images/
 AI/Analysis/NestedUNet/models/
 AI/Analysis/NestedUNet/log/

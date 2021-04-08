@@ -22,6 +22,7 @@ cfg.NESTED_UNET_DIR = os.path.join(cfg.ROOT_DIR, "NestedUNet")
 DataDir
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
+cfg.UNET_RESULTS_DIR = os.path.join(cfg.DATA_DIR, 'NestedUNetResults')
 cfg.BINARY_IMG_DIR = os.path.join(cfg.TEST_DIR, "binary_img")
 cfg.CONTRAST_IMG_DIR = os.path.join(cfg.TEST_DIR, "contrast_img")
 cfg.EDGE_IMG_DIR = os.path.join(cfg.TEST_DIR, "edge_img")
@@ -85,6 +86,10 @@ cfg.SEGMENTATION_TEST_DIR = os.path.join(cfg.SEGMENTATION_DIR, "test")
 """
 cfg.FASHION_MNIST_DIR = os.path.join(cfg.DATA_DIR, "FashionMNIST")
 
+"""LineMod
+"""
+cfg.LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "linemod")
+
 """画像データ
 """
 cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
@@ -93,11 +98,6 @@ cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 """
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
-
-"""NestedUNet
-"""
-cfg.UNET_MODELS_DIR = os.path.join(cfg.NESTED_UNET_DIR, 'models')
-cfg.UNET_RESULTS_DIR = os.path.join(cfg.NESTED_UNET_DIR, 'results')
 
 
 def add_path():

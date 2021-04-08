@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(".")
 sys.path.append("..")
+import datetime
 from collections import OrderedDict
 from glob import glob
 
@@ -115,25 +116,34 @@ def validate(config, val_loader, model, criterion):
 
 def main():
     config = vars(parse_args())
-
-    # Tensorboad 用のログを記録するディレクトリパス
-    log_dir = makedir(cfg.NESTED_UNET_DIR, 'log')
-    writer = SummaryWriter(log_dir=log_dir)
+    now = datetime.datetime.now()
 
     if config['name'] is None:
         if config['deep_supervision']:
-            config['name'] = '%s_%s_wDS' % (config['dataset'], config['arch'])
+            config['name'] = '%s_%s_wDS_%s' % (config['dataset'], config['arch'], now.strftime('%Y%m%d_%H%M%S'))
         else:
-            config['name'] = '%s_%s_woDS' % (config['dataset'], config['arch'])
-    os.makedirs('models/%s' % config['name'], exist_ok=True)
+            config['name'] = '%s_%s_woDS_%s' % (config['dataset'], config['arch'], now.strftime('%Y%m%d_%H%M%S'))
+    output_path = os.path.join(cfg.UNET_RESULTS_DIR, config['name'])
+    try:
+        os.makedirs(output_path, exist_ok=True)
+    except Exception as e:
+        print(e)
+
+    models_path = os.path.join(output_path, 'models')
+    os.mkdir(models_path)
+
+    with open(os.path.join(models_path, 'config.yml'), 'w') as f:
+        yaml.dump(config, f)
 
     print('-' * 20)
     for key in config:
         print('%s: %s' % (key, config[key]))
     print('-' * 20)
 
-    with open('models/%s/config.yml' % config['name'], 'w') as f:
-        yaml.dump(config, f)
+    # Tensorboad 用のログを記録するディレクトリパス
+    log_dir = os.path.join(output_path, 'log')
+    os.mkdir(log_dir)
+    writer = SummaryWriter(log_dir=log_dir)
 
     # define loss function(criterion)
     if config['loss'] == 'BCEWithLogitsLoss':
@@ -292,8 +302,7 @@ def main():
                                   val_log['loss'],
                                   epoch)
 
-        pd.DataFrame(log).to_csv('models/%s/log.csv' %
-                                 config['name'], index=False)
+        pd.DataFrame(log).to_csv('%s/log.csv' % (log_dir), index=False)
 
         if epoch == 0: best_loss = val_log['loss']
         trigger += 1
@@ -301,8 +310,7 @@ def main():
         # Best Model Save
         #if val_log['iou'] > best_iou:
         if (val_log['iou'] > best_iou) and (val_log['loss'] <= best_loss):
-            torch.save(model.state_dict(), 'models/%s/model.pth' %
-                       config['name'])
+            torch.save(model.state_dict(), '%s/model.pth' % (models_path))
             best_iou = val_log['iou']
             best_loss = val_log['loss']
             print("=> saved best model")
