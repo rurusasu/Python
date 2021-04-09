@@ -1,7 +1,6 @@
 *.mat
 *.pyc
 *.csv
-*.zip
 AI/Analysis/node_modules/
 AI/Analysis/data/DataScienceBowl/original
 AI/Analysis/data/DataScienceBowl/dsb2018_96
