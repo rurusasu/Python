@@ -13,7 +13,20 @@ import requests
 from config.config import cfg
 
 # 画像ファイルをダウンロード
-def Download_image(url, timeout=10):
+def Download_image(url: str, timeout: int=10):
+    """ URL 先の HP で動作している HTML テキスト内に含まれる画像情報を検出し，ダウンロードするための関数
+
+    Args:
+        url (str): ダウンロードしたい画像が掲載されているサイトの URL
+        timeout (int, optional): タイムアウト. Defaults to 10[s].
+
+    Raises:
+        e: [description]
+        e: [description]
+
+    Returns:
+        [type]: [description]
+    """
     response = requests.get(url, allow_redirects=False)  # リダイレクト処理を無効
     if response.status_code != 200:  # HTTPステータスコードの200番台以外はエラーコード
         e = Exception("HTTP status: " + response.status_code)

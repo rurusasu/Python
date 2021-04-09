@@ -8,7 +8,6 @@ cfg = EasyDict()
 """
 Path Setting
 """
-
 cfg.CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 cfg.SRC_DIR = os.path.dirname(cfg.CONFIG_DIR)
 cfg.ROOT_DIR = os.path.dirname(cfg.SRC_DIR)
@@ -17,6 +16,7 @@ cfg.DATA_DIR = os.path.join(cfg.ROOT_DIR, "data")
 cfg.EVAL_INDEXES_DIR = os.path.join(cfg.SRC_DIR, "eval_indexes")
 cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
 cfg.NESTED_UNET_DIR = os.path.join(cfg.ROOT_DIR, "NestedUNet")
+cfg.TEMP_DIR = os.path.join(cfg.ROOT_DIR, "temp")
 
 """
 DataDir

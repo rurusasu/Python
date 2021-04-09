@@ -7,12 +7,11 @@ from multiprocessing import Pool
 import urllib.request
 
 from config.config import cfg
-
+from src.utils import DownloadZip
 """
 LINEMOD Dataset 製作者の Stefan Hinterstoißer さんのサイトから
 LINEMOD Dataset の元データをダウンロードする。
 """
-
 
 object_names = ['ape', 'benchviseblue', 'bowl', 'cam', 'can', 'cat',
                 'cup', 'driller', 'duck', 'eggbox', 'glue', 'holepuncher',
@@ -21,20 +20,14 @@ object_names = ['ape', 'benchviseblue', 'bowl', 'cam', 'can', 'cat',
 # Stefan Hinterstoißer さんのサイトのURL
 base_url = 'http://campar.in.tum.de/personal/hinterst/index/downloads!09384230443!/{}.zip'
 target_dir = cfg.LINEMOD_DIR
+temp_dir = cfg.TEMP_DIR
 
-
-def download_and_unzip(object_name):
-
-    url = base_url.format(object_name)
-    os.makedirs(target_dir, exist_ok=True)
-    target_file = os.path.join(
-        target_dir, 'linemod_{}.zip'.format(object_name))
-    urllib.request.urlretrieve(url, target_file)
-    print("{}.zip のダウンロードが終了しました．".format(object_name))
-    os.system('unzip {} -d {}/original_dataset'.format(target_file, target_dir))
-    print("{}.zip の解凍が終了しました．".format(object_name))
+def main():
+    for object_name in object_names:
+        url = base_url.format(object_name)
+        file_pth = DownloadZip(url, temp_dir)
+        
 
 
 if __name__ == "__main__":
-    for object_name in object_names:
-        download_and_unzip(object_name)
+    main()
