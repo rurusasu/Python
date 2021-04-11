@@ -1,5 +1,10 @@
 import os
-import urllib.request
+import sys
+sys.path.append(".")
+sys.path.append("..")
+
+from config.config import cfg
+from src.utils import DownloadZip, UnpackZip
 
 url = 'https://cloudstore.zih.tu-dresden.de/index.php/s/a65ec05fedd4890ae8ced82dfcf92ad8/download'
 target_dir = 'temp'
@@ -18,4 +23,16 @@ def download_and_unzip():
         'for i in $( ls data/occlusion_linemod/poses | grep [A-Z] ); do mv -i data/occlusion_linemod/poses/"$i" data/occlusion_linemod/poses/"`echo $i | tr \'A-Z\' \'a-z\'`"; done')
 
 
-download_and_unzip()
+#download_and_unzip()
+
+
+url = 'https://cloudstore.zih.tu-dresden.de/index.php/s/a65ec05fedd4890ae8ced82dfcf92ad8/download'
+target_dir = cfg.LINEMOD_DIR
+temp_dir = cfg.TEMP_DIR
+
+def main():
+    f_path = DownloadZip(url, "OcclusionChallengeICCV2015.zip", temp_dir)
+
+
+if __name__ == "__main__":
+    main()

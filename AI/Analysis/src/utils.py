@@ -2,6 +2,7 @@ import os
 
 import datetime
 import requests
+import zipfile
 
 class URLAccessError(Exception):
     """指定した URL でアクセスに失敗したことを知らせる例外クラス"""
@@ -78,18 +79,24 @@ def DownloadImage(url: str) -> bytes:
     return res.content
 
 
-def DownloadZip(url: str, dir_name: str = None):
+def DownloadZip(url: str, f_name: str = None, dir_name: str = None):
     """URL 先から ZIP ファイルをダウンロードするための関数
 
     Arg:
         url(str): ダウンロードしたい zip ファイルが存在するサイトの URL
+        f_name(str): zip データを書き込むファイル名
         dir_name(str): zip ファイルをダウンロードするディレクトリパス Defaults to os.path.basename('temp').
 
     Return:
-        filename(str): ダウンロードしたzipファイルまでのパス
+        f_path(str): ダウンロードしたzipファイルまでのパス
     """
     chunk_size = 1024
-    name = url.split('/')[-1]
+    if f_name is None:
+        name = url.split('/')[-1]
+    elif (f_name is not None) and (type(f_name) is str):
+        name = f_name
+    else:
+        raise Exception("f_name には文字列を入力してください．")
     res = _DownloadFile(url)
     total = int(res.headers.get('content-length'))
 
@@ -104,21 +111,42 @@ def DownloadZip(url: str, dir_name: str = None):
     elif not os.path.exists(dir_name):
         os.makedirs(dir_name)
     # データを書き込むファイルを作成
-    file_name = os.path.join(dir_name, name)
+    f_path = os.path.join(dir_name, name)
 
     print("\n File Downloading: {}".format(name))
-    with open(file_name, 'wb') as f:
-        n = 0
-        for chunk in res.iter_content(chunk_size=chunk_size):
-            if chunk:
-                f.write(chunk)
-                f.flush()
-            n += 1
-            _ProgressPrint(block_count=n, block_size=chunk_size, total_size=total)
+    try:
+        with open(f_path, 'wb') as f:
+            n = 0
+            for chunk in res.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                n += 1
+                _ProgressPrint(block_count=n, block_size=chunk_size, total_size=total)
+    except Exception as e:
+        print("ZIP download file writing Error！: ", e)
+        return False
+    finally:
+        del chunk_size, dir_name, f
+        return f_path
 
-    del chunk_size, dir_name, f, file_name
 
+def makedir(src: str, dir_name: str) -> str:
+    """dst で指定された位置に dir_name で指定された名前のディレクトリを作成する関数．既に同名のディレクトリが存在する場合は，現在の「年, 月, 日_時, 分, 秒」を作成したい付ディレクトリ名の後ろに連結する．
 
+    Args:
+        src(str): ディレクトリを作成する場所の親ディレクトリまでのパス
+        dir_name(str): 作成するディレクトリ名
+    Return:
+        dst(str): 作成したディレクトリの絶対パス
+    """
+    dst = os.path.join(src, dir_name)
+    if os.path.exists(dst): # 存在する場合
+        now = datetime.datetime.now()
+        dst = dst + '_' + now.strftime('%Y%m%d_%H%M%S')
+    os.mkdir(dst)
+
+    return dst
 
 
 # 画像の保存
@@ -131,6 +159,24 @@ def _SaveImage(filename: str, image):
     """
     with open(filename, "wb") as f:
         f.write(image)
+
+
+def UnpackZip(zip_path: str, unpack_path: str, create_dir: bool=True):
+    """originalディレクトリ内のzipファイルを展開するための関数
+    Arg:
+        zip_path(str): zip ファイルのパス,
+        unpack_path(str): zip ファイルの解凍先のパス
+        create_dir(bool optional): 解凍するときに、解凍前のファイル名と同じ名前のディレクトリを作成する。default to True.
+    """
+    if create_dir:
+        try:
+            os.makedirs(unpack_path, exist_ok=True) # create directry
+        except FileExistsError as e:
+            print("ディレクトリ作成時にエラーが発生しました: ", e)
+            return False
+
+    with zipfile.ZipFile(zip_path) as existing_zip:
+        existing_zip.extractall(unpack_path)
 
 
 if __name__ == "__main__":
