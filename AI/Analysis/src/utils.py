@@ -127,7 +127,7 @@ def DownloadZip(url: str, f_name: str = None, dir_name: str = None):
         print("ZIP download file writing Error！: ", e)
         return False
     finally:
-        del chunk_size, dir_name, f
+        del chunk_size, dir_name
         return f_path
 
 
