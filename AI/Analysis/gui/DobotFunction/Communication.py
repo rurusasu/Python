@@ -58,44 +58,50 @@ def Connect_Disconnect(connection_flag: bool, api, CON_STR: tuple=CON_STR):
         CON_STR(tuple): 接続時のエラーテーブル
 
     Returns:
-        connection(bool): 接続結果
+        rec(bool): 接続結果
             True: 接続した
             False: 接続していない
         Dobot_Err(int): 処理結果
     """
+    rec = False
+    err = 0
 
     # Dobotがすでに接続されていた場合
     if connection_flag:
         dType.DisconnectDobot(api) # DobotDisconnect
         print("Dobotとの接続を解除しました．")
-        return False, 1
+        rec, err = False, 1
 
     # Dobotが接続されていない場合
     else:
         portName = dType.SearchDobot(api, maxLen=128)
+        try:
+            if ("COM3" in portName) or ("COM4" in portName):
+                char_size = 115200
+                state = dType.ConnectDobot(api, portName[0], char_size)
+                # 接続時にエラーが発生しなかった場合
+                if CON_STR[state[0]] == "DobotConnect_NoError":
+                    print("Dobotに通信速度 {} で接続されました．".format(char_size))
+                    initDobot(api) # Dobotの初期設定を行う
+                    rec , err = True, state[0]
 
-        if "COM3" in portName:
-            char_size = 115200
-            state = dType.ConnectDobot(api, 'COM3', char_size)
-            # 接続時にエラーが発生しなかった場合
-            if CON_STR[state[0]] == "DobotConnect_NoError":
-                print("Dobotに通信速度 {} で接続されました．".format(char_size))
-                initDobot(api) # Dobotの初期設定を行う
-                return True, state[0]
+                elif CON_STR[state[0]] == "DobotConnect_NotFound":
+                    print("Dobot を見つけることができません！")
+                    rec, err =  False, state[0]
 
-            elif CON_STR[state[0]] == "DobotConnect_NotFound":
-                print("Dobot を見つけることができません！")
-                return False, state[0]
-
-            elif CON_STR[state[0]] == "DobotConnect_Occupied":
-                print(
-                    "Dobot が占有されています。接続するには、アプリケーションを再起動する、Dobot 背面の Reset ボタンを押す、接続USBケーブルを再接続する、のどれかを行う必要があります。")
-                return False, state[0]
+                elif CON_STR[state[0]] == "DobotConnect_Occupied":
+                    print(
+                        "Dobot が占有されています。接続するには、アプリケーションを再起動する、Dobot 背面の Reset ボタンを押す、接続USBケーブルを再接続する、のどれかを行う必要があります。")
+                    rec, err = False, state[0]
+                else:
+                    dType.DisconnectDobot(api)
+                    raise Exception("接続時に予期せぬエラーが発生しました！！")
             else:
-                dType.DisconnectDobot(api)
-                raise Exception("接続時に予期せぬエラーが発生しました！！")
-        else:
-            raise Exception("Dobotがハードウェア上で接続されていない可能性があります。接続されている場合は、portNameに格納されている変数を確認してください。")
+                raise Exception("Dobotがハードウェア上で接続されていない可能性があります。接続されている場合は、portNameに格納されている変数を確認してください。")
+        except Exception as e:
+            print(e)
+        finally:
+            return rec, err
 
 
 def initDobot(api):
@@ -418,6 +424,15 @@ if __name__ == "__main__":
         dType.DobotConnect.DobotConnect_Occupied: "DobotConnect_Occupied",
     }
 
+    # ---------------------------- #
+    # Dobot の接続ポートの確認 #
+    # ---------------------------- #
+    #portName = dType.SearchDobot(api, maxLen=128)
+    #print(portName)
+
+    # ------------------- #
+    # Dobot のコネクト #
+    # ------------------- #
     connection_flag = False
 
     connection_flag, result = Connect_Disconnect(connection_flag, api, CON_STR)
@@ -425,34 +440,34 @@ if __name__ == "__main__":
         [value] = dType.GetEndEffectorSuctionCup(api)
         print(value)
 
-        """
-        # グリッパ: 閉、モータ: OFF -> 1
-        [value] = dType.GetEndEffectorGripper(api)
-        print("Gripper CLOSE, Motor OFF: {}".format(value))
-        # グリッパ: 開、モータ: ON -> 0
-        result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=False)
-        time.sleep(5)
-        [value] = dType.GetEndEffectorGripper(api)
-        print("Gripper OPEN Motor ON: {}".format(value))
-        # グリッパ: 開、モータ: OFF -> 0
-        result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=False)
-        [value] = dType.GetEndEffectorGripper(api)
-        print("Gripper OPEN Motor OFF: {}".format(value))
-        # グリッパ: 閉、モータ: ON -> 1
-        result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=True)
-        time.sleep(5)
-        [value] = dType.GetEndEffectorGripper(api)
-        print("Gripper CLOSE Motor ON: {}".format(value))
-        # グリッパ: 閉、モータ: OFF -> 1
-        result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=True)
-        [value] = dType.GetEndEffectorGripper(api)
-        print("Gripper CLOSE Motor OFF: {}".format(value))
-        """
+    """
+    # グリッパ: 閉、モータ: OFF -> 1
+    [value] = dType.GetEndEffectorGripper(api)
+    print("Gripper CLOSE, Motor OFF: {}".format(value))
+    # グリッパ: 開、モータ: ON -> 0
+    result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=False)
+    time.sleep(5)
+    [value] = dType.GetEndEffectorGripper(api)
+    print("Gripper OPEN Motor ON: {}".format(value))
+    # グリッパ: 開、モータ: OFF -> 0
+    result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=False)
+    [value] = dType.GetEndEffectorGripper(api)
+    print("Gripper OPEN Motor OFF: {}".format(value))
+    # グリッパ: 閉、モータ: ON -> 1
+    result = _GripperOpenClose(api, motorCtrl=True, gripperCtrl=True)
+    time.sleep(5)
+    [value] = dType.GetEndEffectorGripper(api)
+    print("Gripper CLOSE Motor ON: {}".format(value))
+    # グリッパ: 閉、モータ: OFF -> 1
+    result = _GripperOpenClose(api, motorCtrl=False, gripperCtrl=True)
+    [value] = dType.GetEndEffectorGripper(api)
+    print("Gripper CLOSE Motor OFF: {}".format(value))
+    """
 
-        #GripperAutoCtrl(api)
-        #GripperAutoCtrl(api)
+    #GripperAutoCtrl(api)
+    #GripperAutoCtrl(api)
 
-        pose = {
+    pose = {
         "x": 193,
         "y": -20,
         "z": 21,
@@ -461,9 +476,9 @@ if __name__ == "__main__":
         "joint2Angle": 0.0,
         "joint3Angle": 0.0,
         "joint4Angle": 0.0,
-        }
+    }
 
-        ptpMoveMode = "JumpCoordinate"
-        #ptpMoveMode = "MoveJCoordinate"
+    ptpMoveMode = "JumpCoordinate"
+    #ptpMoveMode = "MoveJCoordinate"
 
-        SetPoseAct(api, pose, ptpMoveMode)
+    SetPoseAct(api, pose, ptpMoveMode)
