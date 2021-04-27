@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import datetime
 import requests
@@ -131,22 +132,27 @@ def DownloadZip(url: str, f_name: str = None, dir_name: str = None):
         return f_path
 
 
-def makedir(src: str, dir_name: str) -> str:
+def makedir(src: str, dir_name: str, newly: bool = False) -> str:
     """dst で指定された位置に dir_name で指定された名前のディレクトリを作成する関数．既に同名のディレクトリが存在する場合は，現在の「年, 月, 日_時, 分, 秒」を作成したい付ディレクトリ名の後ろに連結する．
 
     Args:
-        src(str): ディレクトリを作成する場所の親ディレクトリまでのパス
-        dir_name(str): 作成するディレクトリ名
+        src (str): ディレクトリを作成する場所の親ディレクトリまでのパス
+        dir_name (str): 作成するディレクトリ名
+        newly (bool): 新規ファイルを作成するか. Defaults to False.
     Return:
-        dst(str): 作成したディレクトリの絶対パス
+        dir_path (str): 作成したディレクトリの絶対パス
     """
-    dst = os.path.join(src, dir_name)
-    if os.path.exists(dst): # 存在する場合
-        now = datetime.datetime.now()
-        dst = dst + '_' + now.strftime('%Y%m%d_%H%M%S')
-    os.mkdir(dst)
+    dir_path = os.path.join(src, dir_name)
 
-    return dst
+    if os.path.exists(dir_path): # 存在する場合
+        if newly:  # 新規ファイルを作成する
+            shutil.rmtree(dir_path)  # ディレクトリ内のファイルごと削除
+        else:
+            now = datetime.datetime.now()
+            dir_path = dir_path + '_' + now.strftime('%Y%m%d_%H%M%S')
+    os.mkdir(dir_path)
+
+    return dir_path
 
 
 # 画像の保存
@@ -180,6 +186,7 @@ def UnpackZip(zip_path: str, unpack_path: str, create_dir: bool=True):
 
 
 if __name__ == "__main__":
+
     # _DowinloadFile Test
     #url = "http://nagata.rs.socu.ac.jp/"
     #r = _DownloadFile(url)
@@ -201,6 +208,6 @@ if __name__ == "__main__":
     # Stefan Hinterstoißer さんのサイトのURL
     base_url = 'http://campar.in.tum.de/personal/hinterst/index/downloads!09384230443!/{}.zip'
 
-    for object_name in object_names:
-        target_file = base_url.format(object_name)
-        DownloadZip(target_file)
+    #for object_name in object_names:
+    #    target_file = base_url.format(object_name)
+    #    DownloadZip(target_file)

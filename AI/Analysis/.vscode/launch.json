@@ -40,7 +40,7 @@
       "type": "python",    // デバッカの種別
       "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
       "program": "${file}",
-      "python": "/opt/conda/bin/python",
+      "python": "/home/miki/miniconda3/bin/python",
       "console": "integratedTerminal",   // プログラムを起動するコンソールの種類を指定
       "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
       "redirectOutput": true

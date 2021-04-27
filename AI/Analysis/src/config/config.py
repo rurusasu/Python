@@ -21,6 +21,7 @@ cfg.TEMP_DIR = os.path.join(cfg.ROOT_DIR, "temp")
 """
 DataDir
 """
+cfg.CONFUTION_DIR = os.path.join(cfg.DATA_DIR, "Confution")
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
 cfg.UNET_RESULTS_DIR = os.path.join(cfg.DATA_DIR, 'NestedUNetResults')
 cfg.BINARY_IMG_DIR = os.path.join(cfg.TEST_DIR, "binary_img")
