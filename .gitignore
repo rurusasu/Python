@@ -2,6 +2,8 @@
 *.pyc
 *.csv
 AI/Analysis/node_modules/
+AI/Analysis/data/OpenImage
+AI/Analysis/data/linemod_orig
 AI/Analysis/data/DataScienceBowl/original
 AI/Analysis/data/DataScienceBowl/dsb2018_96
 Dobot/node_modules
