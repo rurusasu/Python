@@ -24,7 +24,7 @@ def _DownloadFile(url: str):
     """
     res = requests.get(url, stream=True)
     if res.status_code != 200: # HTTPステータスコードの200番台以外はエラーコード
-        raise URLAccessError("HTTP status: " + res.status_code)
+        raise URLAccessError("HTTP status: " + str(res.status_code))
 
     return res
 
@@ -80,24 +80,24 @@ def DownloadImage(url: str) -> bytes:
     return res.content
 
 
-def DownloadZip(url: str, dir_path: str, f_name: str = None):
+def DownloadZip(url: str, dir_path: str, file_name: str = None):
     """URL 先から ZIP ファイルをダウンロードするための関数
 
     Args:
         url(str): ダウンロードしたい zip ファイルが存在するサイトの URL
         dir_path(str): zip ファイルをダウンロードするディレクトリパス
-        f_name(str, optional): zip データを書き込むファイル名. Defaults to None.
+        file_name(str, optional): zip データを書き込むファイル名. Defaults to None.
 
     Return:
         f_path(str): ダウンロードしたzipファイルまでのパス
     """
     chunk_size = 1024
-    if f_name is None:
+    if file_name is None:
         name = url.split('/')[-1]
-    elif (f_name is not None) and (type(f_name) is str):
-        name = f_name
+    elif (file_name is not None) and (type(file_name) is str):
+        name = file_name
     else:
-        raise ValueError("f_name には文字列を入力してください．")
+        raise ValueError("file_name には文字列を入力してください．")
     res = _DownloadFile(url)
     total = int(res.headers.get('content-length'))
 

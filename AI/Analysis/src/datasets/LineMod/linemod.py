@@ -18,11 +18,12 @@ class LineModDataset(Dataset):
                              object_name: str='all'):
         """
         Initializes a Linemod DataLoader
+
         Args:
             base_dir (str): path to the Linemod dataset
-            object_name (str): Integer object id of the Linemod object on which to generate data
-
+            object_name (str): Integer object id of the Linemod object on which to generate data.
         """
+
         linemod_objects = [
             "ape",
             "benchviseblue",

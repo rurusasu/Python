@@ -16,7 +16,7 @@ LINEMOD Dataset の元データをダウンロードする。
 """
 
 # Stefan Hinterstoißer さんのサイトのURL
-base_url = 'https://zjueducn-my.sharepoint.com/personal/pengsida_zju_edu_cn/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fpengsida%5Fzju%5Fedu%5Fcn%2FDocuments%2Fpvnet%2FLINEMOD%2Etar%2Egz&parent=%2Fpersonal%2Fpengsida%5Fzju%5Fedu%5Fcn%2FDocuments%2Fpvnet&originalPath=aHR0cHM6Ly96anVlZHVjbi1teS5zaGFyZXBvaW50LmNvbS86dTovZy9wZXJzb25hbC9wZW5nc2lkYV96anVfZWR1X2NuL0VYSzJLMEItUXJOUGk4TVlMREZIZEI4QlFtOWNXVHhSR1Y5ZFFnYXVjemtWWVE%5FcnRpbWU9SHVZV1hEUVIyVWc'
+base_url = 'https://zjueducn-my.sharepoint.com/personal/pengsida_zju_edu_cn/_layouts/15/onedrive.aspx?originalPath=aHR0cHM6Ly96anVlZHVjbi1teS5zaGFyZXBvaW50LmNvbS86dTovZy9wZXJzb25hbC9wZW5nc2lkYV96anVfZWR1X2NuL0VYSzJLMEItUXJOUGk4TVlMREZIZEI4QlFtOWNXVHhSR1Y5ZFFnYXVjemtWWVE%5FcnRpbWU9SHVZV1hEUVIyVWc&id=%2Fpersonal%2Fpengsida%5Fzju%5Fedu%5Fcn%2FDocuments%2Fpvnet%2FLINEMOD%2Etar%2Egz&parent=%2Fpersonal%2Fpengsida%5Fzju%5Fedu%5Fcn%2FDocuments%2Fpvnet&p=14'
 target_dir = cfg.LINEMOD_DIR
 temp_dir = cfg.TEMP_DIR
 
@@ -85,13 +85,13 @@ class DownloadPVNetLineMod(object):
 
         for object_name in object_names:
             url = base_url.format(object_name)
-            f_path = DownloadZip(url, dir_path= self.temp_dir)
+            f_path = DownloadZip(url, dir_path= self.temp_dir, file_name = 'PVNet_linemod')
 
             unpach_path = os.path.join(self.target_dir, object_name)
             UnpackZip(f_path, unpach_path)
 
 
 if __name__ == "__main__":
-    downloader = DownloadLineMod()
+    downloader = DownloadPVNetLineMod()
     downloader.main()
     del downloader

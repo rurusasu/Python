@@ -84,6 +84,7 @@ cfg.FASHION_MNIST_DIR = os.path.join(cfg.DATA_DIR, "FashionMNIST")
 """LineMod
 """
 cfg.LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "linemod")
+cfg.PVNET_LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "PVNet_linemod")
 
 """Test
 """
