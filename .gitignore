@@ -1,6 +1,7 @@
 *.mat
 *.pyc
 *.csv
+*.mypy_cache
 AI/Analysis/node_modules/
 AI/Analysis/data/OpenImage
 AI/Analysis/data/linemod
