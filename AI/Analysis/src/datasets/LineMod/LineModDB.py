@@ -1,0 +1,148 @@
+import os
+import sys
+sys.path.append('..')
+sys.path.append('../../')
+sys.path.append('../../../')
+
+import numpy as np
+from PIL import Image
+from torchvision import transforms
+
+from src.config.config import cfg
+from src.utils.base_utils import read_ply_model
+
+class LineModDB(object):
+    """
+    DataLoader for the Linemod dataset
+
+    """
+    def __init__(self,
+                              linemod_dir: str,
+                              obj_name: str = 'all'):
+        """
+        Initializes a Linemod DataLoader
+
+        Args:
+            linemod_dir(str): LineMod データセットのディレクトリパス
+            obj_name(str): LineMod データセットに含まれるオブジェクト名
+        """
+
+        self.base_dir = linemod_dir
+        self.image_shape=(480, 640), # (h, w)
+        if obj_name == 'all':
+            self.obj_names = cfg.linemod_obj_names
+        elif obj_name in cfg.linemod_obj_names:
+            self.obj_names = [obj_name]
+        else:
+            raise ValueError('Invalid object name: {}'.format(obj_name))
+        # compute length
+        self.lengths = {}
+        self.total_length = 0
+        for obj_name in self.obj_names:
+            length = len(list(filter(lambda x:x.endswith('jpg'), os.listdir(os.path.join(self.base_dir, obj_name, 'data')))))
+            self.lengths[obj_name] = length
+            self.total_length += length
+        self.model_path = os.path.join(linemod_dir,
+                                                                        '{}/mesh.ply'.format(obj_name))
+        self.old_model_path = os.path.join(linemod_dir,
+                                                                                 '{}/OLDmesh.ply'.format(obj_name))
+        self.transform_dat_path = os.path.join(self.base_dir,
+                                                                                        '{}/transform.dat'.format(obj_name))
+
+
+    def load_ply_model(self) -> np.ndarray:
+        """
+        LineMod データセットから `.ply` ファイルに保存された3dモデルデータをスケール変換を行いつつ読み出すための関数
+
+        Return:
+            (np.ndarray): numpy配列に変換した 3D モデル
+        """
+        if os.path.exists(self.model_path):
+            return read_ply_model(self.model_path) / 1000.
+        else:
+            transform = read_transform_dat(self.transform_dat_path)
+            old_model = read_ply_model(self.old_model_path) / 1000.
+            old_model = np.dot(old_model, transform[:, :3].T) + transform[:, 3]
+            return old_model
+
+
+    def __len__(self):
+        return self.total_length
+
+
+    def __getitem__(self, idx):
+        local_idx = idx
+        for obj_name in self.obj_names:
+            if local_idx < self.lengths[obj_name]:
+                obj_pth = os.path.join(self.base_dir, obj_name)
+                dat_dir = os.path.join(obj_pth, 'data')
+                # image
+                img_pth = os.path.join(dat_dir,
+                                                                'color{}.jpg'.format(local_idx))
+                img = transforms.ToTensor()(Image.open(img_pth).convert('RGB'))
+                pose = read_pose(os.path.join(dat_dir, 'rot{}.rot'.format(local_idx)),
+                                                      os.path.join(dat_dir, 'tra{}.tra'.format(local_idx)))
+
+
+def read_pose(rot_path: str, tra_path: str) -> np.matrix:
+        """オブジェクトの '.rot' ファイル と '.tra' ファイルの情報を読み出し，スケール変換を加えて返す関数
+
+        Args:
+            rot_path str: `.rot` ファイルのパス
+            tra_path str: `.tra` ファイルのパス
+
+        Returns:
+            np.matrix: 姿勢行列
+        """
+        rot = np.loadtxt(rot_path, skiprows=1)
+        tra = np.loadtxt(tra_path, skiprows=1) / 100.
+        return np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
+
+
+def read_rotation(filename: str) -> np.matrix:
+        """LineMod3Dモデルの回転行列を計算する関数
+
+        Arg:
+            filename (str): 単一のLineMod3Dモデルの回転情報が保存された '.rot' ファイルへの絶対パス
+
+        Return:
+            R [np.matrix]: 単一のLineMod3Dモデルの(3, 3)回転行列
+        """
+        with open(filename) as f:
+            f.readline()
+            R = []
+            for line in f:
+                R.append(line.split())
+            R = np.array(R, dtype=np.float32)
+        return R
+
+
+def read_transform_dat(dat_path: str) -> np.matrix:
+        """
+        オリジナルの LineMod データセットから dat ファイルを読み出す関数
+
+        Returns:
+            transform_dat(np.matrix): 読み出したデータ
+        """
+        transform_dat = np.loadtxt(dat_path, skiprows=1)[:, 1]
+        transform_dat = np.reshape(transform_dat, newshape=[3, 4])
+        return transform_dat
+
+
+def read_translation(filename: str) -> np.matrix:
+        """LineMod3Dモデルの並進行列を計算する関数
+
+        Arg:
+            filename (str): 単一のLineMod3Dモデルの並進情報が保存された '.tra' ファイルへの絶対パス
+
+        Return:
+            T [np.matrix]: 単一のLineMod3Dモデルの(3, 3)並進行列
+        """
+        with open(filename) as f:
+            f.readline()
+            T = []
+            for line in f:
+                T.append([line.split()[0]])
+            T = np.array(T, dtype=np.float32)
+            T = T / np.float32(100) # cm -> m
+        return T

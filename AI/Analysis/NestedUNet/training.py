@@ -36,8 +36,8 @@ def train(config, train_loader, model, criterion, optimizer):
 
     pbar = tqdm(total=len(train_loader))
     for input, target, _ in train_loader:
-        input = input.cuda()
-        target = target.cuda()
+        input = input.cuda()# 入力画像
+        target = target.cuda() # マスク画像
 
         # compute output
         if config['deep_supervision']:

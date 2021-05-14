@@ -1,45 +1,16 @@
-FROM ubuntu:focal
+FROM jupyter/scipy-notebook
 
-LABEL maintainer="Anaconda, Inc"
+# Set Locale
+#RUN echo "LC_ALL=ja_JP.UTF-8" >> /etc/environment \
+#          && echo "ja_JP.UTF-8 UTF-8" >> /etc/locale.gen \
+#          && echo "LANG=ja_JP.UTF-8" > /etc/locale.conf \
+#          && locale-gen ja_JP.UTF-8
 
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+# 環境をアップデートするために、Environment.ymlを一時的な場所にコピーします（見つかった場合）。
+# また、"noop.txt "をコピーして、環境.ymlが存在しない場合にCOPY命令が失敗しないようにします。
+#COPY ./environment.yml ./noop.txt /tmp/conda-tmp/
+#RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
+#  && rm -rf /tmp/conda-tmp
 
-# hadolint ignore=DL3008
-RUN apt-get update -q && \
-  apt-get install -q -y --no-install-recommends \
-  bzip2 \
-  ca-certificates \
-  git \
-  libglib2.0-0 \
-  libsm6 \
-  libxext6 \
-  libxrender1 \
-  mercurial \
-  subversion \
-  wget \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-ENV PATH /opt/conda/bin:$PATH
-
-CMD [ "/bin/bash" ]
-
-# Leave these args here to better use the Docker build cache
-ARG CONDA_VERSION=py38_4.9.2
-ARG CONDA_MD5=122c8c9beb51e124ab32a0fa6426c656
-
-# miniconda をダウンロード
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh -O miniconda.sh && \
-  echo "${CONDA_MD5}  miniconda.sh" > miniconda.md5 && \
-  if ! md5sum --status -c miniconda.md5; then exit 1; fi && \
-  mkdir -p /opt && \
-  # miniconda のインストール
-  /bin/bash miniconda.sh -b -p /opt/conda && \
-  rm miniconda.sh miniconda.md5 && \
-  ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-  # 環境変数へ conda コマンドを追加
-  echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-  echo "conda activate base" >> ~/.bashrc && \
-  find /opt/conda/ -follow -type f -name '*.a' -delete && \
-  find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
-  /opt/conda/bin/conda clean -afy
+WORKDIR /home
+USER jovyan

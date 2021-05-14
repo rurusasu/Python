@@ -1,0 +1,15 @@
+version: "3"
+services:
+  # これを、docker-compose.ymlファイルで扱うサービスの名前に更新します。
+  main:
+    # Dockerfileに非rootユーザーを追加したい場合は、devcontainer.jsonの "remoteUser "プロパティを使用して、VS Codeのサブプロセス（ターミナル、タスク、デバッグ）をそのユーザーとして実行させることができます。コンテナ全体をこのユーザとして実行させたい場合は、次の行のコメントを外してください。なお、Linuxでは、作成したコンテナユーザのUIDとGIDがローカルユーザと一致していることを確認する必要があるかもしれません。
+    # user: vscode
+
+    # サービスのDockerfileを.devcontainerフォルダ内のものにオーバーライドする場合は、コメントを外します。Dockerfileとコンテキストのパスは、*primary*のdocker-compose.ymlファイル（devcontainer.jsonの "dockerComposeFile "配列の最初のもの）からの相対パスであることに注意してください。以下のサンプルでは、プライマリファイルがプロジェクトのルートにあることを想定しています。
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    volumes:
+      # VS Codeがプロジェクトのフォルダをマウントしたい場所に更新してください。
+      - .:/home/jovyan/analysis

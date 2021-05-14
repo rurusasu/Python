@@ -48,7 +48,6 @@ class LineModModelDB(object):
         self.diameter_pattern = os.path.join(self.linemod_dir, '{}/distance.txt')
         self.farthest_pattern = os.path.join(self.pvnet_linemod_dir, '{}/farthest{}.txt')
 
-
     def get_centers_3d(self, object_name):
         if object_name in self.centers_3d:
             return self.centers_3d[object_name]

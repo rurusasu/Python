@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 from easydict import EasyDict
 
 cfg = EasyDict()
@@ -11,7 +12,6 @@ Path Setting
 cfg.CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 cfg.SRC_DIR = os.path.dirname(cfg.CONFIG_DIR)
 cfg.ROOT_DIR = os.path.dirname(cfg.SRC_DIR)
-
 cfg.DATA_DIR = os.path.join(cfg.ROOT_DIR, "data")
 cfg.EVAL_INDEXES_DIR = os.path.join(cfg.SRC_DIR, "eval_indexes")
 cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
@@ -24,7 +24,6 @@ DataDir
 cfg.CONFUTION_DIR = os.path.join(cfg.DATA_DIR, "Confution")
 cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
 cfg.UNET_RESULTS_DIR = os.path.join(cfg.DATA_DIR, 'NestedUNetResults')
-
 
 """cifar10
 """
@@ -86,6 +85,20 @@ cfg.FASHION_MNIST_DIR = os.path.join(cfg.DATA_DIR, "FashionMNIST")
 cfg.LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "linemod")
 cfg.PVNET_LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "PVNet_linemod")
 
+cfg.linemod_obj_names=['ape',
+                                                      'cam',
+                                                      'cat',
+                                                      'duck',
+                                                      'glue',
+                                                      'iron',
+                                                      'phone',
+                                                      'benchvise',
+                                                      'can',
+                                                      'driller',
+                                                      'eggbox',
+                                                      'holepuncher',
+                                                      'lamp']
+
 """Test
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
@@ -99,13 +112,39 @@ cfg.NOISE_IMG_DIR = os.path.join(cfg.TEST_DIR, "noise_img")
 cfg.SMOOTHING_IMG_DIR = os.path.join(cfg.TEST_DIR, "smoothing_img")
 cfg.TEST_IMG_ORG_DIR = os.path.join(cfg.TEST_DIR, "org_img")
 
-"""画像データ
-"""
-
 """Dobot
 """
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
+
+
+"""Rendering setting
+参考: https://github.com/zju3dv/pvnet-rendering/blob/master/config.py
+"""
+cfg.BLENDER_DIR = os.path.join(cfg.ROOT_DIR, "Blender")
+cfg.BLENDER_PATH = '/snap/bin/blender'
+cfg.NUM_SYN = 10
+cfg.WIDTH = 640
+cfg.HEIGHT = 480
+cfg.low_azi = 0
+cfg.high_azi = 360
+cfg.low_ele = -15
+cfg.high_ele = 40
+cfg.low_theta = 10
+cfg.high_theta = 40
+cfg.cam_dist = 0.5
+cfg.MIN_DEPTH = 0
+cfg.MAX_DEPTH = 2
+
+cfg.render_K = np.array([[700., 0., 320.],
+                                                    [0., 700., 240.],
+                                                    [0., 0., 1.]],
+                                                    np.float32)
+
+cfg.linemod_K = np.array([[572.41140,0.       ,325.26110],
+                                                       [0.       ,573.57043,242.04899],
+                                                       [0.       ,0.       ,1.       ]],
+                                                       np.float32)
 
 
 def add_path():

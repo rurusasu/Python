@@ -72,6 +72,9 @@
   "python.linting.pylintEnabled": false,
   //"python.pythonPath": "C:\\tools\\miniconda3\\python.exe",
   // Docstring のフォーマット
-  "autoDocstring.docstringFormat": "google"
+  "autoDocstring.docstringFormat": "google",
+  "python.analysis.extraPaths": [
+    "/opt/conda/envs/analysis/Lib/site-packages"
+  ]
   // Testの設定。
 }

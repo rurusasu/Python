@@ -1,0 +1,10 @@
+# Docker 内の cnonda 上に構築する開発環境の設定
+
+name: base
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8.5=h7579374_1
+  - pytorch=1.8.1=py3.8_cuda11.1_cudnn8.0.5_0

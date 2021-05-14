@@ -37,11 +37,21 @@
     },
     {
       "name": "Python for linux", // デバッグ構成として表示する名前
-      "type": "python",    // デバッカの種別
+      "type": "python", // デバッカの種別
       "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
       "program": "${file}",
       "python": "/home/miki/miniconda3/bin/python",
-      "console": "integratedTerminal",   // プログラムを起動するコンソールの種類を指定
+      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
+      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
+      "redirectOutput": true
+    },
+    {
+      "name": "Python for Docker", // デバッグ構成として表示する名前
+      "type": "python", // デバッカの種別
+      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
+      "program": "${file}",
+      "python": "/opt/conda/bin/python",
+      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
       "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
       "redirectOutput": true
     },
