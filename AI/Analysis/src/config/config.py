@@ -86,18 +86,20 @@ cfg.LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "linemod")
 cfg.PVNET_LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "PVNet_linemod")
 
 cfg.linemod_obj_names=['ape',
-                                                      'cam',
-                                                      'cat',
-                                                      'duck',
-                                                      'glue',
-                                                      'iron',
-                                                      'phone',
                                                       'benchvise',
+                                                      #'bowl',
+                                                      'cam',
                                                       'can',
+                                                      'cat',
+                                                      #'cup',
                                                       'driller',
+                                                      'duck',
                                                       'eggbox',
+                                                      'glue',
                                                       'holepuncher',
-                                                      'lamp']
+                                                      'iron',
+                                                      'lamp',
+                                                      'phone',]
 
 """Test
 """

@@ -1,6 +1,40 @@
+import os
+
 import numpy as np
 import pickle
+from PIL import Image, ImageFile
 from plyfile import PlyData
+
+
+def read_mask_np(mask_path: str) -> np.ndarray:
+    """
+    マスク画像を読み出し，ndarray 配列 [max = 255，min = 0] として返す関数．
+
+    Args:
+        mask_path (str): マスク画像のパス
+
+    Returns:
+        mask_seg(np.ndarray): マスク画像の ndarray 配列
+    """
+    mask = Image.open(mask_path)
+    mask_seg = np.array(mask).astype(np.int32)
+    return mask_seg
+
+
+def read_rgb_np(rgb_path:str ) -> np.ndarray:
+    """
+    RGB画像を読み出し，ndarray 配列 [max = 255, min = 0] として返す関数
+
+    Args:
+        rgb_path(str): rgb画像のパス
+
+    Returns:
+        img (np.ndarray): rgb 画像の ndarray 配列
+    """
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+    img = Image.open(rgb_path).convert('RGB')
+    img = np.array(img,np.uint8)
+    return img
 
 
 def read_pickle(pkl_path: str):
@@ -16,7 +50,13 @@ def read_pickle(pkl_path: str):
         return pickle.load(f)
 
 
-def save_pickle(data, pkl_path):
+def save_pickle(data, pkl_path: str):
+    """データを `.pkl` 形式で保存する関数
+
+    Args:
+        data (any): `.pkl` に保存するデータ
+        pkl_path (str): データの保存先のパス
+    """
     os.system('mkdir -p {}'.format(os.path.dirname(pkl_path)))
     with open(pkl_path, 'wb') as f:
         pickle.dump(data, f)
