@@ -1,42 +1,105 @@
 import os
 import sys
 sys.path.append('..')
+import time
 from concurrent.futures import ProcessPoolExecutor
+from glob import glob
+from logging import getLogger
 
+import cv2
+import numpy as np
+
+from Blender.blender_utils import ModelAligner, PoseTransformer
 from src.config.config import cfg
+from src.datasets.LineMod.LineModDB import read_pose
+from src.utils.base_utils import read_mask_np, read_rgb_np, read_pickle, save_pickle
 
 
-class PoseTransformer(object):
-    rotation_transform = np.array([[1., 0., 0.],
-                                                                     [0., -1., 0.],
-                                                                     [0., 0., -1.]])
-    translation_transforms = {}
-    obj_name_to_number = {
-        'ape': '001',
-        'can': '004',
-        'cat': '005',
-        'driller': '006',
-        'duck': '007',
-        'eggbox': '008',
-        'glue': '009',
-        'holepuncher': '010'
-    }
-    blender_models={}
+def _prepare_dataset_single(output_dir: str,
+                                                             idx: int,
+                                                             pvnet_linemod_dir: str,
+                                                             linemod_dir: str,
+                                                             background_dir: str,
+                                                             obj_names: list = cfg.linemod_obj_names,
+                                                             cache_dir: str = './',
+                                                             seed: int = 0):
+    """
+    オブジェクトの画像と別の背景画像を合成する関数
 
-    def __init__(self,
-                              obj_name,
-                              pvnet_linemod_dir,
-                              linemod_dir):
-        self.obj_name = obj_name
-        self.blender_model_path = os.path.join(pvnet_linemod_dir,'{}/{}.ply'.format(obj_name, obj_name))
-        self.orig_model_path = os.path.join(linemod_dir,'{}/mesh.ply'.format(obj_name))
-        self.model_aligner = ModelAligner(obj_name,pvnet_linemod_dir,linemod_dir)
+    Args:
+        output_dir(str): 合成された画像を保存するディレクトリへのパス
+        idx(int): 保存されるデータに振られる番号
+        pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
+        linemod_dir (str): オリジナルのLINEMODデータセットが保存されているディレクトリパス
+        background_dir (str): 背景画像として使用する画像の読み出し先のパス
+        obj_names(list optional): 合成で使用するデータセットのクラス名．Defaults to cfg.linemod_obj_names.
+        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to './'.
+        seed (int, optional): オブジェクトを配置する際に使用する乱数のseed値. Defaults to 0.
+    """
+    time_begin = time.time()
+    np.random.seed(seed)
+    rgbs,masks,begins,poses = [], [], [], []
+    image_dbs = {}
+    for obj_id,obj_name in enumerate(obj_names):
+        image_dbs[obj_id] = _collect_linemod_set_info(pvnet_linemod_dir,
+                                                                                                             obj_name,
+                                                                                                             linemod_dir,
+                                                                                                             cache_dir)
 
-    def orig_pose_to_blender_pose(self, pose):
-        rot, tra = pose[:, :3], pose[:, 3]
-        tra = tra + np.dot(rot, self.model_aligner.get_translation_transform())
-        rot = np.dot(rot, self.rotation_transform)
-        return np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
+    for obj_id, _ in enumerate(obj_names):
+        rgb, mask, begin, pose = __randomly_sample_foreground(image_dbs[obj_id], pvnet_linemod_dir)
+        mask *= obj_id+1
+        rgbs.append(rgb)
+        masks.append(mask)
+        begins.append(begin)
+        poses.append(pose)
+
+    background = __randomly_read_background(background_dir, cache_dir)
+
+    fuse_img, fuse_mask, fuse_begins = _fuse_regions(rgbs, masks, begins, background, 480, 640)
+
+    _save_fuse_data(output_dir, idx, fuse_img, fuse_mask, fuse_begins, poses)
+    print('{} cost {} s'.format(idx, time.time()-time_begin))
+
+
+def prepare_dataset_parallel(output_dir: str,
+                                                              pvnet_linemod_dir: str,
+                                                              linemod_dir: str,
+                                                              background_dir: str,
+                                                              obj_names: list = cfg.linemod_obj_names,
+                                                              fuse_num: int=50,
+                                                              cache_dir: str = './',
+                                                              worker_num=8):
+    """
+    データセットの準備を並列して行う関数
+
+    Args:
+        output_dir (str):
+        pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
+        linemod_dir (str): オリジナルのLINEMODデータセットが保存されているディレクトリパス
+        background_dir (str): 背景画像として使用する画像の読み出し先のパス
+        obj_names(list optional): 合成で使用するデータセットのクラス名．Defaults to cfg.linemod_obj_names.
+        fuse_num (int optional): 作成される合成画像枚数．Defaults to 50.
+        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to './'.
+        worker_num (int, optional): 並列処理で使用するワーカー数. Defaults to 8.
+    """
+    futures=[]
+    with ProcessPoolExecutor(max_workers = worker_num) as executor:
+        for idx in np.arange(fuse_num):
+            seed=np.random.randint(5000)
+            future = executor.submit(_prepare_dataset_single,
+                                                                output_dir,
+                                                                idx,
+                                                                pvnet_linemod_dir,
+                                                                linemod_dir,
+                                                                background_dir,
+                                                                obj_names,
+                                                                cache_dir,
+                                                                seed)
+            futures.append(future)
+
+        for f in futures:
+            f.result()
 
 
 def _collect_linemod_set_info(pvnet_linemod_dir: str,
@@ -94,7 +157,7 @@ def _collect_linemod_set_info(pvnet_linemod_dir: str,
             database.append(data)
 
         print('success generate database {} len {}'.format(obj_name, len(database)))
-        save_pickle(database, os.path.join(cache_dir,'{}_info.pkl').format(obj_name))
+        save_pickle(database, os.path.join(cache_dir, '{}_info.pkl').format(obj_name))
         return database
 
 
@@ -120,16 +183,161 @@ def __collect_train_val_test_info(pvnet_linemod_dir: str,
     return test_fns, train_fns
 
 
+def _fuse_regions(rgbs: list,
+                                      masks: list,
+                                      begins: list,
+                                      background: np.ndarray,
+                                      th: int,
+                                      tw: int):
+    """
+    RGB背景画像とそのマスク画像を (tw, th) にリサイズし，その上にオブジェクトのRGB画像とそのマスク画像を合成する関数．返り値は，合成されたRGB画像とそのマスク画像と合成されたオブジェクトの位置
+
+    Args:
+        rgbs(list): 合成するオブジェクトの ndarray が保存されたリスト
+        masks(list): 合成するオブジェクトのマスク画像の ndarray が保存されたリスト
+        begins(list):
+        background(np.ndarray): 背景の ndarray
+        th(int): 背景画像のリサイズ後の高さ
+        tw(int): 背景画像のリサイズ後の幅
+
+    Returns:
+        fuse_img(np.ndarray): 合成後の画像 [max=255, min=0]
+        fuse_mask(np.ndarray): 合成後のマスク画像 [max=1 min=0]
+        begins(list)
+    """
+    fuse_order = np.arange(len(rgbs))
+    np.random.shuffle(fuse_order)
+    fuse_img = background
+    fuse_img = cv2.resize(fuse_img, (tw,th), interpolation = cv2.INTER_LINEAR) # Bilinearによる内挿法を用いてリサイズ
+    fuse_mask = np.zeros([fuse_img.shape[0], fuse_img.shape[1]], np.int32)
+
+    for idx in fuse_order:
+        rh,rw = masks[idx].shape
+        # 背景画像より外にオブジェクトが配置されないように調整
+        bh = np.random.randint(0, fuse_img.shape[0]-rh)
+        bw = np.random.randint(0, fuse_img.shape[1]-rw)
+
+        silhouette = masks[idx] > 0
+        out_silhouette = np.logical_not(silhouette)
+        fuse_mask[bh:bh+rh,bw:bw+rw] *= out_silhouette.astype(fuse_mask.dtype)
+        fuse_mask[bh:bh+rh,bw:bw+rw] += masks[idx]
+
+        fuse_img[bh:bh+rh,bw:bw+rw] *= out_silhouette.astype(fuse_img.dtype)[:, :, None]
+        fuse_img[bh:bh+rh,bw:bw+rw] += rgbs[idx]
+
+        begins[idx][0] =- begins[idx][0] + bh
+        begins[idx][1] =- begins[idx][1] + bw
+
+    return fuse_img, fuse_mask, begins
+
+
+def __randomly_read_background(background_dir: str, cache_dir: str) -> np.ndarray:
+    """
+    合成画像を作成する際に背景として使用される画像を読み出し，その画像のパスを `background_info.pkl` データとして一度保存しておくための関数．画像は `.jpg` か `.png` として保存されているもののみ使用可能．
+
+    Args:
+        background_dir(str): 背景画像として使用する画像の保存先のパス
+        cache_dir(str): background_info.pkl データの保存先のパス. Defaults to './'.
+
+    Return:
+        (np.ndarray): 背景画像の ndarray 配列
+    """
+    if os.path.exists(os.path.join(cache_dir, 'background_info.pkl')):
+        fns = read_pickle(os.path.join(cache_dir, 'background_info.pkl'))
+    else:
+        fns = glob(os.path.join(background_dir, '*.jpg')) + glob(os.path.join(background_dir, '*.png'))
+        save_pickle(fns, os.path.join(cache_dir, 'background_info.pkl'))
+    return cv2.imread(fns[np.random.randint(0, len(fns))])
+
+
+def __randomly_sample_foreground(image_db: dict, pvnet_linemod_dir: str):
+    """
+    画像合成の際に背景上に配置するオブジェクトを `_collect_linemod_set_info` で保存した下記の情報をもとに読み出し，rgb画像，mask画像，対応するオブジェクトの姿勢を返す関数
+
+    image_db:
+        * rgb_pth: JPEG 画像のパス
+        * dpt_pth: JPEG 画像に対応する Mask 画像のパス
+        * RT: 対象オブジェクトの姿勢情報
+
+    Aegs:
+        image_db(dict): rgb_pth, dpt_pth, RT情報が格納された辞書
+        pvnet_linemod_dir (str): PVNet_LineMod データセットのディレクトリパス
+
+    Return:
+        rgb(np.ndarray): rgb画像の ndarray 配列 [max = 255, min = 0]
+        mask(np.ndarray): mask画像の ndarray 配列 [max = 1, min = 0]
+        begin(list):
+        pose(np.ndarray): オブジェクトの姿勢 [RT| 3x4行列]
+    """
+    idx = np.random.randint(0, len(image_db))
+    rgb_pth = os.path.join(pvnet_linemod_dir,image_db[idx]['rgb_pth'])
+    dpt_pth = os.path.join(pvnet_linemod_dir,image_db[idx]['dpt_pth'])
+    rgb = read_rgb_np(rgb_pth)
+    mask = read_mask_np(dpt_pth)
+    mask = np.sum(mask, 2) > 0
+    mask = np.asarray(mask, np.int32)
+
+    hs, ws = np.nonzero(mask)
+    hmin, hmax = np.min(hs), np.max(hs)
+    wmin, wmax  = np.min(ws), np.max(ws)
+
+    mask = mask[hmin:hmax, wmin:wmax]
+    rgb = rgb[hmin:hmax, wmin:wmax]
+
+    rgb *= mask.astype(np.uint8)[:, :, None]
+    begin = [hmin, wmin]
+    pose = image_db[idx]['RT']
+
+    return rgb, mask, begin, pose
+
+
+def _save_fuse_data(output_dir: str,
+                                          idx: int,
+                                          fuse_img: np.ndarray,
+                                          fuse_mask: np.ndarray,
+                                          fuse_begins,
+                                          fuse_poses: list):
+    """
+    合成したデータを保存する関数
+
+    Args:
+        output_dir(str): データを保存するディレクトリのパス
+        idx(int): 作成したデータの番号
+        fuse_img(np.ndarray): 合成された画像の ndarray
+        fuse_mask(np.ndarray): 合成された画像のマスク画像の ndarray
+        fuse_begins()
+        fuse_poses(list): 合成された画像に使用されているオブジェクトの姿勢 [RT| 3x4行列] のリスト
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    cv2.imwrite(os.path.join(output_dir,
+                                                        '{}_rgb.jpg'.format(idx)),
+                                                        fuse_img)
+    fuse_mask=fuse_mask.astype(np.uint8)
+    cv2.imwrite(os.path.join(output_dir,
+                                                        '{}_mask.png'.format(idx)),
+                                                        fuse_mask)
+    save_pickle([np.asarray(fuse_begins,np.int32),
+                                np.asarray(fuse_poses,np.float32)],
+                              os.path.join(output_dir,'{}_info.pkl'.format(idx)))
+
+
 if __name__=="__main__":
     from src.utils.utils import MakeDir
 
     tmp_dir = MakeDir(cfg.TEMP_DIR, newly=True)
-
+    cache_dir= tmp_dir
     output_dir = tmp_dir
+    idx = 1
     pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
     linemod_dir = cfg.LINEMOD_DIR
-    background_dir='/home/liuyuan/data/SUN2012pascalformat/JPEGImages'
-    cache_dir='./'
-    fuse_num=10000
+    obj_name = 'ape'
+    background_dir = cfg.TEST_IMG_ORG_DIR
+    fuse_num = 5
     worker_num=2
-    prepare_dataset_parallel(output_dir, pvnet_linemod_dir, linemod_dir, fuse_num, background_dir, cache_dir, worker_num)
+    prepare_dataset_parallel(output_dir = output_dir,
+                                                          pvnet_linemod_dir = pvnet_linemod_dir,
+                                                          linemod_dir = linemod_dir,
+                                                          background_dir = background_dir,
+                                                          fuse_num = fuse_num,
+                                                          cache_dir = cache_dir,
+                                                          worker_num = worker_num)
