@@ -5,6 +5,7 @@ sys.path.append('../../')
 
 #import bpy
 import numpy as np
+from transforms3d.euler import mat2euler
 #from mathutils import Matrix
 
 from src.config.config import cfg
