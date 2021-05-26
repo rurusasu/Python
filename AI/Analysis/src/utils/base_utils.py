@@ -64,7 +64,7 @@ def save_pickle(data, pkl_path: str):
 
 def read_ply_model(model_path: str) -> np.array:
         """
-         `.ply` 形式で保存された 3D モデルを numpy 配列として読み出す関数
+         `.ply` 形式で保存された 3D モデル(点群のx, y, z 座標)を numpy 配列として読み出す関数
 
         Arg:
             model_path(str): `.ply` 形式で保存された3Dモデルへのパス

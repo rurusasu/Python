@@ -1,0 +1,10 @@
+{
+  "Renderer": [
+    {
+      "DataSetName": "LineMod",
+      "num_samples": "10",
+      "Width": "640",
+      "Height": "480"
+    }
+  ]
+}

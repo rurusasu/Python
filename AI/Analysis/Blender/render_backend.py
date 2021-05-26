@@ -1,12 +1,19 @@
 import argparse
-import os
+import glob
 import math
+import os
+import pickle
+import sys
+import time
+sys.path.append('.')
+sys.path.append('..')
+
 import bpy
 import numpy as np
-import sys
 from transforms3d.euler import euler2mat
-import itertools
-import glob
+#import itertools
+
+from src.config.config import cfg
 
 UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
 LIB_DIR = os.path.dirname(UTILS_DIR)
@@ -17,9 +24,8 @@ sys.path.append(LIB_DIR)
 sys.path.append(ROOT_DIR)
 
 from config import cfg
-from blender.blender_utils import get_K_P_from_blender, get_3x4_P_matrix_from_blender
-import pickle
-import time
+from Blender.render_base_utils import get_K_P_from_blender, get_3x4_P_matrix_from_blender
+
 
 
 def parse_argument():
@@ -43,8 +49,9 @@ def parse_argument():
     parser.add_argument('--height', type=float, default=0.0,
                         help='Location z of plane.')
 
-    argv = sys.argv[sys.argv.index("--") + 1:]
-    args = parser.parse_args(argv)
+    #argv = sys.argv[sys.argv.index("--") + 1:]
+    #args = parser.parse_args(argv)
+    args = parser.parse_args()
 
     return args
 
@@ -87,13 +94,12 @@ def setup():
     camera = bpy.data.objects['Camera']
     bpy.data.cameras['Camera'].clip_end = 10000
 
-    # configure rendered image's parameters
+    # configure rendered image's parametersS
     bpy.context.scene.render.resolution_x = cfg.WIDTH
     bpy.context.scene.render.resolution_y = cfg.HEIGHT
     bpy.context.scene.render.resolution_percentage = 100
-    bpy.context.scene.render.alpha_mode = 'TRANSPARENT'
+    #bpy.context.scene.render.alpha_mode = 'TRANSPARENT'
     bpy.context.scene.render.image_settings.color_mode = 'RGBA'
-
     # modify the camera intrinsic matrix
     # bpy.data.cameras['Camera'].sensor_width = 39.132693723430386
     # bpy.context.scene.render.pixel_aspect_y = 1.6272340492401836

@@ -21,3 +21,7 @@ AI/Analysis/src/utils/spconv/
 AI/Analysis/src/utils/temp/
 AI/Analysis/temp
 Dobot/node_modules
+AI/Analysis/data/bg_img_pths.npy
+AI/Analysis/data/blender_poses/ape_poses.npy
+AI/Analysis/data/dataset_poses/ape_poses.npy
+AI/Analysis/data/test/org_img/bg-1024x683.jpg

@@ -92,11 +92,12 @@ def read_pose(rot_path: str, tra_path: str) -> np.matrix:
             tra_path str: `.tra` ファイルのパス
 
         Returns:
-            np.matrix: 姿勢行列
+            T (np.matrix): 姿勢の同次変換行列
         """
         rot = np.loadtxt(rot_path, skiprows=1)
         tra = np.loadtxt(tra_path, skiprows=1) / 100.
-        return np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
+        T = np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
+        return T
 
 
 def read_rotation(filename: str) -> np.matrix:
@@ -106,7 +107,7 @@ def read_rotation(filename: str) -> np.matrix:
             filename (str): 単一のLineMod3Dモデルの回転情報が保存された '.rot' ファイルへの絶対パス
 
         Return:
-            R [np.matrix]: 単一のLineMod3Dモデルの(3, 3)回転行列
+            R [np.matrix]: 単一のLineMod3Dモデルの回転行列(3, 3)
         """
         with open(filename) as f:
             f.readline()
@@ -119,14 +120,16 @@ def read_rotation(filename: str) -> np.matrix:
 
 def read_transform_dat(dat_path: str) -> np.matrix:
         """
-        オリジナルの LineMod データセットから dat ファイルを読み出す関数
+        オリジナルの LineMod データセットから `.dat` ファイルに保存された同次変換行列を読み出す関数．このデータは，`OLDmesh.ply` に保存されているオブジェクトの3Dモデルを 'mash.ply' ファイルに保存されている3Dモデルに変換する際に使用される．
 
-        Returns:
-            transform_dat(np.matrix): 読み出したデータ
+        Arg:
+            dat_path(str): `.dat` ファイルパス
+        Return:
+            T (np.matrix): 姿勢の同次変換行列
         """
-        transform_dat = np.loadtxt(dat_path, skiprows=1)[:, 1]
-        transform_dat = np.reshape(transform_dat, newshape=[3, 4])
-        return transform_dat
+        T= np.loadtxt(dat_path, skiprows=1)[:, 1]
+        T = np.reshape(T, newshape=[3, 4])
+        return T
 
 
 def read_translation(filename: str) -> np.matrix:
@@ -136,13 +139,48 @@ def read_translation(filename: str) -> np.matrix:
             filename (str): 単一のLineMod3Dモデルの並進情報が保存された '.tra' ファイルへの絶対パス
 
         Return:
-            T [np.matrix]: 単一のLineMod3Dモデルの(3, 3)並進行列
+            tra [np.matrix]: 単一のLineMod3Dモデルの並進行列(3, 1)
         """
         with open(filename) as f:
             f.readline()
-            T = []
+            tra = []
             for line in f:
-                T.append([line.split()[0]])
-            T = np.array(T, dtype=np.float32)
-            T = T / np.float32(100) # cm -> m
-        return T
+                tra.append([line.split()[0]])
+            tra = np.array(tra, dtype=np.float32)
+            tra = tra / np.float32(100) # cm -> m
+        return tra
+
+
+if __name__ == '__main__':
+    from glob import glob
+    base_dir = cfg.LINEMOD_DIR
+    obj_name = 'ape'
+
+    # Setup
+    filenames = glob(os.path.join(base_dir, obj_name))
+    filename  = filenames[0]
+
+    # ----------------------- #
+    # インスタンス生成 #
+    # ----------------------- #
+    db = LineModDB(linemod_dir = base_dir,
+                                       obj_name = obj_name)
+
+    # read_rotation Test
+    rot_file = glob(os.path.join(filename, 'data', '*.rot'))[0]
+    # rot = read_rotation(rot_file)
+    # print('R =', rot)
+
+    # read_translation Test
+    tra_file = glob(os.path.join(filename, 'data', '*.tra'))[0]
+    # tra = read_translation(tra_file)
+    # print('T =', tra)
+
+    # read pose Test
+    pose = read_pose(rot_file, tra_file)
+    print(pose)
+
+    # read transform data Test
+    dat_file = glob(os.path.join(filename, '*.dat'))[0]
+    transform_dat = read_transform_dat(dat_file)
+    print(transform_dat)

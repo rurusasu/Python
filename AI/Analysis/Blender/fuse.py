@@ -1,5 +1,7 @@
 import os
 import sys
+
+from PIL import Image
 sys.path.append('..')
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -9,7 +11,7 @@ from logging import getLogger
 import cv2
 import numpy as np
 
-from Blender.blender_utils import ModelAligner, PoseTransformer
+from Blender.render_base_utils import ModelAligner, PoseTransformer
 from src.config.config import cfg
 from src.datasets.LineMod.LineModDB import read_pose
 from src.utils.base_utils import read_mask_np, read_rgb_np, read_pickle, save_pickle
@@ -19,9 +21,9 @@ def _prepare_dataset_single(output_dir: str,
                                                              idx: int,
                                                              pvnet_linemod_dir: str,
                                                              linemod_dir: str,
-                                                             background_dir: str,
+                                                             bg_imgs_dir: str,
                                                              obj_names: list = cfg.linemod_obj_names,
-                                                             cache_dir: str = './',
+                                                             cache_dir: str = cfg.TEMP_DIR,
                                                              seed: int = 0):
     """
     オブジェクトの画像と別の背景画像を合成する関数
@@ -31,9 +33,9 @@ def _prepare_dataset_single(output_dir: str,
         idx(int): 保存されるデータに振られる番号
         pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
         linemod_dir (str): オリジナルのLINEMODデータセットが保存されているディレクトリパス
-        background_dir (str): 背景画像として使用する画像の読み出し先のパス
+        bg_imgs_dir (str): 背景画像として使用する画像の読み出し先のパス
         obj_names(list optional): 合成で使用するデータセットのクラス名．Defaults to cfg.linemod_obj_names.
-        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to './'.
+        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to 'cfg.TEMP_DIR'.
         seed (int, optional): オブジェクトを配置する際に使用する乱数のseed値. Defaults to 0.
     """
     time_begin = time.time()
@@ -54,7 +56,7 @@ def _prepare_dataset_single(output_dir: str,
         begins.append(begin)
         poses.append(pose)
 
-    background = __randomly_read_background(background_dir, cache_dir)
+    background = __randomly_read_background(bg_imgs_dir, cache_dir)
 
     fuse_img, fuse_mask, fuse_begins = _fuse_regions(rgbs, masks, begins, background, 480, 640)
 
@@ -63,24 +65,24 @@ def _prepare_dataset_single(output_dir: str,
 
 
 def prepare_dataset_parallel(output_dir: str,
-                                                              pvnet_linemod_dir: str,
+                                                              bg_imgs_dir: str,
                                                               linemod_dir: str,
-                                                              background_dir: str,
+                                                              pvnet_linemod_dir: str,
                                                               obj_names: list = cfg.linemod_obj_names,
                                                               fuse_num: int=50,
-                                                              cache_dir: str = './',
+                                                              cache_dir: str = cfg.TEMP_DIR,
                                                               worker_num=8):
     """
     データセットの準備を並列して行う関数
 
     Args:
         output_dir (str):
-        pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
+        bg_imgs_dir (str): 背景画像として使用する画像が保存されているディレクトリのパス
         linemod_dir (str): オリジナルのLINEMODデータセットが保存されているディレクトリパス
-        background_dir (str): 背景画像として使用する画像の読み出し先のパス
+        pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
         obj_names(list optional): 合成で使用するデータセットのクラス名．Defaults to cfg.linemod_obj_names.
         fuse_num (int optional): 作成される合成画像枚数．Defaults to 50.
-        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to './'.
+        cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to 'cfg.TEMP_DIR'.
         worker_num (int, optional): 並列処理で使用するワーカー数. Defaults to 8.
     """
     futures=[]
@@ -92,7 +94,7 @@ def prepare_dataset_parallel(output_dir: str,
                                                                 idx,
                                                                 pvnet_linemod_dir,
                                                                 linemod_dir,
-                                                                background_dir,
+                                                                bg_imgs_dir,
                                                                 obj_names,
                                                                 cache_dir,
                                                                 seed)
@@ -102,10 +104,10 @@ def prepare_dataset_parallel(output_dir: str,
             f.result()
 
 
-def _collect_linemod_set_info(pvnet_linemod_dir: str,
+def _collect_linemod_set_info(linemod_dir: str,
+                                                                 pvnet_linemod_dir: str,
                                                                  obj_name: str,
-                                                                 linemod_dir: str,
-                                                                 cache_dir: str = './') -> list:
+                                                                 cache_dir: str = cfg.TEMP_DIR) -> list:
         """
         PVNet LineMod データセット と LineMod データセットの各オブジェクトについて以下の情報を読み出し，'_info.pkl' として保存する関数
 
@@ -114,10 +116,10 @@ def _collect_linemod_set_info(pvnet_linemod_dir: str,
         * RT: 対象オブジェクトの姿勢情報
 
         Args:
-            pvnet_linemod_dir (str): PVNet_LineMod データセットのディレクトリパス
+            linemod_dir (str): オリジナルのLINEMODデータセットが保存されているディレクトリパス
+            pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
             obj_name (str): LineMod データセットに含まれるオブジェクト名
-            linemod_dir (str): LineMod データセットのディレクトリパス
-            cache_dir (str, optional): オブジェクトごとに作成される _info.pkl データの保存先のパス. Defaults to './'.
+            cache_dir (str, optional): オブジェクトごとに作成される _info.pkl データの保存先のパス. Defaults to 'cfg.TEMP_DIR'.
 
         Returns:
             database(list): カテゴリごとに上記の情報が保存された辞書のリスト
@@ -150,9 +152,9 @@ def _collect_linemod_set_info(pvnet_linemod_dir: str,
 
             pose = read_pose(os.path.join(rt_dir, 'rot{}.rot'.format(k)),
                                                   os.path.join(rt_dir, 'tra{}.tra'.format(k)))
-            pose_transformer = PoseTransformer(obj_name,
-                                                                                           pvnet_linemod_dir,
-                                                                                           linemod_dir)
+            pose_transformer = PoseTransformer(linemod_dir = linemod_dir,
+                                                                                           pvnet_linemod_dir = pvnet_linemod_dir,
+                                                                                           obj_name = obj_name)
             data['RT'] = pose_transformer.orig_pose_to_blender_pose(pose).astype(np.float32)
             database.append(data)
 
@@ -178,7 +180,7 @@ def __collect_train_val_test_info(pvnet_linemod_dir: str,
         test_fns = [line.strip().split('/')[-1] for line in f.readlines()]
 
     with open(os.path.join(pvnet_linemod_dir, obj_name, 'train.txt'), 'r') as f:
-        train_fns=[line.strip().split('/')[-1] for line in f.readlines()]
+        train_fns = [line.strip().split('/')[-1] for line in f.readlines()]
 
     return test_fns, train_fns
 
@@ -231,25 +233,6 @@ def _fuse_regions(rgbs: list,
     return fuse_img, fuse_mask, begins
 
 
-def __randomly_read_background(background_dir: str, cache_dir: str) -> np.ndarray:
-    """
-    合成画像を作成する際に背景として使用される画像を読み出し，その画像のパスを `background_info.pkl` データとして一度保存しておくための関数．画像は `.jpg` か `.png` として保存されているもののみ使用可能．
-
-    Args:
-        background_dir(str): 背景画像として使用する画像の保存先のパス
-        cache_dir(str): background_info.pkl データの保存先のパス. Defaults to './'.
-
-    Return:
-        (np.ndarray): 背景画像の ndarray 配列
-    """
-    if os.path.exists(os.path.join(cache_dir, 'background_info.pkl')):
-        fns = read_pickle(os.path.join(cache_dir, 'background_info.pkl'))
-    else:
-        fns = glob(os.path.join(background_dir, '*.jpg')) + glob(os.path.join(background_dir, '*.png'))
-        save_pickle(fns, os.path.join(cache_dir, 'background_info.pkl'))
-    return cv2.imread(fns[np.random.randint(0, len(fns))])
-
-
 def __randomly_sample_foreground(image_db: dict, pvnet_linemod_dir: str):
     """
     画像合成の際に背景上に配置するオブジェクトを `_collect_linemod_set_info` で保存した下記の情報をもとに読み出し，rgb画像，mask画像，対応するオブジェクトの姿勢を返す関数
@@ -260,7 +243,12 @@ def __randomly_sample_foreground(image_db: dict, pvnet_linemod_dir: str):
         * RT: 対象オブジェクトの姿勢情報
 
     Aegs:
-        image_db(dict): rgb_pth, dpt_pth, RT情報が格納された辞書
+        image_db(dict): pvnet_linemod の rgb_pth, dpt_pth, と orig_pose_to_blender_pose によって変換された 同次変換行列が格納された辞書．
+        例: {'rgb_pth': './AI/Analysis/data/PVNet_linemod/ape/JPEGImages/000914.jpg',
+                'dpt_pth': './AI/Analysis/data/PVNet_linemod/ape/mask/0914.png',
+                'RT': array([[-0.0536252 ,  0.975377  , -0.213925  ,  0.00464225],
+                                        [ 0.962547  , -0.00652554, -0.271037  , -0.07789672],
+                                        [-0.265759  , -0.220448  , -0.938496  ,  0.6899649 ]],dtype=float32)},
         pvnet_linemod_dir (str): PVNet_LineMod データセットのディレクトリパス
 
     Return:
@@ -331,13 +319,19 @@ if __name__=="__main__":
     pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
     linemod_dir = cfg.LINEMOD_DIR
     obj_name = 'ape'
-    background_dir = cfg.TEST_IMG_ORG_DIR
+    bg_imgs_dir = cfg.TEST_IMG_ORG_DIR
     fuse_num = 5
     worker_num=2
+
+    data_base = _collect_linemod_set_info(pvnet_linemod_dir = pvnet_linemod_dir,
+                                                                                       obj_name = obj_name,
+                                                                                       linemod_dir = linemod_dir)
+
+
     prepare_dataset_parallel(output_dir = output_dir,
                                                           pvnet_linemod_dir = pvnet_linemod_dir,
                                                           linemod_dir = linemod_dir,
-                                                          background_dir = background_dir,
+                                                          bg_imgs_dir = bg_imgs_dir,
                                                           fuse_num = fuse_num,
                                                           cache_dir = cache_dir,
                                                           worker_num = worker_num)
