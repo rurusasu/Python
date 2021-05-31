@@ -3,8 +3,9 @@ from cv2 import data
 from matplotlib import lines
 
 from matplotlib.lines import Line2D
-sys.path.append('.')
-sys.path.append('..')
+
+sys.path.append(".")
+sys.path.append("..")
 
 import glob
 import struct
@@ -21,22 +22,28 @@ from transforms3d.quaternions import mat2quat
 from Blender.render_base_utils import PoseTransformer, randomly_read_background
 from src.config.config import cfg
 from src.datasets.LineMod.LineModDB import read_pose
-from src.utils.base_utils  import read_pickle, save_pickle
+from src.utils.base_utils import read_pickle, save_pickle
 
 
 class DataStatistics(object):
     # world_to_camera_pose = np.array([[-1.19209304e-07,   1.00000000e+00,  -2.98023188e-08, 1.19209304e-07],
     #                                  [-8.94069672e-08,   2.22044605e-16,  -1.00000000e+00, 8.94069672e-08],
     #                                  [-1.00000000e+00,  -8.94069672e-08,   1.19209304e-07, 1.00000000e+00]])
-    world_to_camera_pose = np.array([[-1.00000024e+00,  -8.74227979e-08,  -5.02429621e-15, 8.74227979e-08],
-                                                                               [5.02429621e-15,   1.34358856e-07,  -1.00000012e+00, -1.34358856e-07],
-                                                                               [8.74227979e-08,  -1.00000012e+00,   1.34358856e-07, 1.00000012e+00]])
+    world_to_camera_pose = np.array(
+        [
+            [-1.00000024e00, -8.74227979e-08, -5.02429621e-15, 8.74227979e-08],
+            [5.02429621e-15, 1.34358856e-07, -1.00000012e00, -1.34358856e-07],
+            [8.74227979e-08, -1.00000012e00, 1.34358856e-07, 1.00000012e00],
+        ]
+    )
 
-    def __init__(self,
-                              linemod_dir: str,
-                              pvnet_linemod_dir: str,
-                              obj_name: str,
-                              cache_dir: str = cfg.TEMP_DIR):
+    def __init__(
+        self,
+        linemod_dir: str,
+        pvnet_linemod_dir: str,
+        obj_name: str,
+        cache_dir: str = cfg.TEMP_DIR,
+    ):
         """
         DataStatistics の初期化関数
 
@@ -49,20 +56,26 @@ class DataStatistics(object):
         self.linemod_dir = linemod_dir
         self.pvnet_linemod_dir = pvnet_linemod_dir
         self.obj_name = obj_name
-        self.mask_path = os.path.join(self.pvnet_linemod_dir,'{}/mask/*.png'.format(obj_name))
-        self.dir_path = os.path.join(self.linemod_dir,'{}/data'.format(obj_name))
+        self.mask_path = os.path.join(
+            self.pvnet_linemod_dir, "{}/mask/*.png".format(obj_name)
+        )
+        self.dir_path = os.path.join(self.linemod_dir, "{}/data".format(obj_name))
 
-        dataset_pose_dir_path = os.path.join(cache_dir, 'dataset_poses')
-        os.system('mkdir -p {}'.format(dataset_pose_dir_path))
-        self.dataset_poses_path = os.path.join(dataset_pose_dir_path, '{}_poses.npy'.format(obj_name))
-        blender_pose_dir_path = os.path.join(cache_dir, 'blender_poses')
-        os.system('mkdir -p {}'.format(blender_pose_dir_path))
-        self.blender_poses_path = os.path.join(blender_pose_dir_path, '{}_poses.npy'.format(obj_name))
-        os.system('mkdir -p {}'.format(blender_pose_dir_path))
+        dataset_pose_dir_path = os.path.join(cache_dir, "dataset_poses")
+        os.system("mkdir -p {}".format(dataset_pose_dir_path))
+        self.dataset_poses_path = os.path.join(
+            dataset_pose_dir_path, "{}_poses.npy".format(obj_name)
+        )
+        blender_pose_dir_path = os.path.join(cache_dir, "blender_poses")
+        os.system("mkdir -p {}".format(blender_pose_dir_path))
+        self.blender_poses_path = os.path.join(
+            blender_pose_dir_path, "{}_poses.npy".format(obj_name)
+        )
+        os.system("mkdir -p {}".format(blender_pose_dir_path))
 
-        self.pose_transformer = PoseTransformer(linemod_dir,
-                                                                                               pvnet_linemod_dir,
-                                                                                               obj_name)
+        self.pose_transformer = PoseTransformer(
+            linemod_dir, pvnet_linemod_dir, obj_name
+        )
 
     def get_proper_crop_size(self):
         mask_paths = glob.glob(self.mask_path)
@@ -70,7 +83,7 @@ class DataStatistics(object):
         heights = []
 
         for mask_path in mask_paths:
-            mask = Image.open(mask_path).convert('1')
+            mask = Image.open(mask_path).convert("1")
             mask = np.array(mask).astype(np.int32)
             row_col = np.argwhere(mask == 1)
             min_row, max_row = np.min(row_col[:, 0]), np.max(row_col[:, 0])
@@ -82,13 +95,17 @@ class DataStatistics(object):
 
         widths = np.array(widths)
         heights = np.array(heights)
-        print('min width: {}, max width: {}'.format(np.min(widths), np.max(widths)))
-        print('min height: {}, max height: {}'.format(np.min(heights), np.max(heights)))
+        print("min width: {}, max width: {}".format(np.min(widths), np.max(widths)))
+        print("min height: {}, max height: {}".format(np.min(heights), np.max(heights)))
 
     def get_quat_translation(self, object_to_camera_pose):
         object_to_camera_pose = np.append(object_to_camera_pose, [[0, 0, 0, 1]], axis=0)
-        world_to_camera_pose = np.append(self.world_to_camera_pose, [[0, 0, 0, 1]], axis=0)
-        object_to_world_pose = np.dot(np.linalg.inv(world_to_camera_pose), object_to_camera_pose)
+        world_to_camera_pose = np.append(
+            self.world_to_camera_pose, [[0, 0, 0, 1]], axis=0
+        )
+        object_to_world_pose = np.dot(
+            np.linalg.inv(world_to_camera_pose), object_to_camera_pose
+        )
         quat = mat2quat(object_to_world_pose[:3, :3])
         translation = object_to_world_pose[:3, 3]
         return quat, translation
@@ -100,10 +117,15 @@ class DataStatistics(object):
 
         eulers = []
         translations = []
-        train_set = np.loadtxt(os.path.join(self.pvnet_linemod_dir, '{}/training_range.txt'.format(self.obj_name)),np.int32)
+        train_set = np.loadtxt(
+            os.path.join(
+                self.pvnet_linemod_dir, "{}/training_range.txt".format(self.obj_name)
+            ),
+            np.int32,
+        )
         for idx in train_set:
-            rot_path = os.path.join(self.dir_path, 'rot{}.rot'.format(idx))
-            tra_path = os.path.join(self.dir_path, 'tra{}.tra'.format(idx))
+            rot_path = os.path.join(self.dir_path, "rot{}.rot".format(idx))
+            tra_path = os.path.join(self.dir_path, "tra{}.tra".format(idx))
             pose = read_pose(rot_path, tra_path)
             euler = self.pose_transformer.orig_pose_to_blender_euler(pose)
             eulers.append(euler)
@@ -111,7 +133,9 @@ class DataStatistics(object):
 
         eulers = np.array(eulers)
         translations = np.array(translations)
-        np.save(self.dataset_poses_path, np.concatenate([eulers, translations], axis=-1))
+        np.save(
+            self.dataset_poses_path, np.concatenate([eulers, translations], axis=-1)
+        )
 
         return eulers, translations
 
@@ -119,23 +143,23 @@ class DataStatistics(object):
         """ sample angles from the sphere
         reference: https://zhuanlan.zhihu.com/p/25988652?group_id=828963677192491008
         """
-        flat_objects = ['037_scissors', '051_large_clamp', '052_extra_large_clamp']
+        flat_objects = ["037_scissors", "051_large_clamp", "052_extra_large_clamp"]
         if self.obj_name in flat_objects:
             begin_elevation = 30
         else:
             begin_elevation = 0
         ratio = (begin_elevation + 90) / 180
         num_points = int(num_samples // (1 - ratio))
-        phi = (np.sqrt(5) - 1.0) / 2.
+        phi = (np.sqrt(5) - 1.0) / 2.0
         azimuths = []
         elevations = []
         for n in range(num_points - num_samples, num_points):
-            z = 2. * n / num_points - 1.
+            z = 2.0 * n / num_points - 1.0
             azimuths.append(np.rad2deg(2 * np.pi * n * phi % (2 * np.pi)))
             elevations.append(np.rad2deg(np.arcsin(z)))
         return np.array(azimuths), np.array(elevations)
 
-    def sample_poses(self, num_samples:int = 1000):
+    def sample_poses(self, num_samples: int = 1000):
         eulers, translations = self.get_dataset_poses()
         azimuths, elevations = self.sample_sphere(num_samples)
         euler_sampler = stats.gaussian_kde(eulers.T)
@@ -144,18 +168,26 @@ class DataStatistics(object):
         eulers[:, 1] = elevations
         translation_sampler = stats.gaussian_kde(translations.T)
         translations = translation_sampler.resample(num_samples).T
-        np.save(self.blender_poses_path, np.concatenate([eulers, translations], axis=-1))
+        np.save(
+            self.blender_poses_path, np.concatenate([eulers, translations], axis=-1)
+        )
 
 
 class YCBDataStatistics(DataStatistics):
     def __init__(self, obj_name):
         super(YCBDataStatistics, self).__init__(obj_name)
-        self.dir_path = os.path.join(self.linemod_dir, '{}/data'.format(obj_name))
-        self.obj_names = np.loadtxt(os.path.join(cfg.YCB, 'image_sets/classes.txt'), dtype=np.str)
-        self.obj_names = np.insert(self.obj_names, 0, 'background')
-        self.train_set = np.loadtxt(os.path.join(cfg.YCB, 'image_sets/train.txt'), dtype=np.str)
-        self.meta_pattern = os.path.join(cfg.YCB, 'data/{}-meta.mat')
-        self.dataset_poses_pattern = os.path.join(self.parent_dir_path, 'dataset_poses/{}_poses.npy')
+        self.dir_path = os.path.join(self.linemod_dir, "{}/data".format(obj_name))
+        self.obj_names = np.loadtxt(
+            os.path.join(cfg.YCB, "image_sets/classes.txt"), dtype=np.str
+        )
+        self.obj_names = np.insert(self.obj_names, 0, "background")
+        self.train_set = np.loadtxt(
+            os.path.join(cfg.YCB, "image_sets/train.txt"), dtype=np.str
+        )
+        self.meta_pattern = os.path.join(cfg.YCB, "data/{}-meta.mat")
+        self.dataset_poses_pattern = os.path.join(
+            self.parent_dir_path, "dataset_poses/{}_poses.npy"
+        )
 
     def get_dataset_poses(self):
         if os.path.exists(self.dataset_poses_path):
@@ -166,8 +198,8 @@ class YCBDataStatistics(DataStatistics):
         for i in self.train_set:
             meta_path = self.meta_pattern.format(i)
             meta = sio.loadmat(meta_path)
-            classes = meta['cls_indexes'].ravel()
-            poses = meta['poses']
+            classes = meta["cls_indexes"].ravel()
+            poses = meta["poses"]
             for idx, cls_idx in enumerate(classes):
                 cls_poses = dataset_poses.setdefault(self.obj_names[cls_idx], [[], []])
                 pose = poses[..., idx]
@@ -176,7 +208,10 @@ class YCBDataStatistics(DataStatistics):
                 cls_poses[1].append(pose[:, 3])
 
         for obj_name, cls_poses in dataset_poses.items():
-            np.save(self.dataset_poses_pattern.format(obj_name), np.concatenate(cls_poses, axis=-1))
+            np.save(
+                self.dataset_poses_pattern.format(obj_name),
+                np.concatenate(cls_poses, axis=-1),
+            )
 
         cls_poses = dataset_poses[self.obj_name]
         eulers = np.array(cls_poses[0])
@@ -187,23 +222,25 @@ class YCBDataStatistics(DataStatistics):
 
 class Renderer(object):
     intrinsic_matrix = {
-        'linemod': np.array([[572.4114, 0., 325.2611],
-                                                  [0., 573.57043, 242.04899],
-                                                  [0., 0., 1.]]),
+        "linemod": np.array(
+            [[572.4114, 0.0, 325.2611], [0.0, 573.57043, 242.04899], [0.0, 0.0, 1.0]]
+        ),
         # 'blender': np.array([[280.0, 0.0, 128.0],
         #                      [0.0, 280.0, 128.0],
         #                      [0.0, 0.0, 1.0]]),
-        'blender': np.array([[700.,    0.,  320.],
-                                                  [0.,  700.,  240.],
-                                                  [0.,    0.,    1.]])
+        "blender": np.array(
+            [[700.0, 0.0, 320.0], [0.0, 700.0, 240.0], [0.0, 0.0, 1.0]]
+        ),
     }
 
-    def __init__(self,
-                              linemod_dir: str,
-                              pvnet_linemod_dir: str,
-                              obj_name: str,
-                              bg_imgs_dir: str = cfg.TEST_IMG_ORG_DIR,
-                              cache_dir: str = cfg.TEMP_DIR):
+    def __init__(
+        self,
+        linemod_dir: str,
+        pvnet_linemod_dir: str,
+        obj_name: str,
+        bg_imgs_dir: str = cfg.TEST_IMG_ORG_DIR,
+        cache_dir: str = cfg.TEMP_DIR,
+    ):
         """
         Renderer の初期化
 
@@ -219,14 +256,20 @@ class Renderer(object):
         self.bg_imgs_dir = bg_imgs_dir
         self.cache_dir = cache_dir
 
-        #self.bg_imgs_npy_path = os.path.join(cache_dir, 'bg_imgs.npy')
-        self.poses_path = os.path.join(self.cache_dir, 'blender_poses', '{}_poses.npy').format(obj_name)
-        self.output_dir_path = os.path.join(self.pvnet_linemod_dir,'renders/{}').format(obj_name)
+        # self.bg_imgs_npy_path = os.path.join(cache_dir, 'bg_imgs.npy')
+        self.poses_path = os.path.join(
+            self.cache_dir, "blender_poses", "{}_poses.npy"
+        ).format(obj_name)
+        self.output_dir_path = os.path.join(
+            self.pvnet_linemod_dir, "renders/{}"
+        ).format(obj_name)
         self.blender_path = cfg.BLENDER_PATH
-        self.blank_blend = os.path.join(cfg.BLENDER_DIR, 'blank.blend')
-        self.py_path = os.path.join(cfg.BLENDER_DIR, 'render_backend.py')
-        self.obj_path = os.path.join(self.pvnet_linemod_dir,'{}/{}.ply').format(obj_name, obj_name)
-        self.plane_height_path = os.path.join(self.cache_dir, 'plane_height.pkl')
+        self.blank_blend = os.path.join(cfg.BLENDER_DIR, "blank.blend")
+        self.py_path = os.path.join(cfg.BLENDER_DIR, "render_backend.py")
+        self.obj_path = os.path.join(self.pvnet_linemod_dir, "{}/{}.ply").format(
+            obj_name, obj_name
+        )
+        self.plane_height_path = os.path.join(self.cache_dir, "plane_height.pkl")
 
     """
     def get_bg_imgs(self):
@@ -252,9 +295,9 @@ class Renderer(object):
 
     @staticmethod
     def exr_to_png(exr_path):
-        depth_path = exr_path.replace('.png0001.exr', '.png')
+        depth_path = exr_path.replace(".png0001.exr", ".png")
         exr_image = OpenEXR.InputFile(exr_path)
-        dw = exr_image.header()['dataWindow']
+        dw = exr_image.header()["dataWindow"]
         (width, height) = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
         def read_exr(s, width, height):
@@ -262,17 +305,22 @@ class Renderer(object):
             mat = mat.reshape(height, width)
             return mat
 
-        dmap, _, _ = [read_exr(s, width, height) for s in exr_image.channels('BGR', Imath.PixelType(Imath.PixelType.FLOAT))]
+        dmap, _, _ = [
+            read_exr(s, width, height)
+            for s in exr_image.channels("BGR", Imath.PixelType(Imath.PixelType.FLOAT))
+        ]
         dmap = Image.fromarray((dmap != 1).astype(np.int32))
         dmap.save(depth_path)
         exr_image.close()
-        os.system('rm {}'.format(exr_path))
+        os.system("rm {}".format(exr_path))
 
     def sample_poses(self):
-        statistician = DataStatistics(linemod_dir = self.linemod_dir,
-                                                                pvnet_linemod_dir = self.pvnet_linemod_dir,
-                                                                obj_name = self.obj_name,
-                                                                cache_dir = self.cache_dir)
+        statistician = DataStatistics(
+            linemod_dir=self.linemod_dir,
+            pvnet_linemod_dir=self.pvnet_linemod_dir,
+            obj_name=self.obj_name,
+            cache_dir=self.cache_dir,
+        )
         statistician.sample_poses()
 
     def get_plane_height(self):
@@ -297,18 +345,41 @@ class Renderer(object):
         2. sample poses from the pose distribution of training data
         3. call the blender to render images
         """
-        #self.get_bg_imgs()
-        bg_imgs_npy_path, _ = randomly_read_background(bg_imgs_dir = self.bg_imgs_dir,
-                                                                                                                      cache_dir = self.cache_dir)
+        # self.get_bg_imgs()
+        bg_imgs_npy_path, _ = randomly_read_background(
+            bg_imgs_dir=self.bg_imgs_dir, cache_dir=self.cache_dir
+        )
         self.sample_poses()
 
         if not os.path.exists(self.output_dir_path):
             os.makedirs(self.output_dir_path)
 
-        os.system('{} {} --background --python {} -- --input {} --output_dir {} --bg_imgs {} --poses_path {}'.
-                  format(self.blender_path, self.blank_blend, self.py_path, self.obj_path,
-                         self.output_dir_path, bg_imgs_npy_path, self.poses_path))
-        depth_paths = glob.glob(os.path.join(self.output_dir_path, '*.exr'))
+        """
+        os.system(
+            "{} {} --background --python {} -- --input {} --output_dir {} --bg_imgs {} --poses_path {}".format(
+                self.blender_path,
+                self.blank_blend,
+                self.py_path,
+                self.obj_path,
+                self.output_dir_path,
+                bg_imgs_npy_path,
+                self.poses_path,
+            )
+        )
+        """
+        os.system(
+            "{} --background {} --python {} -- --input {} --output_dir {} --bg_imgs {} --poses_path {}".format(
+                self.blender_path,
+                self.blank_blend,
+                self.py_path,
+                self.obj_path,
+                self.output_dir_path,
+                bg_imgs_npy_path,
+                self.poses_path,
+            )
+        )
+
+        depth_paths = glob.glob(os.path.join(self.output_dir_path, "*.exr"))
         for depth_path in depth_paths:
             self.exr_to_png(depth_path)
 
@@ -316,7 +387,7 @@ class Renderer(object):
     def multi_thread_render():
         # objects = ['ape', 'benchvise', 'bowl', 'can', 'cat', 'cup', 'driller', 'duck',
         #            'glue', 'holepuncher', 'iron', 'lamp', 'phone', 'cam', 'eggbox']
-        objects = ['lamp', 'phone']
+        objects = ["lamp", "phone"]
 
         def render(obj_name):
             renderer = Renderer(obj_name)
@@ -329,11 +400,13 @@ class Renderer(object):
 class YCBRenderer(Renderer):
     def __init__(self, obj_name):
         super(YCBRenderer, self).__init__(obj_name)
-        self.output_dir_path = os.path.join(cfg.YCB, 'renders/{}').format(obj_name)
-        self.blank_blend = os.path.join(self.parent_dir_path, 'blank.blend')
-        self.obj_path = os.path.join(cfg.YCB, 'models', obj_name, 'textured.obj')
-        self.obj_names = np.loadtxt(os.path.join(cfg.YCB, 'image_sets/classes.txt'), dtype=np.str)
-        self.obj_names = np.insert(self.obj_names, 0, 'background')
+        self.output_dir_path = os.path.join(cfg.YCB, "renders/{}").format(obj_name)
+        self.blank_blend = os.path.join(self.parent_dir_path, "blank.blend")
+        self.obj_path = os.path.join(cfg.YCB, "models", obj_name, "textured.obj")
+        self.obj_names = np.loadtxt(
+            os.path.join(cfg.YCB, "image_sets/classes.txt"), dtype=np.str
+        )
+        self.obj_names = np.insert(self.obj_names, 0, "background")
 
     def sample_poses(self):
         statistician = YCBDataStatistics(self.obj_name)
@@ -341,7 +414,12 @@ class YCBRenderer(Renderer):
 
     @staticmethod
     def multi_thread_render():
-        objects = ['003_cracker_box', '004_sugar_box', '005_tomato_soup_can', '006_mustard_bottle']
+        objects = [
+            "003_cracker_box",
+            "004_sugar_box",
+            "005_tomato_soup_can",
+            "006_mustard_bottle",
+        ]
 
         def render(obj_name):
             renderer = YCBRenderer(obj_name)
@@ -352,13 +430,26 @@ class YCBRenderer(Renderer):
 
 
 class MultiRenderer(Renderer):
-    obj_names = ['ape', 'benchvise', 'can', 'cat', 'driller', 'duck', 'glue',
-                   'holepuncher', 'iron', 'lamp', 'phone', 'cam', 'eggbox']
+    obj_names = [
+        "ape",
+        "benchvise",
+        "can",
+        "cat",
+        "driller",
+        "duck",
+        "glue",
+        "holepuncher",
+        "iron",
+        "lamp",
+        "phone",
+        "cam",
+        "eggbox",
+    ]
 
     def __init__(self):
-        super(MultiRenderer, self).__init__('')
-        self.poses_path = os.path.join(self.parent_dir_path, '{}_poses.npy')
-        self.output_dir_path = '/home/pengsida/Datasets/LINEMOD/renders/all_objects'
+        super(MultiRenderer, self).__init__("")
+        self.poses_path = os.path.join(self.parent_dir_path, "{}_poses.npy")
+        self.output_dir_path = "/home/pengsida/Datasets/LINEMOD/renders/all_objects"
 
     def sample_poses(self):
         for obj_name in self.obj_names:
@@ -374,20 +465,42 @@ class MultiRenderer(Renderer):
         self.get_bg_imgs()
         self.sample_poses()
 
-        os.system('{} {} --background --python {} -- --input {} --output_dir {} --use_cycles True --bg_imgs {} --poses_path {}'.
-                  format(self.blender_path, self.blank_blend, self.py_path, self.obj_path, self.output_dir_path, self.bg_imgs_npy_path, self.poses_path))
-        depth_paths = glob.glob(os.path.join(self.output_dir_path, '*.exr'))
+        """
+        os.system(
+            "{} {} --background --python {} -- --input {} --output_dir {} --use_cycles True --bg_imgs {} --poses_path {}".format(
+                self.blender_path,
+                self.blank_blend,
+                self.py_path,
+                self.obj_path,
+                self.output_dir_path,
+                self.bg_imgs_npy_path,
+                self.poses_path,
+            )
+        )
+        """
+        os.system(
+            "{} --background {} --python {} -- --input {} --output_dir {} --use_cycles True --bg_imgs {} --poses_path {}".format(
+                self.blender_path,
+                self.blank_blend,
+                self.py_path,
+                self.obj_path,
+                self.output_dir_path,
+                self.bg_imgs_npy_path,
+                self.poses_path,
+            )
+        )
+        depth_paths = glob.glob(os.path.join(self.output_dir_path, "*.exr"))
         for depth_path in depth_paths:
             self.exr_to_png(depth_path)
 
 
-if __name__ == '__main__':
-    obj_name = 'ape'
+if __name__ == "__main__":
+    obj_name = "ape"
     linemod_dir = cfg.LINEMOD_DIR
     pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
 
-    render = Renderer(linemod_dir = linemod_dir,
-                                           pvnet_linemod_dir = pvnet_linemod_dir,
-                                           obj_name = obj_name)
+    render = Renderer(
+        linemod_dir=linemod_dir, pvnet_linemod_dir=pvnet_linemod_dir, obj_name=obj_name
+    )
 
     render.run()

@@ -1,17 +1,19 @@
 import os
 import sys
-sys.path.append('..')
-sys.path.append('../../')
+
+sys.path.append("..")
+sys.path.append("../../")
 from glob import glob
 
-#import bpy
+import bpy
 import cv2
 import json
 import numpy as np
 from PIL import Image
 from scipy import stats
 from transforms3d.euler import mat2euler
-#from mathutils import Matrix
+
+# from mathutils import Matrix
 
 from src.config.config import cfg
 from src.datasets.LineMod.LineModDB import LineModDB, read_pose
@@ -22,29 +24,25 @@ class ModelAligner(object):
     """
     3Dオブジェクトの姿勢をオリジナルの LineMod のものと Blender 上のものに変換するクラス
     """
+
     # X軸 -180度回転する場合の回転行列
-    rotation_transform = np.array([[1., 0., 0.],
-                                   [0., -1., 0.],
-                                   [0., 0., -1.]])
+    rotation_transform = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
     translation_transforms = {
         # 'cat': np.array([-0.00577495, -0.01259045, -0.04062323])
     }
     intrinsic_matrix = {
-        'linemod': np.array([[572.4114, 0., 325.2611],
-                                                   [0., 573.57043, 242.04899],
-                                                   [0., 0., 1.]]),
+        "linemod": np.array(
+            [[572.4114, 0.0, 325.2611], [0.0, 573.57043, 242.04899], [0.0, 0.0, 1.0]]
+        ),
         # 'blender': np.array([[280.0, 0.0, 128.0],
         #                      [0.0, 280.0, 128.0],
         #                      [0.0, 0.0, 1.0]]),
-        'blender': np.array([[700.,    0.,  320.],
-                                                  [0.,  700.,  240.],
-                                                  [0.,    0.,    1.]])
+        "blender": np.array(
+            [[700.0, 0.0, 320.0], [0.0, 700.0, 240.0], [0.0, 0.0, 1.0]]
+        ),
     }
 
-    def __init__(self,
-                              linemod_dir: str,
-                              pvnet_linemod_dir: str,
-                              obj_name: str):
+    def __init__(self, linemod_dir: str, pvnet_linemod_dir: str, obj_name: str):
         """
         ModelAligner の初期化関数
 
@@ -55,20 +53,28 @@ class ModelAligner(object):
         """
         self.obj_name = obj_name
         self.linemod_dir = linemod_dir
-        self.LineModDB = LineModDB(linemod_dir = self.linemod_dir,
-                                                                       obj_name = self.obj_name)
-        self.blender_model_path = os.path.join(pvnet_linemod_dir,
-                                                                                           '{}/{}.ply'.format(obj_name, obj_name))
+        self.LineModDB = LineModDB(linemod_dir=self.linemod_dir, obj_name=self.obj_name)
+        self.blender_model_path = os.path.join(
+            pvnet_linemod_dir, "{}/{}.ply".format(obj_name, obj_name)
+        )
         self.R_p2w, self.t_p2w, self.s_p2w = self.setup_p2w_transform()
 
     @staticmethod
     def setup_p2w_transform():
-        transform1 = np.array([[0.161513626575, -0.827108919621, 0.538334608078, -0.245206743479],
-                                                        [-0.986692547798, -0.124983474612, 0.104004733264, -0.050683632493],
-                                                        [-0.018740313128, -0.547968924046, -0.836288750172, 0.387638419867]])
-        transform2 = np.array([[0.976471602917, 0.201606079936, -0.076541729271, -0.000718327821],
-                                                        [-0.196746662259, 0.978194475174, 0.066531419754, 0.000077120210],
-                                                        [0.088285841048, -0.049906700850, 0.994844079018, -0.001409600372]])
+        transform1 = np.array(
+            [
+                [0.161513626575, -0.827108919621, 0.538334608078, -0.245206743479],
+                [-0.986692547798, -0.124983474612, 0.104004733264, -0.050683632493],
+                [-0.018740313128, -0.547968924046, -0.836288750172, 0.387638419867],
+            ]
+        )
+        transform2 = np.array(
+            [
+                [0.976471602917, 0.201606079936, -0.076541729271, -0.000718327821],
+                [-0.196746662259, 0.978194475174, 0.066531419754, 0.000077120210],
+                [0.088285841048, -0.049906700850, 0.994844079018, -0.001409600372],
+            ]
+        )
 
         R1 = transform1[:, :3]
         t1 = transform1[:, 3]
@@ -91,7 +97,7 @@ class ModelAligner(object):
         Return:
             (np.matrix): 変換後の姿勢行列
         """
-        t,R = RT[:,3],RT[:,:3]
+        t, R = RT[:, 3], RT[:, :3]
         R_w2c = np.dot(R, self.R_p2w.T)
         t_w2c = -np.dot(R_w2c, self.t_p2w) + self.s_p2w * t
         return np.concatenate([R_w2c, t_w2c[:, None]], 1)
@@ -108,33 +114,30 @@ class ModelAligner(object):
         blender_model = read_ply_model(self.blender_model_path)
         orig_model = self.LineModDB.load_ply_model()
         blender_model = np.dot(blender_model, self.rotation_transform.T)
-        translation_transform = np.mean(orig_model, axis=0) - np.mean(blender_model, axis=0) # 各モデルごとに点群座標全体の平均値を計算し，引き算することで並進ベクトルを求める．
+        translation_transform = np.mean(orig_model, axis=0) - np.mean(
+            blender_model, axis=0
+        )  # 各モデルごとに点群座標全体の平均値を計算し，引き算することで並進ベクトルを求める．
         self.translation_transforms[self.obj_name] = translation_transform
 
         return translation_transform
 
 
 class PoseTransformer(object):
-    rotation_transform = np.array([[1., 0., 0.],
-                                                                     [0., -1., 0.],
-                                                                     [0., 0., -1.]])
+    rotation_transform = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
     translation_transforms = {}
     obj_name_to_number = {
-        'ape': '001',
-        'can': '004',
-        'cat': '005',
-        'driller': '006',
-        'duck': '007',
-        'eggbox': '008',
-        'glue': '009',
-        'holepuncher': '010'
+        "ape": "001",
+        "can": "004",
+        "cat": "005",
+        "driller": "006",
+        "duck": "007",
+        "eggbox": "008",
+        "glue": "009",
+        "holepuncher": "010",
     }
-    blender_models={}
+    blender_models = {}
 
-    def __init__(self,
-                              linemod_dir: str,
-                              pvnet_linemod_dir: str,
-                              obj_name: str):
+    def __init__(self, linemod_dir: str, pvnet_linemod_dir: str, obj_name: str):
         """
         PoseTransformer の初期化関数
         Args:
@@ -143,12 +146,15 @@ class PoseTransformer(object):
             obj_name(str): LineMod データセットに含まれるオブジェクト名
         """
         self.obj_name = obj_name
-        self.blender_model_path = os.path.join(pvnet_linemod_dir, '{}/{}.ply'.format(obj_name, obj_name))
-        self.orig_model_path = os.path.join(linemod_dir, '{}/mesh.ply'.format(obj_name))
-        self.model_aligner = ModelAligner(linemod_dir = linemod_dir,
-                                                                                pvnet_linemod_dir = pvnet_linemod_dir,
-                                                                                obj_name=obj_name,)
-
+        self.blender_model_path = os.path.join(
+            pvnet_linemod_dir, "{}/{}.ply".format(obj_name, obj_name)
+        )
+        self.orig_model_path = os.path.join(linemod_dir, "{}/mesh.ply".format(obj_name))
+        self.model_aligner = ModelAligner(
+            linemod_dir=linemod_dir,
+            pvnet_linemod_dir=pvnet_linemod_dir,
+            obj_name=obj_name,
+        )
 
     def orig_pose_to_blender_pose(self, pose: np.matrix) -> np.ndarray:
         """
@@ -160,7 +166,7 @@ class PoseTransformer(object):
         """
         rot, tra = pose[:, :3], pose[:, 3]
         tra = tra + np.dot(rot, self.model_aligner.get_translation_transform())
-        rot = np.dot(rot, self.rotation_transform) # R_orig × X軸回りに-180度回転
+        rot = np.dot(rot, self.rotation_transform)  # R_orig × X軸回りに-180度回転
         return np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
 
     @staticmethod
@@ -172,11 +178,10 @@ class PoseTransformer(object):
         Returns:
             [type]: [description]
         """
-        euler = [r / np.pi * 180 for r in mat2euler(pose, axes='szxz')]
+        euler = [r / np.pi * 180 for r in mat2euler(pose, axes="szxz")]
         euler[0] = -(euler[0] + 90) % 360
         euler[1] = euler[1] - 90
         return np.array(euler)
-
 
     def orig_pose_to_blender_euler(self, pose):
         blender_pose = self.orig_pose_to_blender_pose(pose)
@@ -187,14 +192,15 @@ class DataStatistics(object):
     # world_to_camera_pose = np.array([[-1.19209304e-07,   1.00000000e+00,  -2.98023188e-08, 1.19209304e-07],
     #                                  [-8.94069672e-08,   2.22044605e-16,  -1.00000000e+00, 8.94069672e-08],
     #                                  [-1.00000000e+00,  -8.94069672e-08,   1.19209304e-07, 1.00000000e+00]])
-    world_to_camera_pose = np.array([[-1.00000024e+00,  -8.74227979e-08,  -5.02429621e-15, 8.74227979e-08],
-                                     [5.02429621e-15,   1.34358856e-07,  -1.00000012e+00, -1.34358856e-07],
-                                     [8.74227979e-08,  -1.00000012e+00,   1.34358856e-07, 1.00000012e+00]])
+    world_to_camera_pose = np.array(
+        [
+            [-1.00000024e00, -8.74227979e-08, -5.02429621e-15, 8.74227979e-08],
+            [5.02429621e-15, 1.34358856e-07, -1.00000012e00, -1.34358856e-07],
+            [8.74227979e-08, -1.00000012e00, 1.34358856e-07, 1.00000012e00],
+        ]
+    )
 
-    def __init__(self,
-                             linemod_dir: str,
-                             pvnet_linemod_dir: str,
-                             obj_name):
+    def __init__(self, linemod_dir: str, pvnet_linemod_dir: str, obj_name):
         """
         DataStatistics の初期化関数
 
@@ -208,30 +214,38 @@ class DataStatistics(object):
         self.linemod_dir = linemod_dir
         self.pvnet_linemod_dir = pvnet_linemod_dir
 
-        self.mask_path = os.path.join(self.pvnet_linemod_dir, '{}/mask/*.png'.format(obj_name))
-        self.dir_path = os.path.join(self.linemod_dir, '{}/data'.format(obj_name))
+        self.mask_path = os.path.join(
+            self.pvnet_linemod_dir, "{}/mask/*.png".format(obj_name)
+        )
+        self.dir_path = os.path.join(self.linemod_dir, "{}/data".format(obj_name))
 
-        dataset_pose_dir_path = os.path.join(cfg.DATA_DIR, 'dataset_poses')
-        os.system('mkdir -p {}'.format(dataset_pose_dir_path))
-        self.dataset_poses_path = os.path.join(dataset_pose_dir_path, '{}_poses.npy'.format(obj_name))
-        blender_pose_dir_path = os.path.join(cfg.DATA_DIR, 'blender_poses')
-        os.system('mkdir -p {}'.format(blender_pose_dir_path))
-        self.blender_poses_path = os.path.join(blender_pose_dir_path, '{}_poses.npy'.format(obj_name))
-        os.system('mkdir -p {}'.format(blender_pose_dir_path))
+        dataset_pose_dir_path = os.path.join(cfg.DATA_DIR, "dataset_poses")
+        os.system("mkdir -p {}".format(dataset_pose_dir_path))
+        self.dataset_poses_path = os.path.join(
+            dataset_pose_dir_path, "{}_poses.npy".format(obj_name)
+        )
+        blender_pose_dir_path = os.path.join(cfg.DATA_DIR, "blender_poses")
+        os.system("mkdir -p {}".format(blender_pose_dir_path))
+        self.blender_poses_path = os.path.join(
+            blender_pose_dir_path, "{}_poses.npy".format(obj_name)
+        )
+        os.system("mkdir -p {}".format(blender_pose_dir_path))
 
-        self.pose_transformer = PoseTransformer(linemod_dir=self.linemod_dir,
-                                                                                               pvnet_linemod_dir=self.pvnet_linemod_dir,
-                                                                                               obj_name=self.obj_name)
+        self.pose_transformer = PoseTransformer(
+            linemod_dir=self.linemod_dir,
+            pvnet_linemod_dir=self.pvnet_linemod_dir,
+            obj_name=self.obj_name,
+        )
 
         try:
-            with open('config.json', mode='rt', encoding='utf-8') as f:
-                self.num_samples = json.load(f)['Renderer']['num_samples']
+            with open("config.json", mode="rt", encoding="utf-8") as f:
+                self.num_samples = json.load(f)["Renderer"]["num_samples"]
         except FileNotFoundError as fe:
-            print('config.json ファイルが見つかりません．デフォルト値を使用します．')
+            print("config.json ファイルが見つかりません．デフォルト値を使用します．")
             self.num_samples = 10
         except Exception as e:
-            print('予期せぬ例外です．')
-        #self.num_samples = json.load()
+            print("予期せぬ例外です．")
+        # self.num_samples = json.load()
 
     def get_proper_crop_size(self):
         """
@@ -242,7 +256,7 @@ class DataStatistics(object):
         heights = []
 
         for mask_path in mask_paths:
-            mask = Image.open(mask_path).convert('1')
+            mask = Image.open(mask_path).convert("1")
             mask = np.array(mask).astype(np.int32)
             row_col = np.argwhere(mask == 1)
             min_row, max_row = np.min(row_col[:, 0]), np.max(row_col[:, 0])
@@ -254,13 +268,23 @@ class DataStatistics(object):
 
         widths = np.array(widths)
         heights = np.array(heights)
-        print('min width: {} px, max width: {} px'.format(np.min(widths), np.max(widths)))
-        print('min height: {} px, max height: {} px'.format(np.min(heights), np.max(heights)))
+        print(
+            "min width: {} px, max width: {} px".format(np.min(widths), np.max(widths))
+        )
+        print(
+            "min height: {} px, max height: {} px".format(
+                np.min(heights), np.max(heights)
+            )
+        )
 
     def get_quat_translation(self, object_to_camera_pose):
         object_to_camera_pose = np.append(object_to_camera_pose, [[0, 0, 0, 1]], axis=0)
-        world_to_camera_pose = np.append(self.world_to_camera_pose, [[0, 0, 0, 1]], axis=0)
-        object_to_world_pose = np.dot(np.linalg.inv(world_to_camera_pose), object_to_camera_pose)
+        world_to_camera_pose = np.append(
+            self.world_to_camera_pose, [[0, 0, 0, 1]], axis=0
+        )
+        object_to_world_pose = np.dot(
+            np.linalg.inv(world_to_camera_pose), object_to_camera_pose
+        )
         quat = mat2quat(object_to_world_pose[:3, :3])
         translation = object_to_world_pose[:3, 3]
         return quat, translation
@@ -278,10 +302,15 @@ class DataStatistics(object):
 
         eulers = []
         translations = []
-        train_set = np.loadtxt(os.path.join(self.pvnet_linemod_dir, '{}/training_range.txt'.format(self.obj_name)),np.int32)
+        train_set = np.loadtxt(
+            os.path.join(
+                self.pvnet_linemod_dir, "{}/training_range.txt".format(self.obj_name)
+            ),
+            np.int32,
+        )
         for idx in train_set:
-            rot_path = os.path.join(self.dir_path, 'rot{}.rot'.format(idx))
-            tra_path = os.path.join(self.dir_path, 'tra{}.tra'.format(idx))
+            rot_path = os.path.join(self.dir_path, "rot{}.rot".format(idx))
+            tra_path = os.path.join(self.dir_path, "tra{}.tra".format(idx))
             pose = read_pose(rot_path, tra_path)
             euler = self.pose_transformer.orig_pose_to_blender_euler(pose)
             eulers.append(euler)
@@ -289,27 +318,28 @@ class DataStatistics(object):
 
         eulers = np.array(eulers)
         translations = np.array(translations)
-        np.save(self.dataset_poses_path, np.concatenate([eulers, translations], axis=-1))
+        np.save(
+            self.dataset_poses_path, np.concatenate([eulers, translations], axis=-1)
+        )
 
         return eulers, translations
-
 
     def sample_sphere(self, num_samples):
         """ sample angles from the sphere
         reference: https://zhuanlan.zhihu.com/p/25988652?group_id=828963677192491008
         """
-        flat_objects = ['037_scissors', '051_large_clamp', '052_extra_large_clamp']
+        flat_objects = ["037_scissors", "051_large_clamp", "052_extra_large_clamp"]
         if self.obj_name in flat_objects:
             begin_elevation = 30
         else:
             begin_elevation = 0
         ratio = (begin_elevation + 90) / 180
         num_points = int(num_samples // (1 - ratio))
-        phi = (np.sqrt(5) - 1.0) / 2.
+        phi = (np.sqrt(5) - 1.0) / 2.0
         azimuths = []
         elevations = []
         for n in range(num_points - num_samples, num_points):
-            z = 2. * n / num_points - 1.
+            z = 2.0 * n / num_points - 1.0
             azimuths.append(np.rad2deg(2 * np.pi * n * phi % (2 * np.pi)))
             elevations.append(np.rad2deg(np.arcsin(z)))
         return np.array(azimuths), np.array(elevations)
@@ -324,14 +354,18 @@ class DataStatistics(object):
         eulers[:, 1] = elevations
         translation_sampler = stats.gaussian_kde(translations.T)
         translations = translation_sampler.resample(num_samples).T
-        np.save(self.blender_poses_path, np.concatenate([eulers, translations], axis=-1))
+        np.save(
+            self.blender_poses_path, np.concatenate([eulers, translations], axis=-1)
+        )
         return np.concatenate([eulers, translations], axis=-1)
 
 
-def randomly_read_background(bg_imgs_dir: str,
-                                                                     cache_dir :str = cfg.TEMP_DIR,
-                                                                     th: int = cfg.HEIGHT,
-                                                                     tw: int = cfg.WIDTH) -> np.ndarray:
+def randomly_read_background(
+    bg_imgs_dir: str,
+    cache_dir: str = cfg.TEMP_DIR,
+    th: int = cfg.HEIGHT,
+    tw: int = cfg.WIDTH,
+) -> np.ndarray:
     """
     合成画像を作成する際に背景として使用される画像を読み出し，その画像のパスを `background_info.pkl` データとして一度保存しておくための関数．画像は `.jpg` か `.png` として保存されているもののみ使用可能．
 
@@ -346,21 +380,23 @@ def randomly_read_background(bg_imgs_dir: str,
         (np.ndarray): 背景画像1枚の ndarray 配列
     """
     bg_fns = []
-    bg_img_npy_path = os.path.join(cache_dir, 'bg_img_pths.npy')
+    bg_img_npy_path = os.path.join(cache_dir, "bg_img_pths.npy")
     if os.path.exists(bg_img_npy_path):
         bg_fns = np.load(bg_img_npy_path)
     else:
-        fns = glob(os.path.join(bg_imgs_dir, '*.jpg')) + glob(os.path.join(bg_imgs_dir, '*.png'))
+        fns = glob(os.path.join(bg_imgs_dir, "*.jpg")) + glob(
+            os.path.join(bg_imgs_dir, "*.png")
+        )
         for fn in fns:
             img = Image.open(fn)
             height, width = img.size
             if width > tw and height > th:
                 bg_fns.append(fn)
         if bg_fns:
-            #save_pickle(bg_fns, os.path.join(cache_dir, 'background_info.pkl'))
+            # save_pickle(bg_fns, os.path.join(cache_dir, 'background_info.pkl'))
             np.save(bg_img_npy_path, bg_fns)
         else:
-            raise ValueError('The list has zero elements.')
+            raise ValueError("The list has zero elements.")
     return bg_img_npy_path, cv2.imread(bg_fns[np.random.randint(0, len(bg_fns))])
 
 
@@ -387,7 +423,7 @@ def get_calibration_matrix_K_from_blender(camera):
     sensor_height_in_mm = camera.sensor_height
     pixel_aspect_ratio = scene.render.pixel_aspect_x / scene.render.pixel_aspect_y
 
-    if camera.sensor_fit == 'VERTICAL':
+    if camera.sensor_fit == "VERTICAL":
         # the sensor height is fixed (sensor fit is horizontal),
         # the sensor width is effectively changed with the pixel aspect ratio
         s_u = resolution_x_in_px * scale / sensor_width_in_mm / pixel_aspect_ratio
@@ -405,9 +441,7 @@ def get_calibration_matrix_K_from_blender(camera):
     v_0 = resolution_y_in_px * scale / 2
     skew = 0  # only use rectangular pixels
 
-    K = Matrix(((alpha_u, skew, u_0),
-                (0, alpha_v, v_0),
-                (0, 0, 1)))
+    K = Matrix(((alpha_u, skew, u_0), (0, alpha_v, v_0), (0, 0, 1)))
 
     return K
 
@@ -428,10 +462,7 @@ def get_calibration_matrix_K_from_blender(camera):
 #       - right-handed: positive z look-at direction
 def get_3x4_RT_matrix_from_blender(camera):
     # bcam stands for blender camera
-    R_bcam2cv = Matrix(
-        ((1, 0,  0),
-         (0, -1, 0),
-         (0, 0, -1)))
+    R_bcam2cv = Matrix(((1, 0, 0), (0, -1, 0), (0, 0, -1)))
 
     # Use matrix_world instead to account for all constraints
     location, rotation = camera.matrix_world.decompose()[0:2]
@@ -446,32 +477,37 @@ def get_3x4_RT_matrix_from_blender(camera):
     T_world2cv = R_bcam2cv * T_world2bcam
 
     # put into 3x4 matrix
-    RT = Matrix((R_world2cv[0][:] + (T_world2cv[0],),
-                 R_world2cv[1][:] + (T_world2cv[1],),
-                 R_world2cv[2][:] + (T_world2cv[2],)))
+    RT = Matrix(
+        (
+            R_world2cv[0][:] + (T_world2cv[0],),
+            R_world2cv[1][:] + (T_world2cv[1],),
+            R_world2cv[2][:] + (T_world2cv[2],),
+        )
+    )
     return RT
 
 
 def get_3x4_P_matrix_from_blender(camera):
     K = get_calibration_matrix_K_from_blender(camera.data)
     RT = get_3x4_RT_matrix_from_blender(camera)
-    return K*RT
+    return K * RT
 
 
 def get_K_P_from_blender(camera):
     K = get_calibration_matrix_K_from_blender(camera.data)
     RT = get_3x4_RT_matrix_from_blender(camera)
-    return {"K": np.asarray(K, dtype=np.float32), "RT": np.asarray(RT, dtype=np.float32)}
+    return {
+        "K": np.asarray(K, dtype=np.float32),
+        "RT": np.asarray(RT, dtype=np.float32),
+    }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
     linemod_dir = cfg.LINEMOD_DIR
-    obj_name = 'ape'
+    obj_name = "ape"
 
-    rotation_transform = np.array([[1., 0., 0.],
-                                                                     [0., -1., 0.],
-                                                                     [0., 0., -1.]])
+    rotation_transform = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
 
     # ------------------- #
     # ModelAligner  #
@@ -490,31 +526,32 @@ if __name__ == '__main__':
     # print(t_tfm)
 
     #
-    blender_model_path = os.path.join(pvnet_linemod_dir, '{}/{}.ply'.format(obj_name, obj_name))
-    db = LineModDB(linemod_dir = linemod_dir, obj_name = obj_name)
+    blender_model_path = os.path.join(
+        pvnet_linemod_dir, "{}/{}.ply".format(obj_name, obj_name)
+    )
+    db = LineModDB(linemod_dir=linemod_dir, obj_name=obj_name)
 
     blender_model = read_ply_model(blender_model_path)
     orig_model = db.load_ply_model()
-    blender_model = np.dot(blender_model, rotation_transform.T) # X軸回りに-180度回転
+    blender_model = np.dot(blender_model, rotation_transform.T)  # X軸回りに-180度回転
     # translation_transform = np.mean(orig_model, axis=0) - np.mean(blender_model, axis=0)
 
     # ----------------------- #
     # PoseTransformer #
     # ----------------------- #
     from src.datasets.LineMod.LineModDB import read_pose
+
     # 姿勢
-    rt_dir = os.path.join(linemod_dir,
-                                              obj_name,
-                                              'data')
-    rot_path = os.path.join(rt_dir, 'rot{}.rot'.format(1))
-    tra_path = os.path.join(rt_dir, 'tra{}.tra'.format(1))
+    rt_dir = os.path.join(linemod_dir, obj_name, "data")
+    rot_path = os.path.join(rt_dir, "rot{}.rot".format(1))
+    tra_path = os.path.join(rt_dir, "tra{}.tra".format(1))
     pose = read_pose(rot_path, tra_path)
     # ----------------------- #
     # インスタンス生成 #
     # ----------------------- #
-    pos_tra = PoseTransformer(linemod_dir = linemod_dir,
-                                                             pvnet_linemod_dir = pvnet_linemod_dir,
-                                                             obj_name = obj_name)
+    pos_tra = PoseTransformer(
+        linemod_dir=linemod_dir, pvnet_linemod_dir=pvnet_linemod_dir, obj_name=obj_name
+    )
     # -------------------------------------------- #
     # orig_pose_to_blender_pose Test #
     # -------------------------------------------- #
@@ -551,32 +588,38 @@ if __name__ == '__main__':
     ax.set_zlabel("Z")
 
     # .scatterで描画
-    ax.scatter(blender_ply_X,
-                         blender_ply_Y,
-                         blender_ply_Z,
-                         s=5,
-                         c="plum",
-                         marker="o",
-                         alpha=0.1,
-                         label="blender_model")
+    ax.scatter(
+        blender_ply_X,
+        blender_ply_Y,
+        blender_ply_Z,
+        s=5,
+        c="plum",
+        marker="o",
+        alpha=0.1,
+        label="blender_model",
+    )
 
-    ax.scatter(orig_ply_X,
-                         orig_ply_Y,
-                         orig_ply_Z,
-                         s=5,
-                         c="b",
-                         marker="o",
-                         alpha=0.1,
-                         label="orig_model")
+    ax.scatter(
+        orig_ply_X,
+        orig_ply_Y,
+        orig_ply_Z,
+        s=5,
+        c="b",
+        marker="o",
+        alpha=0.1,
+        label="orig_model",
+    )
 
-    ax.scatter(transform_orig_ply_X,
-                         transform_orig_ply_Y,
-                         transform_orig_ply_Z,
-                         s=5,
-                         c="g",
-                         marker="o",
-                         alpha=0.1,
-                         label="transform_orig_model")
+    ax.scatter(
+        transform_orig_ply_X,
+        transform_orig_ply_Y,
+        transform_orig_ply_Z,
+        s=5,
+        c="g",
+        marker="o",
+        alpha=0.1,
+        label="transform_orig_model",
+    )
 
     # 凡例を表示
     ax.legend()
