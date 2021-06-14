@@ -238,7 +238,7 @@ class Renderer(object):
         linemod_dir: str,
         pvnet_linemod_dir: str,
         obj_name: str,
-        bg_imgs_dir: str = cfg.TEST_IMG_ORG_DIR,
+        bg_imgs_dir: str = cfg.SUN_2012_JPEGIMAGES_DIR,
         cache_dir: str = cfg.TEMP_DIR,
     ):
         """
@@ -260,12 +260,12 @@ class Renderer(object):
         self.poses_path = os.path.join(
             self.cache_dir, "blender_poses", "{}_poses.npy"
         ).format(obj_name)
-        self.output_dir_path = os.path.join(
-            self.pvnet_linemod_dir, "renders/{}"
-        ).format(obj_name)
+        self.output_dir_path = os.path.join(self.cache_dir, "renders/{}").format(
+            obj_name
+        )
         self.blender_path = cfg.BLENDER_PATH
         self.blank_blend = os.path.join(cfg.BLENDER_DIR, "blank.blend")
-        self.py_path = os.path.join(cfg.BLENDER_DIR, "render_backend.py")
+        self.py_path = os.path.join(cfg.BLENDER_DIR, "backend2.py")
         self.obj_path = os.path.join(self.pvnet_linemod_dir, "{}/{}.ply").format(
             obj_name, obj_name
         )
@@ -354,19 +354,6 @@ class Renderer(object):
         if not os.path.exists(self.output_dir_path):
             os.makedirs(self.output_dir_path)
 
-        """
-        os.system(
-            "{} {} --background --python {} -- --input {} --output_dir {} --bg_imgs {} --poses_path {}".format(
-                self.blender_path,
-                self.blank_blend,
-                self.py_path,
-                self.obj_path,
-                self.output_dir_path,
-                bg_imgs_npy_path,
-                self.poses_path,
-            )
-        )
-        """
         os.system(
             "{} --background {} --python {} -- --input {} --output_dir {} --bg_imgs {} --poses_path {}".format(
                 self.blender_path,
@@ -465,19 +452,6 @@ class MultiRenderer(Renderer):
         self.get_bg_imgs()
         self.sample_poses()
 
-        """
-        os.system(
-            "{} {} --background --python {} -- --input {} --output_dir {} --use_cycles True --bg_imgs {} --poses_path {}".format(
-                self.blender_path,
-                self.blank_blend,
-                self.py_path,
-                self.obj_path,
-                self.output_dir_path,
-                self.bg_imgs_npy_path,
-                self.poses_path,
-            )
-        )
-        """
         os.system(
             "{} --background {} --python {} -- --input {} --output_dir {} --use_cycles True --bg_imgs {} --poses_path {}".format(
                 self.blender_path,

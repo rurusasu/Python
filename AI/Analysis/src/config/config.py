@@ -100,6 +100,13 @@ cfg.linemod_obj_names = [
     "phone",
 ]
 
+"""SUN2012
+"""
+cfg.SUN_2012_DIR = os.path.join(cfg.DATA_DIR, "SUN2012pascalformat")
+cfg.SUN_2012_ANNOTATIONS_DIR = os.path.join(cfg.SUN_2012_DIR, "Annotations")
+cfg.SUN_2012_IMAGESETS_DIR = os.path.join(cfg.SUN_2012_DIR, "ImageSets")
+cfg.SUN_2012_JPEGIMAGES_DIR = os.path.join(cfg.SUN_2012_DIR, "JPEGImages")
+
 """Test
 """
 cfg.TEST_DIR = os.path.join(cfg.DATA_DIR, "test")
@@ -123,7 +130,6 @@ cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 参考: https://github.com/zju3dv/pvnet-rendering/blob/master/config.py
 """
 cfg.BLENDER_DIR = os.path.join(cfg.ROOT_DIR, "Blender")
-# cfg.BLENDER_PATH = '/snap/bin/blender'
 cfg.BLENDER_PATH = "/home/miki/blender/blender"
 cfg.NUM_SYN = 10
 cfg.WIDTH = 640

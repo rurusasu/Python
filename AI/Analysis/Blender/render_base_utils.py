@@ -9,11 +9,10 @@ import bpy
 import cv2
 import json
 import numpy as np
+from mathutils import Matrix
 from PIL import Image
 from scipy import stats
 from transforms3d.euler import mat2euler
-
-# from mathutils import Matrix
 
 from src.config.config import cfg
 from src.datasets.LineMod.LineModDB import LineModDB, read_pose
@@ -433,13 +432,12 @@ def get_calibration_matrix_K_from_blender(camera):
         # the sensor height is effectively changed with the pixel aspect ratio
         s_u = resolution_x_in_px * scale / sensor_width_in_mm
         s_v = resolution_y_in_px * scale * pixel_aspect_ratio / sensor_height_in_mm
-
-    # Parameters of intrinsic calibration matrix K
-    alpha_u = f_in_mm * s_u
-    alpha_v = f_in_mm * s_u
-    u_0 = resolution_x_in_px * scale / 2
-    v_0 = resolution_y_in_px * scale / 2
-    skew = 0  # only use rectangular pixels
+        # Parameters of intrinsic calibration matrix K
+        alpha_u = f_in_mm * s_u
+        alpha_v = f_in_mm * s_u
+        u_0 = resolution_x_in_px * scale / 2
+        v_0 = resolution_y_in_px * scale / 2
+        skew = 0  # only use rectangular pixels
 
     K = Matrix(((alpha_u, skew, u_0), (0, alpha_v, v_0), (0, 0, 1)))
 
@@ -461,20 +459,23 @@ def get_calibration_matrix_K_from_blender(camera):
 #         used in digital images)
 #       - right-handed: positive z look-at direction
 def get_3x4_RT_matrix_from_blender(camera):
+    # カメラオブジェクトをアクティブにする．
+    bpy.context.view_layer.objects.active = camera
     # bcam stands for blender camera
     R_bcam2cv = Matrix(((1, 0, 0), (0, -1, 0), (0, 0, -1)))
 
     # Use matrix_world instead to account for all constraints
-    location, rotation = camera.matrix_world.decompose()[0:2]
+    # location, rotation = camera.matrix_world.decompose()[0:2]
+    location, rotation = bpy.context.object.matrix_world.decompose()[0:2]
     R_world2bcam = rotation.to_matrix().transposed()
 
     # Convert camera location to translation vector used in coordinate changes
     # Use location from matrix_world to account for constraints:
-    T_world2bcam = -1 * R_world2bcam * location
+    T_world2bcam = -1 * R_world2bcam @ location
 
     # Build the coordinate transform matrix from world to computer vision camera
-    R_world2cv = R_bcam2cv * R_world2bcam
-    T_world2cv = R_bcam2cv * T_world2bcam
+    R_world2cv = R_bcam2cv @ R_world2bcam
+    T_world2cv = R_bcam2cv @ T_world2bcam
 
     # put into 3x4 matrix
     RT = Matrix(
@@ -484,6 +485,7 @@ def get_3x4_RT_matrix_from_blender(camera):
             R_world2cv[2][:] + (T_world2cv[2],),
         )
     )
+
     return RT
 
 
