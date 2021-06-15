@@ -114,6 +114,10 @@ cfg.NOISE_IMG_DIR = os.path.join(cfg.TEST_DIR, "noise_img")
 cfg.SMOOTHING_IMG_DIR = os.path.join(cfg.TEST_DIR, "smoothing_img")
 cfg.TEST_IMG_ORG_DIR = os.path.join(cfg.TEST_DIR, "org_img")
 
+"""PASCAL_VOC_2012
+"""
+cfg.PASCAL_VOC_2012 = os.path.join(cfg.DATA_DIR, "PASCAL_VOC_2012")
+
 """Dobot
 """
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")

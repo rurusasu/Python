@@ -49,7 +49,7 @@
   // @sync os=linux
   // "python.condaPath": "/opt/conda/etc/profile.d",
   // フォーマッターの設定。black を指定する。
-  "python.formatting.provider": "black",
+  "python.formatting.provider": "autopep8",
   // @sync os=windows
   "python.formatting.blackPath": "C:\\tools\\miniconda3\\Scripts\\black-script.py",
   // フォーマッターの設定。autopep8 を指定する。
@@ -64,17 +64,18 @@
   // @sync os=windows
   "python.linting.flake8Path": "C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\flake8-script.py",
   // mypy を有効化する。
-  "python.linting.mypyEnabled": true,
+  "python.linting.mypyEnabled": false,
   // @sync os=windows
   "python.linting.mypyPath": "C:\\tools\\miniconda3\\Scripts\\mypy-script.py",
   //"python.linting.mypyPath": "C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\mypy-script.py",
   "python.linting.pycodestyleEnabled": false,
-  "python.linting.pylintEnabled": false,
+  "python.linting.pylintEnabled": true,
   //"python.pythonPath": "C:\\tools\\miniconda3\\python.exe",
   // Docstring のフォーマット
   "autoDocstring.docstringFormat": "google",
   "python.analysis.extraPaths": [
     "/opt/conda/envs/analysis/Lib/site-packages"
-  ]
+  ],
+  "python.pythonPath": "C:\\ProgramData\\Miniconda3\\python.exe"
   // Testの設定。
 }
