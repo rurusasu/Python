@@ -14,17 +14,19 @@ import numpy as np
 from transforms3d.euler import euler2mat
 import itertools
 
-from src.config.config import cfg
+# from src.config.config import cfg
 
-UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
-LIB_DIR = os.path.dirname(UTILS_DIR)
-ROOT_DIR = os.path.dirname(LIB_DIR)
+BLENDER_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BLENDER_DIR)
+SRC_DIR = os.path.join(ROOT_DIR, "src")
+CONFIG_DIR = os.path.join(SRC_DIR, "config")
 
-sys.path.append(UTILS_DIR)
-sys.path.append(LIB_DIR)
+sys.path.append(BLENDER_DIR)
 sys.path.append(ROOT_DIR)
+sys.path.append(SRC_DIR)
+sys.path.append(CONFIG_DIR)
 
-from config import cfg
+#from config import cfg
 from Blender.render_base_utils import (
     get_K_P_from_blender,
     get_3x4_P_matrix_from_blender,

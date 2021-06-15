@@ -23,7 +23,7 @@ DataDir
 """
 cfg.CONFUTION_DIR = os.path.join(cfg.DATA_DIR, "Confution")
 cfg.IMAGE_DIR = os.path.join(cfg.DATA_DIR, "img")
-cfg.UNET_RESULTS_DIR = os.path.join(cfg.DATA_DIR, 'NestedUNetResults')
+cfg.UNET_RESULTS_DIR = os.path.join(cfg.DATA_DIR, "NestedUNetResults")
 
 """cifar10
 """
@@ -50,8 +50,7 @@ cfg.IMAGE_ID_TEST_DIR = os.path.join(cfg.IMAGE_ID_DIR, "test")
 # Image label Dir
 cfg.IMAGE_LABEL_DIR = os.path.join(cfg.OPENIMAGE_DIR, "image_label")
 cfg.IMAGE_LABEL_TRAIN_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "train")
-cfg.IMAGE_LABEL_VALIDATION_DIR = os.path.join(
-    cfg.IMAGE_LABEL_DIR, "validation")
+cfg.IMAGE_LABEL_VALIDATION_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "validation")
 cfg.IMAGE_LABEL_TEST_DIR = os.path.join(cfg.IMAGE_LABEL_DIR, "test")
 # Images Dir
 cfg.IMAGES_DIR = os.path.join(cfg.OPENIMAGE_DIR, "images")
@@ -66,14 +65,12 @@ cfg.META_DATA_TEST_DIR = os.path.join(cfg.META_DATA_DIR, "test")
 # Relationship Dir
 cfg.RELATIONSHIP_DIR = os.path.join(cfg.OPENIMAGE_DIR, "relationship")
 cfg.RELATIONSHIP_TRAIN_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "train")
-cfg.RELATIONSHIP_VALIDATION_DIR = os.path.join(
-    cfg.RELATIONSHIP_DIR, "validation")
+cfg.RELATIONSHIP_VALIDATION_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "validation")
 cfg.RELATIONSHIP_TEST_DIR = os.path.join(cfg.RELATIONSHIP_DIR, "test")
 # Segmentation Dir
 cfg.SEGMENTATION_DIR = os.path.join(cfg.OPENIMAGE_DIR, "segmentation")
 cfg.SEGMENTATION_TRAIN_DIR = os.path.join(cfg.SEGMENTATION_DIR, "train")
-cfg.SEGMENTATION_VALIDATION_DIR = os.path.join(
-    cfg.SEGMENTATION_DIR, "validation")
+cfg.SEGMENTATION_VALIDATION_DIR = os.path.join(cfg.SEGMENTATION_DIR, "validation")
 cfg.SEGMENTATION_TEST_DIR = os.path.join(cfg.SEGMENTATION_DIR, "test")
 
 """FashionMNIST
@@ -85,21 +82,30 @@ cfg.FASHION_MNIST_DIR = os.path.join(cfg.DATA_DIR, "FashionMNIST")
 cfg.LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "linemod")
 cfg.PVNET_LINEMOD_DIR = os.path.join(cfg.DATA_DIR, "PVNet_linemod")
 
-cfg.linemod_obj_names=['ape',
-                                                      'benchvise',
-                                                      #'bowl',
-                                                      'cam',
-                                                      'can',
-                                                      'cat',
-                                                      #'cup',
-                                                      'driller',
-                                                      'duck',
-                                                      'eggbox',
-                                                      'glue',
-                                                      'holepuncher',
-                                                      'iron',
-                                                      'lamp',
-                                                      'phone',]
+cfg.linemod_obj_names = [
+    "ape",
+    "benchvise",
+    #'bowl',
+    "cam",
+    "can",
+    "cat",
+    #'cup',
+    "driller",
+    "duck",
+    "eggbox",
+    "glue",
+    "holepuncher",
+    "iron",
+    "lamp",
+    "phone",
+]
+
+"""SUN2012
+"""
+cfg.SUN_2012_DIR = os.path.join(cfg.DATA_DIR, "SUN2012pascalformat")
+cfg.SUN_2012_ANNOTATIONS_DIR = os.path.join(cfg.SUN_2012_DIR, "Annotations")
+cfg.SUN_2012_IMAGESETS_DIR = os.path.join(cfg.SUN_2012_DIR, "ImageSets")
+cfg.SUN_2012_JPEGIMAGES_DIR = os.path.join(cfg.SUN_2012_DIR, "JPEGImages")
 
 """Test
 """
@@ -128,7 +134,7 @@ cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 参考: https://github.com/zju3dv/pvnet-rendering/blob/master/config.py
 """
 cfg.BLENDER_DIR = os.path.join(cfg.ROOT_DIR, "Blender")
-cfg.BLENDER_PATH = '/snap/bin/blender'
+cfg.BLENDER_PATH = "/home/miki/blender/blender"
 cfg.NUM_SYN = 10
 cfg.WIDTH = 640
 cfg.HEIGHT = 480
@@ -142,15 +148,14 @@ cfg.cam_dist = 0.5
 cfg.MIN_DEPTH = 0
 cfg.MAX_DEPTH = 2
 
-cfg.render_K = np.array([[700., 0., 320.],
-                                                    [0., 700., 240.],
-                                                    [0., 0., 1.]],
-                                                    np.float32)
+cfg.render_K = np.array(
+    [[700.0, 0.0, 320.0], [0.0, 700.0, 240.0], [0.0, 0.0, 1.0]], np.float32
+)
 
-cfg.linemod_K = np.array([[572.41140,0.       ,325.26110],
-                                                       [0.       ,573.57043,242.04899],
-                                                       [0.       ,0.       ,1.       ]],
-                                                       np.float32)
+cfg.linemod_K = np.array(
+    [[572.41140, 0.0, 325.26110], [0.0, 573.57043, 242.04899], [0.0, 0.0, 1.0]],
+    np.float32,
+)
 
 
 def add_path():
