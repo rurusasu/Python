@@ -1,27 +1,30 @@
 import os, sys
-from cv2 import data
-from matplotlib import lines
+from glob import glob
 
-from matplotlib.lines import Line2D
+# from matplotlib import lines
 
-sys.path.append(".")
-sys.path.append("..")
+# from matplotlib.lines import Line2D
 
-import glob
-import struct
+sys.path.append("../")
+sys.path.append("../../")
+
+
+# import struct
 
 import Imath
 import numpy as np
 import OpenEXR
 import scipy.io as sio
+
+# from cv2 import data
 from multiprocessing.dummy import Pool
 from PIL import Image
 from scipy import stats
 from transforms3d.quaternions import mat2quat
 
-from Blender.render_base_utils import PoseTransformer, randomly_read_background
+from datasets.Blender.render_base_utils import PoseTransformer
+from datasets.LineMod.LineModDB import read_pose
 from src.config.config import cfg
-from src.datasets.LineMod.LineModDB import read_pose
 from src.utils.base_utils import read_pickle, save_pickle
 
 
@@ -78,7 +81,7 @@ class DataStatistics(object):
         )
 
     def get_proper_crop_size(self):
-        mask_paths = glob.glob(self.mask_path)
+        mask_paths = glob(self.mask_path)
         widths = []
         heights = []
 
@@ -253,10 +256,10 @@ class Renderer(object):
         self.linemod_dir = linemod_dir
         self.pvnet_linemod_dir = pvnet_linemod_dir
         self.obj_name = obj_name
-        self.bg_imgs_dir = bg_imgs_dir
+        self.bg_img_dir = bg_imgs_dir
         self.cache_dir = cache_dir
 
-        # self.bg_imgs_npy_path = os.path.join(cache_dir, 'bg_imgs.npy')
+        self.bg_imgs_npy_pth = os.path.join(cache_dir, "bg_imgs.npy")
         self.poses_path = os.path.join(
             self.cache_dir, "blender_poses", "{}_poses.npy"
         ).format(obj_name)
@@ -265,28 +268,26 @@ class Renderer(object):
         )
         self.blender_path = cfg.BLENDER_PATH
         self.blank_blend = os.path.join(cfg.BLENDER_DIR, "blank.blend")
-        self.py_path = os.path.join(cfg.BLENDER_DIR, "backend2.py")
+        self.py_path = os.path.join(cfg.BLENDER_DIR, "render_backend.py")
         self.obj_path = os.path.join(self.pvnet_linemod_dir, "{}/{}.ply").format(
             obj_name, obj_name
         )
         self.plane_height_path = os.path.join(self.cache_dir, "plane_height.pkl")
 
-    """
     def get_bg_imgs(self):
-        if os.path.exists(self.bg_imgs_npy_path):
+        if os.path.exists(self.bg_imgs_npy_pth):
             return
 
-        img_paths = glob.glob(os.path.join(cfg.SUN, 'JPEGImages/*'))
+        img_pths = glob(os.path.join(self.bg_img_dir, "*"))
         bg_imgs = []
 
-        for img_path in img_paths:
-            img = Image.open(img_path)
+        for img_pth in img_pths:
+            img = Image.open(img_pth)
             row, col = img.size
             if row > 500 and col > 500:
-                bg_imgs.append(img_path)
+                bg_imgs.append(img_pth)
 
-        np.save(self.bg_imgs_npy_path, bg_imgs)
-        """
+        np.save(self.bg_imgs_npy_pth, bg_imgs)
 
     def project_model(self, model_3d, pose, camera_type):
         camera_model_2d = np.dot(model_3d, pose[:, :3].T) + pose[:, 3]
@@ -346,9 +347,7 @@ class Renderer(object):
         3. call the blender to render images
         """
         # self.get_bg_imgs()
-        bg_imgs_npy_path, _ = randomly_read_background(
-            bg_imgs_dir=self.bg_imgs_dir, cache_dir=self.cache_dir
-        )
+        self.get_bg_imgs()
         self.sample_poses()
 
         if not os.path.exists(self.output_dir_path):
@@ -361,23 +360,27 @@ class Renderer(object):
                 self.py_path,
                 self.obj_path,
                 self.output_dir_path,
-                bg_imgs_npy_path,
+                self.bg_imgs_npy_pth,
                 self.poses_path,
             )
         )
 
-        depth_paths = glob.glob(os.path.join(self.output_dir_path, "*.exr"))
+        depth_paths = glob(os.path.join(self.output_dir_path, "*.exr"))
         for depth_path in depth_paths:
             self.exr_to_png(depth_path)
 
     @staticmethod
-    def multi_thread_render():
+    def multi_thread_render(self):
         # objects = ['ape', 'benchvise', 'bowl', 'can', 'cat', 'cup', 'driller', 'duck',
         #            'glue', 'holepuncher', 'iron', 'lamp', 'phone', 'cam', 'eggbox']
         objects = ["lamp", "phone"]
 
         def render(obj_name):
-            renderer = Renderer(obj_name)
+            renderer = Renderer(
+                linemod_dir=self.linemod_dir,
+                pvnet_linemod_dir=self.pvnet_linemod_dir,
+                obj_name=obj_name,
+            )
             renderer.run()
 
         with Pool(processes=2) as pool:
@@ -433,14 +436,26 @@ class MultiRenderer(Renderer):
         "eggbox",
     ]
 
-    def __init__(self):
-        super(MultiRenderer, self).__init__("")
-        self.poses_path = os.path.join(self.parent_dir_path, "{}_poses.npy")
-        self.output_dir_path = "/home/pengsida/Datasets/LINEMOD/renders/all_objects"
+    def __init__(
+        self,
+        linemod_dir: str,
+        pvnet_linemod_dir: str,
+        obj_name: str,
+        output_dir: str,
+        bg_imgs_dir: str = cfg.SUN_2012_JPEGIMAGES_DIR,
+        cache_dir: str = cfg.TEMP_DIR,
+    ):
+        super(MultiRenderer, self).__init__(
+            linemod_dir, pvnet_linemod_dir, obj_name, bg_imgs_dir, cache_dir
+        )
+        self.poses_path = os.path.join(self.cache_dir, "blender_poses", "{}_poses.npy")
+        self.output_dir_path = output_dir
 
     def sample_poses(self):
         for obj_name in self.obj_names:
-            statistician = DataStatistics(obj_name)
+            statistician = DataStatistics(
+                self.linemod_dir, self.pvnet_linemod_dir, obj_name, self.cache_dir
+            )
             statistician.sample_poses()
 
     def run(self):
@@ -459,11 +474,11 @@ class MultiRenderer(Renderer):
                 self.py_path,
                 self.obj_path,
                 self.output_dir_path,
-                self.bg_imgs_npy_path,
+                self.bg_imgs_npy_pth,
                 self.poses_path,
             )
         )
-        depth_paths = glob.glob(os.path.join(self.output_dir_path, "*.exr"))
+        depth_paths = glob(os.path.join(self.output_dir_path, "*.exr"))
         for depth_path in depth_paths:
             self.exr_to_png(depth_path)
 

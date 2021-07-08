@@ -62,7 +62,7 @@
   // flake8 を有効化する。
   "python.linting.flake8Enabled": false,
   // @sync os=windows
-  "python.linting.flake8Path": //"C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\flake8-script.py",
+  //"python.linting.flake8Path": "C:\\Users\\PC-2020-3\\miniconda3\\Scripts\\flake8-script.py",
   // mypy を有効化する。
   "python.linting.mypyEnabled": false,
   // @sync os=windows
@@ -76,6 +76,6 @@
   "python.analysis.extraPaths": [
     "/opt/conda/envs/analysis/Lib/site-packages"
   ],
-  "python.pythonPath": "C:\\ProgramData\\Miniconda3\\python.exe"
+  "python.pythonPath": "/home/miki/miniconda3/bin/python",
   // Testの設定。
 }

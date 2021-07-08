@@ -1,22 +1,25 @@
-import os
-import sys
-
-sys.path.append("..")
-sys.path.append("../../")
+import os, sys
 from glob import glob
 
+sys.path.append(".")
+sys.path.append("..")
+sys.path.append("../../")
+
 import bpy
-import cv2
+
+# import cv2
 import json
 import numpy as np
 from mathutils import Matrix
 from PIL import Image
 from scipy import stats
+from skimage.io import imread
 from transforms3d.euler import mat2euler
+from transforms3d.quaternions import mat2quat
 
 from src.config.config import cfg
-from src.datasets.LineMod.LineModDB import LineModDB, read_pose
-from src.utils.base_utils import read_ply_model
+from datasets.LineMod.LineModDB import LineModDB, read_pose
+from src.utils.base_utils import read_pickle, read_ply_model, save_pickle
 
 
 class ModelAligner(object):
@@ -359,45 +362,6 @@ class DataStatistics(object):
         return np.concatenate([eulers, translations], axis=-1)
 
 
-def randomly_read_background(
-    bg_imgs_dir: str,
-    cache_dir: str = cfg.TEMP_DIR,
-    th: int = cfg.HEIGHT,
-    tw: int = cfg.WIDTH,
-) -> np.ndarray:
-    """
-    合成画像を作成する際に背景として使用される画像を読み出し，その画像のパスを `background_info.pkl` データとして一度保存しておくための関数．画像は `.jpg` か `.png` として保存されているもののみ使用可能．
-
-    Args:
-        bg_imgs_dir(str): 背景画像として使用する画像の保存先のパス
-        cache_dir(str, optional): 一時ファイル 'bg_img_pths.npy' の保存先のパス. Defaults to 'cfg.TEMP_DIR'.
-        th(int, optional): 読み出す画像の最小高さ. Defaults to 'cfg.HEIGHT'.
-        tw(int, optional): 読み出す画像の最小幅. Defaults to 'cfg.WIDTH'.
-
-    Return:
-        bg_img_npy_path(str): 背景画像として使用する
-        (np.ndarray): 背景画像1枚の ndarray 配列
-    """
-    bg_fns = []
-    bg_img_npy_path = os.path.join(cache_dir, "bg_img_pths.npy")
-    if os.path.exists(bg_img_npy_path):
-        bg_fns = np.load(bg_img_npy_path)
-    else:
-        fns = glob(os.path.join(bg_imgs_dir, "*.jpg")) + glob(
-            os.path.join(bg_imgs_dir, "*.png")
-        )
-        for fn in fns:
-            img = Image.open(fn)
-            height, width = img.size
-            if width > tw and height > th:
-                bg_fns.append(fn)
-        if bg_fns:
-            # save_pickle(bg_fns, os.path.join(cache_dir, 'background_info.pkl'))
-            np.save(bg_img_npy_path, bg_fns)
-        else:
-            raise ValueError("The list has zero elements.")
-    return bg_img_npy_path, cv2.imread(bg_fns[np.random.randint(0, len(bg_fns))])
-
 
 # ----------------- #
 # カメラの設定 #
@@ -541,7 +505,7 @@ if __name__ == "__main__":
     # ----------------------- #
     # PoseTransformer #
     # ----------------------- #
-    from src.datasets.LineMod.LineModDB import read_pose
+    from datasets.LineMod.LineModDB import read_pose
 
     # 姿勢
     rt_dir = os.path.join(linemod_dir, obj_name, "data")

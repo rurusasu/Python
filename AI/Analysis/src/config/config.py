@@ -13,6 +13,8 @@ cfg.CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
 cfg.SRC_DIR = os.path.dirname(cfg.CONFIG_DIR)
 cfg.ROOT_DIR = os.path.dirname(cfg.SRC_DIR)
 cfg.DATA_DIR = os.path.join(cfg.ROOT_DIR, "data")
+cfg.DATASET_DIR = os.path.join(cfg.ROOT_DIR, "datasets")
+cfg.BLENDER_DIR = os.path.join(cfg.DATASET_DIR, "Blender")
 cfg.EVAL_INDEXES_DIR = os.path.join(cfg.SRC_DIR, "eval_indexes")
 cfg.GUI_DIR = os.path.join(cfg.ROOT_DIR, "gui")
 cfg.NESTED_UNET_DIR = os.path.join(cfg.ROOT_DIR, "NestedUNet")
@@ -129,11 +131,13 @@ cfg.PASCAL_VOC_2012 = os.path.join(cfg.DATA_DIR, "PASCAL_VOC_2012")
 cfg.DOBOT_DLL_DIR = os.path.join(cfg.GUI_DIR, "DobotDLL")
 cfg.DOBOT_FUNCTION_DIR = os.path.join(cfg.GUI_DIR, "DobotFunction")
 
+"""FuseSetting
+"""
+cfg.FUSE_NUM = 500
 
 """Rendering setting
 参考: https://github.com/zju3dv/pvnet-rendering/blob/master/config.py
 """
-cfg.BLENDER_DIR = os.path.join(cfg.ROOT_DIR, "Blender")
 cfg.BLENDER_PATH = "/home/miki/blender/blender"
 cfg.NUM_SYN = 10
 cfg.WIDTH = 640

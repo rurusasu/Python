@@ -92,7 +92,7 @@ class LineModDB(object):
 
 
 def read_pose(rot_path: str, tra_path: str) -> np.matrix:
-    """オブジェクトの '.rot' ファイル と '.tra' ファイルの情報を読み出し，スケール変換を加えて返す関数
+    """オブジェクトの `.rot` ファイル と `.tra` ファイルの情報を読み出し，スケール変換を加えて返す関数
 
         Args:
             rot_path str: `.rot` ファイルのパス

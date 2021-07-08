@@ -7,18 +7,27 @@ import sys
 import time
 from glob import glob
 
+# sys.path.append("..")
+# sys.path.append("../../")
+
+BLENDER_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASETS_DIR = os.path.dirname(BLENDER_DIR)
+ROOT_DIR = os.path.dirname(DATASETS_DIR)
+# SRC_DIR = os.path.join(ROOT_DIR, "src")
+# CONFIG_DIR = os.path.join(SRC_DIR, "config")
+
+sys.path.append(BLENDER_DIR)
+sys.path.append(DATASETS_DIR)
+sys.path.append(ROOT_DIR)
+# sys.path.append(SRC_DIR)
+# sys.path.append(CONFIG_DIR)
+
 import bpy
 import numpy as np
 from mathutils import Matrix
 
-BLENDER_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BLENDER_DIR)
-
-sys.path.append(BLENDER_DIR)
-sys.path.append(ROOT_DIR)
-
 from src.config.config import cfg
-from Blender.render_base_utils import (
+from datasets.Blender.render_base_utils import (
     get_K_P_from_blender,
     get_3x4_P_matrix_from_blender,
 )
