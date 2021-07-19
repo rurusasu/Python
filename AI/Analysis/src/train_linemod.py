@@ -97,7 +97,7 @@ class NetWarpper(nn.Module):
         loss_seg = self.seg_criterion(seg_pred, mask)
         loss_seg = torch.mean(loss_seg.view(loss_seg.shape[0], -1), 1)
 
-        #loss_vertex = self.vertex_criterion(vertex_pred, vertex, vertex_weights)
+        # loss_vertex = self.vertex_criterion(vertex_pred, vertex, vertex_weights)
         loss_vertex = self.vertex_criterion(vertex_pred, vertex)
         precision, recall = compute_precision_recall(seg_pred, mask)
         return seg_pred, vertex_pred, loss_seg, loss_vertex, precision, recall
@@ -172,7 +172,12 @@ def train(net, optimizer, dataloader, epoch):
                 vertex_pred, vertex_weights, nrow=4, step=step, name="train/image/ver"
             )
 
-        visualize_vertex(vertex_pred, vertex_weights, save=True, save_fn=os.path.join(cfg.TEMP_DIR, 'vertex_pred_{}'))
+        visualize_vertex(
+            vertex_pred,
+            vertex_weights,
+            save=True,
+            save_fn=os.path.join(cfg.TEMP_DIR, "vertex_pred_{}"),
+        )
 
     print("epoch {} training cost {} s".format(epoch, time.time() - train_begin))
 
@@ -321,7 +326,11 @@ def val(
     print("epoch {} {} cost {} s".format(epoch, val_prefix, time.time() - test_begin))
 
 
-def train_net():
+def train_net(num_workers: int = 0):
+    """
+    Args:
+        num_workers(int, optional): DataLoaderで使用するCPU数. 1 GPU に対して 2CPU 使用する程度で良い. Default to 0.
+    """
     net = ResNet18_8s(ver_dim=vote_num * 2, seg_dim=2)
     net = NetWarpper(net)
     net = DataParallel(net).cuda()
@@ -353,7 +362,7 @@ def train_net():
                 test_sampler, train_cfg["test_batch_size"], False
             )
             test_loader = DataLoader(
-                test_set, batch_sampler=test_batch_sampler, num_workers=0
+                test_set, batch_sampler=test_batch_sampler, num_workers=num_workers
             )
             prefix = "test" if args.use_test_set else "val"
             # val(net, test_loader, begin_epoch, prefix, use_motion=motion_model)
@@ -390,7 +399,7 @@ def train_net():
             cfg=train_cfg["aug_cfg"],
         )
         train_loader = DataLoader(
-            train_set, batch_sampler=train_batch_sampler, num_workers=12
+            train_set, batch_sampler=train_batch_sampler, num_workers=num_workers
         )
 
         val_db = image_db.val_real_set
@@ -407,7 +416,7 @@ def train_net():
             val_sampler, train_cfg["test_batch_size"], False, cfg=train_cfg["aug_cfg"]
         )
         val_loader = DataLoader(
-            val_set, batch_sampler=val_batch_sampler, num_workers=12
+            val_set, batch_sampler=val_batch_sampler, num_workers=num_workers
         )
 
         """
@@ -432,7 +441,7 @@ def train_net():
                 cfg=train_cfg["aug_cfg"],
             )
             occ_val_loader = DataLoader(
-                occ_val_set, batch_sampler=occ_val_batch_sampler, num_workers=12
+                occ_val_set, batch_sampler=occ_val_batch_sampler, num_workers=num_workers
             )
         """
 
@@ -445,8 +454,8 @@ def train_net():
             )
 
             train(net, optimizer, train_loader, epoch)
-            #val(net, val_loader, epoch, use_motion=motion_model)
-            #if args.linemod_cls in cfg.occ_linemod_cls_names:
+            # val(net, val_loader, epoch, use_motion=motion_model)
+            # if args.linemod_cls in cfg.occ_linemod_cls_names:
             #    val(net, occ_val_loader, epoch, "occ_val", use_motion=motion_model)
             save_model(net.module.net, optimizer, epoch, model_dir)
 
