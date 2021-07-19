@@ -47,7 +47,7 @@ class PVNetLineModImageDB(object):
 
         self.linemod_dir = cfg.LINEMOD_DIR
         self.pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
-        self.input_dir = cfg.TEMP_DIR
+        #self.pvnet_linemod_dir = cfg.TEMP_DIR
 
         self.obj_name = obj_name
         # some dirs for processing
@@ -66,7 +66,7 @@ class PVNetLineModImageDB(object):
 
         if has_render_set:
             self.render_pkl = os.path.join(
-                self.input_dir, "posedb", "{}_render.pkl".format(obj_name)
+                self.pvnet_linemod_dir, "posedb", "{}_render.pkl".format(obj_name)
             )
             # prepare dataset
             if os.path.exists(self.render_pkl):
@@ -81,7 +81,7 @@ class PVNetLineModImageDB(object):
             self.render_set = []
 
         self.real_pkl = os.path.join(
-            self.input_dir, "posedb", "{}_real.pkl".format(obj_name)
+            self.pvnet_linemod_dir, "posedb", "{}_real.pkl".format(obj_name)
         )
         if os.path.exists(self.real_pkl):
             # read cached
@@ -103,7 +103,7 @@ class PVNetLineModImageDB(object):
 
         if has_fuse_set:
             self.fuse_pkl = os.path.join(
-                self.input_dir, "posedb", "{}_fuse.pkl".format(obj_name)
+                self.pvnet_linemod_dir, "posedb", "{}_fuse.pkl".format(obj_name)
             )
             # prepare dataset
             if os.path.exists(self.fuse_pkl):
@@ -137,7 +137,7 @@ class PVNetLineModImageDB(object):
             data["rgb_pth"] = os.path.join(render_dir, "{}.{}".format(k, format))
             data["dpt_pth"] = os.path.join(render_dir, "{}_depth.png".format(k))
             data["RT"] = read_pickle(
-                os.path.join(self.input_dir, render_dir, "{}_RT.pkl".format(k))
+                os.path.join(self.pvnet_linemod_dir, render_dir, "{}_RT.pkl".format(k))
             )["RT"]
             data["object_typ"] = self.obj_name
             data["rnd_typ"] = "render"
@@ -242,14 +242,14 @@ class PVNetLineModImageDB(object):
             data["dpt_pth"] = os.path.join(self.fuse_dir, "{}_mask.png".format(k))
 
             # if too few foreground pts then continue
-            mask = imread(os.path.join(self.input_dir, data["dpt_pth"]))
+            mask = imread(os.path.join(self.pvnet_linemod_dir, data["dpt_pth"]))
             if np.sum(mask == (cfg.linemod_obj_names.index(self.obj_name) + 1)) < 400:
                 continue
 
             data["cls_typ"] = self.obj_name
             data["rnd_typ"] = "fuse"
             begins, poses = read_pickle(
-                os.path.join(self.input_dir, self.fuse_dir, "{}_info.pkl".format(k))
+                os.path.join(self.pvnet_linemod_dir, self.fuse_dir, "{}_info.pkl".format(k))
             )
             data["RT"] = poses[self.obj_idx]
             K = projector.intrinsic_matrix["linemod"].copy()
