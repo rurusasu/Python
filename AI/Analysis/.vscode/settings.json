@@ -76,6 +76,6 @@
   "python.analysis.extraPaths": [
     "/opt/conda/envs/analysis/Lib/site-packages"
   ],
-  "python.pythonPath": "/home/miki/miniconda3/bin/python",
+  //"python.pythonPath": "/home/miki/miniconda3/bin/python",
   // Testの設定。
 }
