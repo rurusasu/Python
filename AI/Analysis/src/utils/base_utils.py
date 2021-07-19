@@ -1,9 +1,18 @@
 import os
+import sys
+import json
+
+sys.path.append(".")
+sys.path.append("..")
+sys.path.append("../../")
 
 import numpy as np
 import pickle
 from PIL import Image, ImageFile
 from plyfile import PlyData
+from torch.utils.data import Sampler
+
+from src.config.config import cfg
 
 
 def read_mask_np(mask_path: str) -> np.ndarray:
@@ -134,3 +143,69 @@ class Projector(object):
         pts_2d = np.matmul(pts_2d, K.T)
         pts_2d = pts_2d[:, :2] / pts_2d[:, 2:]
         return pts_2d
+
+
+with open(os.path.join(cfg.CONFIG_DIR, "default_linemod_cfg.json"), "r",) as f:
+    default_aug_cfg = json.load(f)
+
+
+class ImageSizeBatchSampler(Sampler):
+    def __init__(self, sampler, batch_size, drop_last, cfg=default_aug_cfg):
+        if not isinstance(sampler, Sampler):
+            raise ValueError(
+                "sampler should be an instance of torch.utils.data.Sampler, but got sampler={}".format(
+                    sampler
+                )
+            )
+        if (
+            not isinstance(batch_size, int)
+            or isinstance(batch_size, bool)
+            or batch_size <= 0
+        ):
+            raise ValueError(
+                "batch_size should be a positive integeral value, but got batch_size={}".format(
+                    batch_size
+                )
+            )
+        if not isinstance(drop_last, bool):
+            raise ValueError(
+                "drop_last should be a boolean value, but got drop_last={}".format(
+                    drop_last
+                )
+            )
+
+        self.sampler = sampler
+        self.batch_size = batch_size
+        self.drop_last = drop_last
+        self.hmin = cfg["hmin"]  # -> 256
+        self.hmax = cfg["hmax"]  # -> 480
+        self.wmin = cfg["wmin"]  # -> 256
+        self.wmax = cfg["wmax"]  # -> 640
+        self.size_int = cfg["size_int"]  # -> 8
+        self.hint = (self.hmax - self.hmin) // self.size_int + 1  # -> 29
+        self.wint = (self.wmax - self.wmin) // self.size_int + 1
+
+    def generate_height_width(self):
+        # hi, wi = np.random.randint(0, self.hint), np.random.randint(0, self.wint)
+        # h, w = self.hmin + hi * self.size_int, self.wmin + wi * self.size_int
+        h, w = self.hmin, self.wmin
+        return h, w
+
+    def __iter__(self):
+        batch = []
+        h, w = self.generate_height_width()
+        for idx in self.sampler:
+            batch.append((idx, h, w))
+            if len(batch) == self.batch_size:
+                h, w = self.generate_height_width()
+                yield batch
+                batch = []
+        if len(batch) > 0 and not self.drop_last:
+            h, w = self.generate_height_width()
+            yield batch
+
+    def __len__(self):
+        if self.drop_last:
+            return len(self.sampler) // self.batch_size
+        else:
+            return (len(self.sampler) + self.batch_size - 1) // self.batch_size

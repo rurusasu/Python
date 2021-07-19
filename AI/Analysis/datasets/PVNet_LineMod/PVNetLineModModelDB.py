@@ -14,7 +14,7 @@ from plyfile import PlyData
 from src.config.config import cfg
 
 
-class LineModModelDB(object):
+class PVNetLineModModelDB(object):
     """LineModModelDBは、各モデルのメッシュを管理するために使用されます
 
     """
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     from mpl_toolkits.mplot3d import Axes3D
 
     obj_name = "ape"
-    db = LineModModelDB()
+    db = PVNetLineModModelDB()
 
     # --------------------- #
     # corners_3d Test #
