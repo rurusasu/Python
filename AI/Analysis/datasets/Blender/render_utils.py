@@ -240,7 +240,8 @@ class Renderer(object):
         self,
         linemod_dir: str,
         pvnet_linemod_dir: str,
-        obj_name: str,
+        output_dir: str = cfg.PVNET_LINEMOD_DIR,
+        obj_name: str = "ape",
         bg_imgs_dir: str = cfg.SUN_2012_JPEGIMAGES_DIR,
         cache_dir: str = cfg.TEMP_DIR,
     ):
@@ -248,7 +249,9 @@ class Renderer(object):
         Renderer の初期化
 
         Args:
-            pvnet_linemod_dir (str): PVNet で作成された LINEMODデータセットが保存されているディレクトリパス
+            linemode_dir (str): LINEMOD データセットが保存されているディレクトリパス
+            pvnet_linemod_dir (str): PVNet で作成された LINEMOD データセットが保存されているディレクトリパス
+            output_dir(str): 出力先のディレクトリパス
             obj_name (str): LineMod データセットに含まれるオブジェクト名
             bg_imgs_dir (str): 背景画像として使用する画像が保存されているディレクトリのパス
             cache_dir(str): 一時ファイル 'bg_img_pths.npy' の保存先のパス. Defaults to 'cfg.TEMP_DIR'.
@@ -263,7 +266,7 @@ class Renderer(object):
         self.poses_path = os.path.join(
             self.cache_dir, "blender_poses", "{}_poses.npy"
         ).format(obj_name)
-        self.output_dir_path = os.path.join(self.cache_dir, "renders/{}").format(
+        self.output_dir_path = os.path.join(output_dir, "renders/{}").format(
             obj_name
         )
         self.blender_path = cfg.BLENDER_PATH

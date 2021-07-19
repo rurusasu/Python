@@ -97,6 +97,9 @@ def prepare_dataset_parallel(
         cache_dir (str, optional): オブジェクトごとに作成される `obj_name_info.pkl` データや合成画像の背景として使用される画像のパスを保存した `background_inf.pkl`の保存先のパス. Defaults to 'cfg.TEMP_DIR'.
         worker_num (int, optional): 並列処理で使用するワーカー数. Defaults to 8.
     """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     futures = []
     for obj_name in cfg.linemod_obj_names:
         _collect_linemod_set_info(
@@ -361,21 +364,17 @@ def _save_fuse_data(
 if __name__ == "__main__":
     from src.utils.utils import MakeDir
 
-    output_dir = os.path.join(cfg.TEMP_DIR, "fuse")
-    tmp_dir = MakeDir(output_dir, newly=True)
+    # output_dir = os.path.join(cfg.TEMP_DIR, "fuse")
+    #fuse_num = 2
+    output_dir = os.path.join(cfg.PVNET_LINEMOD_DIR, "fuse")
+    # tmp_dir = MakeDir(output_dir, newly=False)
     cache_dir = cfg.TEMP_DIR
-    output_dir = tmp_dir
-    idx = 1
     pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
     linemod_dir = cfg.LINEMOD_DIR
     obj_name = "ape"
     bg_imgs_dir = cfg.SUN_2012_JPEGIMAGES_DIR
     fuse_num = cfg.FUSE_NUM
     worker_num = 2
-
-    # data_base = _collect_linemod_set_info(
-    #    linemod_dir=linemod_dir, pvnet_linemod_dir=pvnet_linemod_dir, #obj_name=obj_name,
-    # )
 
     prepare_dataset_parallel(
         bg_imgs_dir=bg_imgs_dir,

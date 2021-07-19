@@ -10,12 +10,12 @@ from skimage.io import imread
 
 from datasets.Blender.render_base_utils import PoseTransformer
 from datasets.LineMod.LineModDB import read_pose
-from datasets.PVNet_LineMod.PVNetLineModModelDB import LineModModelDB
+from datasets.PVNet_LineMod.PVNetLineModModelDB import PVNetLineModModelDB
 from src.config.config import cfg
 from src.utils.base_utils import read_pickle, save_pickle, Projector
 
 
-class LineModImageDB(object):
+class PVNetLineModImageDB(object):
     """
     rgb_pth relative path to cfg.LINEMOD
     dpt_pth relative path to cfg.LINEMOD
@@ -27,36 +27,46 @@ class LineModImageDB(object):
 
     def __init__(
         self,
-        object_name,
+        obj_name: str,
         render_num: int = cfg.NUM_SYN,
         fuse_num: int = cfg.FUSE_NUM,
         ms_num: int = 10000,
         has_render_set=True,
         has_fuse_set=True,
     ):
+        """LINEMOD が提供しているデータと Blender および fuse を使用して拡張したデータセットを管理するクラス
+
+        Args:
+            obj_name (str): オブジェクト名
+            render_num (int, optional): Blender で作成したデータからロードするデータ数. Defaults to cfg.NUM_SYN.
+            fuse_num (int, optional): fuse で作成したデータからロードするデータ数. Defaults to cfg.FUSE_NUM.
+            ms_num (int, optional): [description]. Defaults to 10000.
+            has_render_set (bool, optional): Blender で作成したデータをロードするか. Defaults to True.
+            has_fuse_set (bool, optional): fuse で作成したデータをロードするか. Defaults to True.
+        """
 
         self.linemod_dir = cfg.LINEMOD_DIR
         self.pvnet_linemod_dir = cfg.PVNET_LINEMOD_DIR
         self.input_dir = cfg.TEMP_DIR
 
-        self.object_name = object_name
+        self.obj_name = obj_name
         # some dirs for processing
         # os.path.join(
-        #    self.pvnet_linemod_dir, "posedb", "{}_render.pkl".format(object_name)
+        #    self.pvnet_linemod_dir, "posedb", "{}_render.pkl".format(obj_name)
         # )
-        self.render_dir = "renders/{}".format(object_name)
-        self.rgb_dir = "{}/JPEGImages".format(object_name)
-        self.mask_dir = "{}/mask".format(object_name)
-        self.rt_dir = os.path.join(self.linemod_dir, object_name, "data")
+        self.render_dir = "renders/{}".format(obj_name)
+        self.rgb_dir = "{}/JPEGImages".format(obj_name)
+        self.mask_dir = "{}/mask".format(obj_name)
+        self.rt_dir = os.path.join(self.linemod_dir, obj_name, "data")
         self.render_num = render_num
 
-        self.test_fn = "{}/test.txt".format(object_name)
-        self.train_fn = "{}/train.txt".format(object_name)
-        self.val_fn = "{}/val.txt".format(object_name)
+        self.test_fn = "{}/test.txt".format(obj_name)
+        self.train_fn = "{}/train.txt".format(obj_name)
+        self.val_fn = "{}/val.txt".format(obj_name)
 
         if has_render_set:
             self.render_pkl = os.path.join(
-                self.input_dir, "posedb", "{}_render.pkl".format(object_name)
+                self.input_dir, "posedb", "{}_render.pkl".format(obj_name)
             )
             # prepare dataset
             if os.path.exists(self.render_pkl):
@@ -71,7 +81,7 @@ class LineModImageDB(object):
             self.render_set = []
 
         self.real_pkl = os.path.join(
-            self.input_dir, "posedb", "{}_real.pkl".format(object_name)
+            self.input_dir, "posedb", "{}_real.pkl".format(obj_name)
         )
         if os.path.exists(self.real_pkl):
             # read cached
@@ -89,11 +99,11 @@ class LineModImageDB(object):
         self.fuse_set = []
         self.fuse_dir = "fuse"
         self.fuse_num = fuse_num
-        self.obj_idx = cfg.linemod_obj_names.index(object_name)
+        self.obj_idx = cfg.linemod_obj_names.index(obj_name)
 
         if has_fuse_set:
             self.fuse_pkl = os.path.join(
-                self.input_dir, "posedb", "{}_fuse.pkl".format(object_name)
+                self.input_dir, "posedb", "{}_fuse.pkl".format(obj_name)
             )
             # prepare dataset
             if os.path.exists(self.fuse_pkl):
@@ -121,7 +131,7 @@ class LineModImageDB(object):
         """
         database = []
         projector = Projector()
-        modeldb = LineModModelDB()
+        modeldb = PVNetLineModModelDB()
         for k in range(self.render_num):
             data = {}
             data["rgb_pth"] = os.path.join(render_dir, "{}.{}".format(k, format))
@@ -129,25 +139,23 @@ class LineModImageDB(object):
             data["RT"] = read_pickle(
                 os.path.join(self.input_dir, render_dir, "{}_RT.pkl".format(k))
             )["RT"]
-            data["object_typ"] = self.object_name
+            data["object_typ"] = self.obj_name
             data["rnd_typ"] = "render"
             data["corners"] = projector.project(
-                modeldb.get_corners_3d(self.object_name), data["RT"], "blender"
+                modeldb.get_corners_3d(self.obj_name), data["RT"], "blender"
             )
             data["farthest"] = projector.project(
-                modeldb.get_farthest_3d(self.object_name), data["RT"], "blender"
+                modeldb.get_farthest_3d(self.obj_name), data["RT"], "blender"
             )
             data["center"] = projector.project(
-                modeldb.get_centers_3d(self.object_name)[None, :], data["RT"], "blender"
+                modeldb.get_centers_3d(self.obj_name)[None, :], data["RT"], "blender"
             )
             for num in [4, 12, 16, 20]:
                 data["farthest{}".format(num)] = projector.project(
-                    modeldb.get_farthest_3d(self.object_name, num),
-                    data["RT"],
-                    "blender",
+                    modeldb.get_farthest_3d(self.obj_name, num), data["RT"], "blender",
                 )
             data["small_bbox"] = projector.project(
-                modeldb.get_small_bbox(self.object_name), data["RT"], "blender"
+                modeldb.get_small_bbox(self.obj_name), data["RT"], "blender"
             )
             axis_direct = np.concatenate([np.identity(3), np.zeros([3, 1])], 1).astype(
                 np.float32
@@ -161,7 +169,7 @@ class LineModImageDB(object):
     def collect_real_set_info(self):
         database = []
         projector = Projector()
-        modeldb = LineModModelDB()
+        modeldb = PVNetLineModModelDB()
         img_num = len(os.listdir(os.path.join(self.pvnet_linemod_dir, self.rgb_dir)))
         for k in range(img_num):
             data = {}
@@ -172,30 +180,28 @@ class LineModImageDB(object):
                 os.path.join(self.rt_dir, "tra{}.tra".format(k)),
             )
             pose_transformer = PoseTransformer(
-                self.linemod_dir, self.pvnet_linemod_dir, obj_name=self.object_name
+                self.linemod_dir, self.pvnet_linemod_dir, obj_name=self.obj_name
             )
             data["RT"] = pose_transformer.orig_pose_to_blender_pose(pose).astype(
                 np.float32
             )
-            data["cls_typ"] = self.object_name
+            data["cls_typ"] = self.obj_name
             data["rnd_typ"] = "real"
             data["corners"] = projector.project(
-                modeldb.get_corners_3d(self.object_name), data["RT"], "linemod"
+                modeldb.get_corners_3d(self.obj_name), data["RT"], "linemod"
             )
             data["farthest"] = projector.project(
-                modeldb.get_farthest_3d(self.object_name), data["RT"], "linemod"
+                modeldb.get_farthest_3d(self.obj_name), data["RT"], "linemod"
             )
             for num in [4, 12, 16, 20]:
                 data["farthest{}".format(num)] = projector.project(
-                    modeldb.get_farthest_3d(self.object_name, num),
-                    data["RT"],
-                    "linemod",
+                    modeldb.get_farthest_3d(self.obj_name, num), data["RT"], "linemod",
                 )
             data["center"] = projector.project(
-                modeldb.get_centers_3d(self.object_name)[None, :], data["RT"], "linemod"
+                modeldb.get_centers_3d(self.obj_name)[None, :], data["RT"], "linemod"
             )
             data["small_bbox"] = projector.project(
-                modeldb.get_small_bbox(self.object_name), data["RT"], "linemod"
+                modeldb.get_small_bbox(self.obj_name), data["RT"], "linemod"
             )
             axis_direct = np.concatenate([np.identity(3), np.zeros([3, 1])], 1).astype(
                 np.float32
@@ -228,7 +234,7 @@ class LineModImageDB(object):
 
     def collect_fuse_info(self):
         database = []
-        modeldb = LineModModelDB()
+        modeldb = PVNetLineModModelDB()
         projector = Projector()
         for k in range(self.fuse_num):
             data = dict()
@@ -237,13 +243,10 @@ class LineModImageDB(object):
 
             # if too few foreground pts then continue
             mask = imread(os.path.join(self.input_dir, data["dpt_pth"]))
-            if (
-                np.sum(mask == (cfg.linemod_obj_names.index(self.object_name) + 1))
-                < 400
-            ):
+            if np.sum(mask == (cfg.linemod_obj_names.index(self.obj_name) + 1)) < 400:
                 continue
 
-            data["cls_typ"] = self.object_name
+            data["cls_typ"] = self.obj_name
             data["rnd_typ"] = "fuse"
             begins, poses = read_pickle(
                 os.path.join(self.input_dir, self.fuse_dir, "{}_info.pkl".format(k))
@@ -254,20 +257,20 @@ class LineModImageDB(object):
             K[1, 2] += begins[self.obj_idx, 0]
             data["K"] = K
             data["corners"] = projector.project_K(
-                modeldb.get_corners_3d(self.object_name), data["RT"], K
+                modeldb.get_corners_3d(self.obj_name), data["RT"], K
             )
             data["center"] = projector.project_K(
-                modeldb.get_centers_3d(self.object_name), data["RT"], K
+                modeldb.get_centers_3d(self.obj_name), data["RT"], K
             )
             data["farthest"] = projector.project_K(
-                modeldb.get_farthest_3d(self.object_name), data["RT"], K
+                modeldb.get_farthest_3d(self.obj_name), data["RT"], K
             )
             for num in [4, 12, 16, 20]:
                 data["farthest{}".format(num)] = projector.project_K(
-                    modeldb.get_farthest_3d(self.object_name, num), data["RT"], K
+                    modeldb.get_farthest_3d(self.obj_name, num), data["RT"], K
                 )
             data["small_bbox"] = projector.project_K(
-                modeldb.get_small_bbox(self.object_name), data["RT"], K
+                modeldb.get_small_bbox(self.obj_name), data["RT"], K
             )
             database.append(data)
 
@@ -276,6 +279,7 @@ class LineModImageDB(object):
 
 
 if __name__ == "__main__":
-    object_name = "ape"
+    obj_name = "ape"
 
-    db = LineModImageDB(object_name=object_name)
+    db = PVNetLineModImageDB(obj_name=obj_name)
+    print(db)
