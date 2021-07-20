@@ -8,7 +8,7 @@ sys.path.append("../../")
 import torch
 import torchvision.utils as vutils
 from easydict import EasyDict
-from torch.tensor import Tensor
+from torch import Tensor
 
 from tensorboardX import SummaryWriter
 

@@ -14,7 +14,7 @@ from torch import nn, optim
 from torch.nn import DataParallel
 
 # from torch.nn.modules import loss
-from torch.tensor import Tensor
+from torch import Tensor
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
 # from torch._C import R
