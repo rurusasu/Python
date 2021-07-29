@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../../")
@@ -82,9 +83,13 @@ class Resnet18_8s(nn.Module):
         fm = self.conv2s(torch.cat([fm, x2s], 1))
         fm = self.up2storaw(fm)
 
-        x = self.convraw(torch.cat([fm, x], 1))
-        seg_pred = x[:, : self.seg_dim, :, :]
-        ver_pred = x[:, self.seg_dim :, :, :]
+        x = self.convraw(torch.cat([fm, x], 1))  # [3, 320, 528] -> [1, 4, 320, 528]
+        seg_pred = x[
+            :, : self.seg_dim, :, :
+        ]  # [1, 4, 320, 528] -> [1, 2, 320, 528] 最初から seg_dim 番目までの特徴量を セグメンテーションの推定量として取得
+        ver_pred = x[
+            :, self.seg_dim :, :, :
+        ]  # [1, 4, 320, 528] -> [1, 2, 320, 528] seg_dim から最後までの特徴量を 頂点の推定量として取得
 
         return seg_pred, ver_pred
 
@@ -364,5 +369,5 @@ if __name__ == "__main__":
         print(h, w)
         img = np.random.uniform(-1, 1, [1, 3, h, w]).astype(np.float32)
         net = Resnet18_8s(2, 2).cuda()
-        print(net)
+        # print(net)
         out = net(torch.tensor(img).cuda())
