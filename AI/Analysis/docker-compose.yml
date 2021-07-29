@@ -1,15 +1,15 @@
-version: '3'
+version: "3"
 services:
   test:
     #image: nvcr.io/partners/gridai/pytorch-lightning:v1.3.8
     build:
       context: .
-      dockerfile: Dockerfile_pcl
+      dockerfile: ./Dockerfile_pcl
     tty: true
     volumes:
       - type: bind
         source: "../../Analysis"
-        target: "/home/${USER}/"
+        target: "/home/"
     deploy:
       resources:
         reservations:
