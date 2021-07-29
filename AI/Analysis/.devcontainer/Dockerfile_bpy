@@ -1,0 +1,77 @@
+#From nvcr.io/partners/gridai/pytorch-lightning:v1.3.8
+From ubuntu:focal
+
+
+# ロケール設定
+RUN apt-get update \
+  && apt install -y tzdata \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV TZ Asia/Tokyo
+
+# pyenv をインストールするために必要なパッケージのインストール
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  build-essential \
+  ca-certificates \
+  git \
+  libbz2-dev \
+  libffi-dev \
+  liblzma-dev \
+  libopencv-dev \
+  libreadline-dev \
+  libsqlite3-dev \
+  libssl-dev \
+  tk-dev \
+  wget \
+  zlib1g-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# pyenv をインストール
+RUN mkdir -p ~/.pyenv \
+  && git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+RUN cd ~/.pyenv \
+  && git checkout v2.0.3 \
+  && src/configure && make -C src
+
+# SHELL を変更する
+SHELL ["/bin/bash", "-c"]
+#RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# 環境変数に pyenv を登録
+#RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc \
+#  echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc \
+#  echo 'eval "$(pyenv init --path)"' >> ~/.bashrc \
+#  echo 'eval "$(pyenv init -)"' >> ~/.bashrc \
+#  source ~/.bashrc
+ENV HOME /root
+ENV PYENV_ROOT $HOME/.pyenv
+ENV PATH $PYENV_ROOT/bin:$PATH
+RUN echo 'eval "$(pyenv init --path)"' >> ~/.bashrc \
+  echo 'eval "$(pyenv init -)"' >> ~/.bashrc \
+  source ~/.bashrc
+
+# pyenv 環境を構築
+RUN pyenv install 3.7.8 \
+  && pyenv global 3.7.8 \
+  && pyenv rehash
+
+#RUN pip install --upgrade pip
+#RUN /bin/bash -c 'pip install --upgrade pip'
+#RUN pip install numpy
+
+# bpy をコンパイルするために必要
+RUN pip install -U future-fstrings \
+  pip install -U setuptools \
+  pip install -U wheel
+
+# svn を有効化
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  apache2 \
+  apache2-utils \
+  subversion \
+  subversion-tools \
+  libapache2-mod-svn \
+  && rm -rf /var/lib/apt/lists/*

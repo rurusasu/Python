@@ -449,21 +449,21 @@ def train_net(num_workers: int = 0):
 
         with tqdm.trange(begin_epoch, train_cfg["epoch_num"] + 1, desc="epochs") as tbar:
 
-        for epoch in tbar:
-            adjust_learning_rate(
-                optimizer,
-                epoch,
-                train_cfg["lr_decay_rate"],
-                train_cfg["lr_decay_epoch"],
-            )
+            for epoch in tbar:
+                adjust_learning_rate(
+                    optimizer,
+                    epoch,
+                    train_cfg["lr_decay_rate"],
+                    train_cfg["lr_decay_epoch"],
+                )
 
-            train(net, optimizer, train_loader, epoch)
-            # val(net, val_loader, epoch, use_motion=motion_model)
-            # if args.linemod_cls in cfg.occ_linemod_cls_names:
-            #    val(net, occ_val_loader, epoch, "occ_val", use_motion=motion_model)
-            save_model(net.module.net, optimizer, epoch, model_dir)
+                train(net, optimizer, train_loader, epoch)
+                # val(net, val_loader, epoch, use_motion=motion_model)
+                # if args.linemod_cls in cfg.occ_linemod_cls_names:
+                #    val(net, occ_val_loader, epoch, "occ_val", use_motion=motion_model)
+                save_model(net.module.net, optimizer, epoch, model_dir)
 
-            tbar.refresh()
+                tbar.refresh()
 
 
 if __name__ == "__main__":
