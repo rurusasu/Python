@@ -3,6 +3,11 @@
 
 import os
 import sys
+import traceback
+import urllib
+import zipfile
+from typing import Type, Union
+
 
 sys.path.append(".")
 sys.path.append("..")
@@ -11,10 +16,12 @@ import pandas as pd
 import requests
 
 from config.config import cfg
+from src.utils.base_utils import MakeDir
+
 
 # 画像ファイルをダウンロード
-def Download_image(url: str, timeout: int=10):
-    """ URL 先の HP で動作している HTML テキスト内に含まれる画像情報を検出し，ダウンロードするための関数
+def Download_image(url: str, timeout: int = 10):
+    """URL 先の HP で動作している HTML テキスト内に含まれる画像情報を検出し，ダウンロードするための関数
 
     Args:
         url (str): ダウンロードしたい画像が掲載されているサイトの URL
@@ -69,16 +76,10 @@ def Download_images_from_csv(csv_path, dst_path):
         except:
             pass
 
-def unpack(file_name: str, create_dir: bool=True):
-    """originalディレクトリ内のzipファイルを展開するための関数
-    Arg:
-        file_name(str): original ディレクトリ内の zip ファイル名,
-        create_dir(bool optional): 解凍するときに、解凍前のファイル名と同じ名前のディレクトリを作成する。default to True.
-    """
-    z_pth = os.path.join()
-
 
 class Download_GOI(object):
+    """Google Open Image Dataset を自動でダウンロードするためのクラス"""
+
     # ROOT_DIR = cfg.DATA_DIR + os.sep
     # train_csv_path = ROOT_DIR + "train-images-boxable-with-rotation.csv"  # 訓練用CSVファイル
     csv_path = (
@@ -103,6 +104,55 @@ class Download_GOI(object):
         Download_images_from_csv(csv_path, dst_path)
 
 
+def __Download_ZIP(file_url: str, save_pth: str):
+    """url 上にある zip ファイルを拡張子 .zip ファイルに保存するための関数
+
+    Args:
+        file_url (str): ダウンロードしたいファイルの url
+        save_pth (str):
+    """
+    try:
+        with urllib.request.urlopen(file_url) as f:
+            data = f.read()
+            with open(save_pth, mode="wb") as f_save:
+                f_save.write(data)
+                f_save.flush()
+    except urllib.error.URLError as e:
+        print(e)
+
+
+def __Unpack(file_pth: str, save_pth: str, file_name: Type[Union[str, None]] = None):
+    """originalディレクトリ内のzipファイルを展開するための関数
+    Arg:
+        file_name(str): original ディレクトリ内の zip ファイル名,
+        create_dir(bool optional): 解凍するときに、解凍前のファイル名と同じ名前のディレクトリを作成する。default to True.
+    """
+    with zipfile.ZipFile(file_pth) as obj_zip:
+        if file_name != None:
+            # file_name で指定したファイルだけを保存したい場合
+            # zipから指定ファイル（第1引数）を取得して、指定ディレクトリ（第2引数）に保存する
+            obj_zip.extract(file_name, save_pth)
+        else:
+            # zip に保存されているデータをすべて展開する
+            obj_zip.extractall(save_pth)
+
+
+class Download_LineMOD(object):
+    def __init__(self, output_dir: str):
+        # 保存先のディレクトリ作成
+        self.file_url = "https://zjueducn-my.sharepoint.com/LINEMOD.tar.gz"
+        self.output_pth = MakeDir(output_dir, newly=True)
+
+    def download(self):
+        print("ファイルのダウンロードを開始します。")
+        try:
+            __Download_ZIP(file_url=self.file_url, save_pth=self.output_pth)
+        except Exception as e:
+            print(traceback.format_exc())
+        
+        __Unpack(file_pth=self.output_pth, save_pth=self.output_pth)
+
+
 if __name__ == "__main__":
     # f_path = cfg.DATA_DIR + os.sep + "train-images-boxable-with-rotation.csv"
     # 1つのURLを読み出し
@@ -122,5 +172,7 @@ if __name__ == "__main__":
     # ext = os.path.splitext(url)[1]  # .jpg
 
     # dst_path = cfg.TRAIN_DIR
-    di = Download_GOI()
-    di.Download_validation_images()
+    # di = Download_GOI()
+    # di.Download_validation_images()
+
+    Download_LineMOD(cfg.PVNET_LINEMOD_DIR)

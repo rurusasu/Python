@@ -8,8 +8,8 @@ services:
     tty: true
     volumes:
       - type: bind
-        source: "../../Analysis"
-        target: "/home/"
+        source: "../Analysis"
+        target: "/home"
     deploy:
       resources:
         reservations:
