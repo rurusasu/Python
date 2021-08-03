@@ -3,6 +3,7 @@
 *.csv
 *.mypy_cache
 AI/Analysis/node_modules/
+<<<<<<< HEAD
 AI/Analysis/data/blender_poses/
 AI/Analysis/data/Confution/
 AI/Analysis/data/DataScienceBowl/
@@ -20,6 +21,20 @@ AI/Analysis/data/test/
 AI/Analysis/data/2020-10-21_動作後.zip
 AI/Analysis/data/bg_img_pths.npy
 AI/Analysis/data/data_object_image_2.zip
+=======
+AI/Analysis/data/cifar10/
+AI/Analysis/data/Confution/
+AI/Analysis/data/DataScienceBowl/
+AI/Analysis/data/FashionMNIST/
+AI/Analysis/data/linemod/
+AI/Analysis/data/model/
+AI/Analysis/data/NestedUNetResults/
+AI/Analysis/data/OpenImage/
+AI/Analysis/data/PASCAL_VOC_2012/
+AI/Analysis/data/PVNet_linemod/
+AI/Analysis/data/test/
+AI/Analysis/data/2020-10-21_動作後.zip
+>>>>>>> a0593739af984c8766613c4b8bbcdb5035915a66
 AI/Analysis/NestedUNet/models/
 AI/Analysis/NestedUNet/log/
 AI/Analysis/src/utils/extend_utils/
