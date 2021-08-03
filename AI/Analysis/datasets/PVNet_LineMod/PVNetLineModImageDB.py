@@ -64,6 +64,7 @@ class PVNetLineModImageDB(object):
         self.train_fn = "{}/train.txt".format(obj_name)
         self.val_fn = "{}/val.txt".format(obj_name)
 
+        # render で拡張したデータを読み込み
         if has_render_set:
             self.render_pkl = os.path.join(
                 self.pvnet_linemod_dir, "posedb", "{}_render.pkl".format(obj_name)
@@ -119,7 +120,7 @@ class PVNetLineModImageDB(object):
         self, pkl_file: str, render_dir: str, format: str = "jpg"
     ) -> list:
         """
-        `render_utils.py` で作成した `JPEG_IMAGE`, `depth_IMAGE`, `RT.pkl` に加え，`Bboxの頂点座標および中心座標`などを`database`配列にまとめて `pkl` ファイルに保存する関数．返り値は `database` 配列
+        `render_utils.py` で作成した `JPEG_IMAGE`, `depth_IMAGE`, `RT.pkl` に加え，`Bounding boxの頂点座標および中心座標`などを`database`配列にまとめて `pkl` ファイルに保存する関数．返り値は `database` 配列
 
         Args:
             pkl_file (str): render_utils で作成した `RT.pkl` のファイルパス

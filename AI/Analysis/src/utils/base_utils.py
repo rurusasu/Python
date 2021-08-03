@@ -9,6 +9,8 @@ sys.path.append("../../")
 
 import numpy as np
 import pickle
+import datetime
+
 from PIL import Image, ImageFile
 from plyfile import PlyData
 from torch.utils.data import Sampler
@@ -26,17 +28,17 @@ def MakeDir(dir_path: str, newly: bool = False) -> str:
         dir_path (str): 作成したディレクトリの絶対パス
     """
 
-    if os.path.exists(dir_path): # 存在する場合
+    if os.path.exists(dir_path):  # 存在する場合
         if newly:  # 新規ファイルを作成する
             __DeleteDir(dir_path)  # ディレクトリ内のフォルダごと削除
         else:
             now = datetime.datetime.now()
-            dir_path = dir_path + '_' + now.strftime('%Y%m%d_%H%M%S') # 現在時刻をファイル名に付ける
+            dir_path = dir_path + "_" + now.strftime("%Y%m%d_%H%M%S")  # 現在時刻をファイル名に付ける
     os.mkdir(dir_path)
     return dir_path
 
 
-def  __DeleteDir(dir_path: str):
+def __DeleteDir(dir_path: str):
     """ディレクトリ内のフォルダごと削除
 
     Args:
@@ -175,7 +177,10 @@ class Projector(object):
         return pts_2d
 
 
-with open(os.path.join(cfg.CONFIG_DIR, "default_linemod_cfg.json"), "r",) as f:
+with open(
+    os.path.join(cfg.CONFIG_DIR, "default_linemod_cfg.json"),
+    "r",
+) as f:
     default_aug_cfg = json.load(f)
 
 

@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
-import os
-import numpy as np
 import glob
-from plyfile import PlyData
-from tqdm import tqdm
-import pickle as pkl
-from fps.fps_utils import farthest_point_sampling
+import os
+import sys
 from argparse import ArgumentParser
+
+sys.path.append('.')
+sys.path.append('..')
+sys.path.append('../../')
+
+#import pickle as pkl
+import numpy as np
+from plyfile import PlyData
+#from tqdm import tqdm
+
+from fps.fps_utils import farthest_point_sampling
 
 
 parser = ArgumentParser()
@@ -107,7 +114,8 @@ def gen_one_mesh_info(ply_pth, sv_fd):
 
 
 def test():
-    ply_pth = '../../../datasets/ycb/YCB_Video_Dataset/models/002_master_chef_can/textured.ply'
+    from src.config.config import cfg
+    ply_pth =os.path.join(cfg.PVNET_LINEMOD_DIR, )
     gen_one_mesh_info(ply_pth, 'mesh_info/002_master_chef_can')
 
 

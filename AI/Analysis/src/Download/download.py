@@ -104,24 +104,25 @@ class Download_GOI(object):
         Download_images_from_csv(csv_path, dst_path)
 
 
-def __Download_ZIP(file_url: str, save_pth: str):
+def Download_ZIP(file_url: str, save_file_pth: str):
     """url 上にある zip ファイルを拡張子 .zip ファイルに保存するための関数
 
     Args:
         file_url (str): ダウンロードしたいファイルの url
-        save_pth (str):
+        save_file_pth (str): `.zip` ファイルで終了するファイルパス。例: "/home/data/xxx.zip"
     """
     try:
         with urllib.request.urlopen(file_url) as f:
             data = f.read()
-            with open(save_pth, mode="wb") as f_save:
+            with open(save_file_pth, mode="wb") as f_save:
                 f_save.write(data)
                 f_save.flush()
     except urllib.error.URLError as e:
-        print(e)
+        raise Exception("ファイルダウンロード時にエラーが発生しました。")
+        #print(e)
 
 
-def __Unpack(file_pth: str, save_pth: str, file_name: Type[Union[str, None]] = None):
+def Unpack(file_pth: str, save_pth: str, file_name: Type[Union[str, None]] = None):
     """originalディレクトリ内のzipファイルを展開するための関数
     Arg:
         file_name(str): original ディレクトリ内の zip ファイル名,
@@ -146,11 +147,12 @@ class Download_LineMOD(object):
     def download(self):
         print("ファイルのダウンロードを開始します。")
         try:
-            __Download_ZIP(file_url=self.file_url, save_pth=self.output_pth)
+            Download_ZIP(file_url=self.file_url, save_file_pth=self.output_pth)
         except Exception as e:
             print(traceback.format_exc())
-        
-        __Unpack(file_pth=self.output_pth, save_pth=self.output_pth)
+        else:
+            print("ファイルを展開します。")
+            Unpack(file_pth=self.output_pth, save_pth=self.output_pth)
 
 
 if __name__ == "__main__":
@@ -175,4 +177,6 @@ if __name__ == "__main__":
     # di = Download_GOI()
     # di.Download_validation_images()
 
-    Download_LineMOD(cfg.PVNET_LINEMOD_DIR)
+    file_pth = os.path.join(cfg.PVNET_LINEMOD_DIR, "linemod.zip")
+    Linemod = Download_LineMOD(file_pth)
+    Linemod.download()
