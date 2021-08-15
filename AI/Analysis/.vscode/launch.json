@@ -46,6 +46,16 @@
       "redirectOutput": true
     },
     {
+      "name": "Python for Open3d", // デバッグ構成として表示する名前
+      "type": "python", // デバッカの種別
+      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
+      "program": "${file}",
+      "python": "/opt/conda/envs/open3d/bin/python3",
+      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
+      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
+      "redirectOutput": true
+    },
+    {
       "name": "Python for Docker", // デバッグ構成として表示する名前
       "type": "python", // デバッカの種別
       "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)

@@ -5,17 +5,17 @@ sys.path.append(".")
 sys.path.append("..")
 sys.path.append("../../")
 
-import bpy
+#import bpy
 
 # import cv2
 import json
 import numpy as np
-from mathutils import Matrix
+#from mathutils import Matrix
 from PIL import Image
 from scipy import stats
 from skimage.io import imread
-from transforms3d.euler import mat2euler
-from transforms3d.quaternions import mat2quat
+#from transforms3d.euler import mat2euler
+#from transforms3d.quaternions import mat2quat
 
 from src.config.config import cfg
 from datasets.LineMod.LineModDB import LineModDB, read_pose

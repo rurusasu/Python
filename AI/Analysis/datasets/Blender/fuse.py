@@ -67,7 +67,7 @@ def _prepare_dataset_single(
     background = _randomly_read_background(bg_imgs_dir, cache_dir)
 
     fuse_img, fuse_mask, fuse_begins = _fuse_regions(
-        rgbs, masks, begins, background, 480, 640
+        rgbs, masks, begins, background
     )
 
     _save_fuse_data(output_dir, idx, fuse_img, fuse_mask, fuse_begins, poses)
@@ -167,23 +167,27 @@ def _collect_linemod_set_info(
     rt_dir = os.path.join(linemod_dir, obj_name, "data")
     img_num = len(os.listdir(rgb_dir))
     for k in range(img_num):
-        data = {}
-        data["rgb_pth"] = os.path.join(rgb_dir, "{:06}.jpg".format(k))
-        data["dpt_pth"] = os.path.join(msk_dir, "{:04}.png".format(k))
-        if data["rgb_pth"].split("/")[-1] not in train_fns:
-            continue  # 訓練で使用するファイル名に含まれていなければ、次のファイルへ
+        rgb_pth = os.path.join(rgb_dir, "{:06}.jpg".format(k))
+        if rgb_pth.split('/')[-1] not in train_fns:
+            continue # 訓練で使用するファイル名に含まれていなければ、次のファイルへ
+        else:
+            data = {}
+            data["rgb_pth"] = rgb_pth
+            data["dpt_pth"] = os.path.join(msk_dir, "{:04}.png".format(k))
+        #if data["rgb_pth"].split("/")[-1] not in train_fns:
+        #    continue
 
-        pose = read_pose(
-            os.path.join(rt_dir, "rot{}.rot".format(k)),
-            os.path.join(rt_dir, "tra{}.tra".format(k)),
-        )
-        pose_transformer = PoseTransformer(
-            linemod_dir=linemod_dir,
-            pvnet_linemod_dir=pvnet_linemod_dir,
-            obj_name=obj_name,
-        )
-        data["RT"] = pose_transformer.orig_pose_to_blender_pose(pose).astype(np.float32)
-        database.append(data)
+            pose = read_pose(
+                os.path.join(rt_dir, "rot{}.rot".format(k)),
+                os.path.join(rt_dir, "tra{}.tra".format(k)),
+            )
+            pose_transformer = PoseTransformer(
+                linemod_dir=linemod_dir,
+                pvnet_linemod_dir=pvnet_linemod_dir,
+                obj_name=obj_name,
+            )
+            data["RT"] = pose_transformer.orig_pose_to_blender_pose(pose).astype(np.float32)
+            database.append(data)
 
     print("success generate database {} len {}".format(obj_name, len(database)))
     save_pickle(database, os.path.join(cache_dir, "{}_info.pkl").format(obj_name))
@@ -212,18 +216,25 @@ def __collect_train_val_test_info(pvnet_linemod_dir: str, obj_name: str) -> list
 
 
 def _fuse_regions(
-    rgbs: list, masks: list, begins: list, background: np.ndarray, th: int, tw: int
+    rgbs: list,
+    masks: list,
+    begins: list,
+    background: np.ndarray,
+    th: int = cfg.HEIGHT,
+    tw: int = cfg.WIDTH,
 ):
     """
-    RGB背景画像とそのマスク画像を (tw, th) にリサイズし，その上にオブジェクトのRGB画像とそのマスク画像を合成する関数．返り値は，合成されたRGB画像とそのマスク画像と合成されたオブジェクトの位置
+    1. 背景画像(RGB)を (tw, th) にリサイズ
+    2. その上にオブジェクトのRGB画像とそのマスク画像を合成
+    返り値は，合成されたRGB画像とそのマスク画像と合成されたオブジェクトの位置
 
     Args:
         rgbs(list): 合成するオブジェクトの ndarray が保存されたリスト
         masks(list): 合成するオブジェクトのマスク画像の ndarray が保存されたリスト
         begins(list):
         background(np.ndarray): 背景の ndarray
-        th(int): 背景画像のリサイズ後の高さ
-        tw(int): 背景画像のリサイズ後の幅
+        th(int): 背景画像のリサイズ後の高さ. default to cfg.HEIGHT
+        tw(int): 背景画像のリサイズ後の幅. default to cfg.WIDTH
 
     Returns:
         fuse_img(np.ndarray): 合成後の画像 [max=255, min=0]
@@ -268,12 +279,12 @@ def __randomly_sample_foreground(image_db: dict, pvnet_linemod_dir: str):
         * RT: 対象オブジェクトの姿勢情報
 
     Aegs:
-        image_db(dict): pvnet_linemod の rgb_pth, dpt_pth, と orig_pose_to_blender_pose によって変換された 同次変換行列が格納された辞書．
+        image_db(dict): pvnet_linemod の rgb_pth, dpt_pth, そして orig_pose_to_blender_pose によって変換された 同次変換行列が格納された辞書．
         例: {'rgb_pth': './AI/Analysis/data/PVNet_linemod/ape/JPEGImages/000914.jpg',
                 'dpt_pth': './AI/Analysis/data/PVNet_linemod/ape/mask/0914.png',
                 'RT': array([[-0.0536252 ,  0.975377  , -0.213925  ,  0.00464225],
-                                        [ 0.962547  , -0.00652554, -0.271037  , -0.07789672],
-                                        [-0.265759  , -0.220448  , -0.938496  ,  0.6899649 ]],dtype=float32)},
+                                  [ 0.962547  , -0.00652554, -0.271037  , -0.07789672],
+                                  [-0.265759  , -0.220448  , -0.938496  ,  0.6899649 ]],dtype=float32)},
         pvnet_linemod_dir (str): PVNet_LineMod データセットのディレクトリパス
 
     Return:
@@ -307,8 +318,6 @@ def __randomly_sample_foreground(image_db: dict, pvnet_linemod_dir: str):
 def _randomly_read_background(
     bg_imgs_dir: str,
     cache_dir: str = cfg.TEMP_DIR,
-    th: int = cfg.HEIGHT,
-    tw: int = cfg.WIDTH,
 ) -> np.ndarray:
     """
     合成画像を作成する際に背景として使用される画像を読み出し，その画像のパスを `bg_img_pths.pkl` データとして一度保存しておくための関数．画像パスは `.jpg` か `.png` として保存されているもののみ抽出．

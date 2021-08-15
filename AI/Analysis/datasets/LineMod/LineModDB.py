@@ -7,7 +7,7 @@ sys.path.append("../../../")
 
 import numpy as np
 from PIL import Image
-from torchvision import transforms
+#from torchvision import transforms
 
 from src.config.config import cfg
 from src.utils.base_utils import read_ply_model
