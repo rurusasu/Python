@@ -3,6 +3,7 @@
 import cv2
 import PySimpleGUI as sg
 import numpy as np
+from matplotlib import pyplot as plt
 
 Cammera_num = 1
 frame = None
