@@ -14,8 +14,8 @@ Cammera_num = 1
 src = np.array([])
 ret = None
 fig_agg = None  # 画像のヒストグラムを表示する用の変数
-Image_height = 3024  # 画面上に表示する画像の高さ
-Image_width = 4032  # 画面上に表示する画像の幅
+Image_height = 255  # 画面上に表示する画像の高さ
+Image_width = 255  # 画面上に表示する画像の幅
 ticks = [0, 40, 80, 120, 160, 200, 240]
 binary_color_num = {"r": 0, "g": 1, "b": 2, "w": 3, "bk": 4}
 
@@ -73,9 +73,11 @@ def Image_hist(img, ax, ticks=None, thresh=None):
     if thresh:
         if type(thresh) == tuple:
             for i in thresh:
-                ax.vlines(i, 0, hist.max(), "blue", linestyles="dashed")
+                # ax.vlines(i, 0, hist.max(), "blue", linestyles="dashed")
+                ax.vlines(i, 0, hist.max(), "k", linestyles="dashed")
         else:
-            ax.vlines(thresh, 0, hist.max(), "blue", linestyles="dashed")
+            # ax.vlines(thresh, 0, hist.max(), "blue", linestyles="dashed")
+            ax.vlines(thresh, 0, hist.max(), "k", linestyles="dashed")
     ax.set_title("histogram")
     ax.set_xlim([0, 256])
     ax.set_ylim([0, 81])
@@ -326,7 +328,7 @@ slider = [
         ),
         sg.Slider(
             (0, 255),
-            default_value=160,
+            default_value=180,
             resolution=1,
             orientation="horizontal",
             size=(28, 5),
@@ -464,9 +466,18 @@ while True:  # The PSG "Event Loop"
             # ------------------------------------------------
             canvas_elem = window["-CANVAS_1-"]
             canvas = canvas_elem.TKCanvas
-            fig, ax = plt.subplots(figsize=(4, 3))
+            # fig, ax = plt.subplots(figsize=(4, 3))
+            fig = plt.figure()
+            ax = fig.add_subplot(1, 1, 1)
+
+            # 閾値をヒストグラム上に表示する
             if values["-thresh_prev-"]:
-                ax = Image_hist(src, ax, ticks, ret)
+                if values["-Binary_Type-"] == "Two_Thresh":
+                    ret = (values["-LowerThresh-"], values["-UpperThresh-"])
+                    ax = Image_hist(src, ax, ticks, ret)
+                else:
+                    ret = values["-LowerThresh-"]
+                    ax = Image_hist(src, ax, ticks, ret)
             else:
                 ax = Image_hist(src, ax, ticks)
 
@@ -529,6 +540,10 @@ while True:  # The PSG "Event Loop"
             for i, color in enumerate(dst_dict):
                 img_name = color + "_bin_" + filename
                 save_img(dst_dict[color], filepth=filepth, filename=img_name)
+
+            # ヒストグラムを保存
+            fig_name = os.path.join(filepth, "histgram.png")
+            plt.savefig(fig_name, format="png", dpi=1200)
         else:
             sg.popup("画像の保存先が設定されていません。")
 
@@ -541,9 +556,6 @@ while True:  # The PSG "Event Loop"
     elif values["-Image-"]:
         if window["-Image_path-"].Disabled:
             window["-Image_path-"].update(disabled=False)
-
-    elif event == "-save-":
-        print("file save")
 
     if type(src) == None:
         print("Not Found Error")
