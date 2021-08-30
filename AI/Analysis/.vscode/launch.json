@@ -5,6 +5,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python for dobot", // デバッグ構成として表示する名前
+      "type": "python", // デバッカの種別
+      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
+      "program": "${file}",
+      "python": "/opt/conda/envs/dobot/bin/python3",
+      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
+      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
+      "redirectOutput": true
+    },
+    {
       "name": "Electron for windows Note PC",
       "type": "pwa-node",
       "request": "launch",
@@ -35,55 +45,5 @@
         "src"
       ]
     },
-    {
-      "name": "Python for linux", // デバッグ構成として表示する名前
-      "type": "python", // デバッカの種別
-      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
-      "program": "${file}",
-      "python": "/home/miki/miniconda3/bin/python",
-      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
-      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
-      "redirectOutput": true
-    },
-    {
-      "name": "Python for Open3d", // デバッグ構成として表示する名前
-      "type": "python", // デバッカの種別
-      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
-      "program": "${file}",
-      "python": "/opt/conda/envs/open3d/bin/python3",
-      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
-      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
-      "redirectOutput": true
-    },
-    {
-      "name": "Python for Docker", // デバッグ構成として表示する名前
-      "type": "python", // デバッカの種別
-      "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
-      "program": "${file}",
-      "python": "/opt/conda/bin/python",
-      "console": "integratedTerminal", // プログラムを起動するコンソールの種類を指定
-      "cwd": "${fileDirname}", // デバッグ実行を行うディレクトリ
-      "redirectOutput": true
-    },
-    {
-      "name": "Python for windows Note PC",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "python": "C:\\tools\\miniconda3\\python.exe",
-      "console": "integratedTerminal",
-      "cwd": "${fileDirname}",
-      "redirectOutput": true
-    },
-    {
-      "name": "Python for windows DeskTop",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "python": "C:\\ProgramData\\Miniconda3\\python.exe",
-      "console": "integratedTerminal",
-      "cwd": "${fileDirname}",
-      "redirectOutput": true
-    }
   ]
 }

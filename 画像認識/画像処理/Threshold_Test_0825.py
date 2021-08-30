@@ -14,8 +14,8 @@ Cammera_num = 1
 src = np.array([])
 ret = None
 fig_agg = None  # 画像のヒストグラムを表示する用の変数
-Image_height = 3024  # 画面上に表示する画像の高さ
-Image_width = 4032  # 画面上に表示する画像の幅
+Image_height = 488  # 画面上に表示する画像の高さ
+Image_width = 706  # 画面上に表示する画像の幅
 ticks = [0, 40, 80, 120, 160, 200, 240]
 binary_color_num = {"r": 0, "g": 1, "b": 2, "w": 3, "bk": 4}
 
@@ -207,15 +207,8 @@ WebCam = [
             "Input Image",
             size=(12, 1),
             background_color="grey59",
-            justification="left",
+            justification="center",
             pad=(0, 0),
-        ),
-        sg.Checkbox(
-            "show threshold",
-            default=False,
-            size=(15, 1),
-            background_color="grey59",
-            key="-thresh_prev-",
         ),
         sg.Text("Binary Type", background_color="grey63"),
         sg.InputCombo(
@@ -246,6 +239,32 @@ WebCam = [
         sg.Input(size=(30, 1), disabled=True),
         sg.FolderBrowse(
             button_text="save", size=(11, 1), enable_events=True, key="-save_path-"
+        ),
+    ],
+    [
+        sg.Text(
+            "Show histogram color",
+            size=(20, 1),
+            background_color="grey59",
+            justification="center",
+            pad=(0, 0),
+        ),
+        sg.InputCombo(
+            (
+                "RGB",
+                "Gray",
+            ),
+            default_value="RGB",
+            size=(10, 1),
+            key="-Calc_Hist_Type-",
+            readonly=True,
+        ),
+        sg.Checkbox(
+            "show threshold",
+            default=False,
+            size=(15, 1),
+            background_color="grey59",
+            key="-thresh_prev-",
         ),
     ],
     [
@@ -328,7 +347,7 @@ slider = [
         ),
         sg.Slider(
             (0, 255),
-            default_value=160,
+            default_value=140,
             resolution=1,
             orientation="horizontal",
             size=(28, 5),
@@ -447,7 +466,7 @@ while True:  # The PSG "Event Loop"
             mk_bin = make_bin_img(
                 src, threshold=(values["-LowerThresh-"], values["-UpperThresh-"])
             )
-            img_dict, dst_dict = mk_bin.binarize(values["-Binary_Type-"])
+            img_dict, dst_dict, ret = mk_bin.binarize(values["-Binary_Type-"])
 
             # オリジナル画像の要素群を表示
             for i, color in enumerate(img_dict):
@@ -470,16 +489,23 @@ while True:  # The PSG "Event Loop"
             fig = plt.figure()
             ax = fig.add_subplot(1, 1, 1)
 
-            # 閾値をヒストグラム上に表示する
-            if values["-thresh_prev-"]:
-                if values["-Binary_Type-"] == "Two_Thresh":
-                    ret = (values["-LowerThresh-"], values["-UpperThresh-"])
-                    ax = Image_hist(src, ax, ticks, ret)
-                else:
-                    ret = values["-LowerThresh-"]
-                    ax = Image_hist(src, ax, ticks, ret)
+            # 閾値の個数による条件分岐
+            if values["-Binary_Type-"] == "Two_Thresh":
+                ret = (values["-LowerThresh-"], values["-UpperThresh-"])
+            elif values["-Binary_Type-"] == "Adaptive":
+                ret = values["-LowerThresh-"]
             else:
-                ax = Image_hist(src, ax, ticks)
+                pass
+
+            # 閾値をヒストグラム上に表示するときの条件分岐
+            if not values["-thresh_prev-"]:  # 表示する場合
+                ret = None
+
+            # ヒストグラムを計算する色による条件分岐
+            if values["-Calc_Hist_Type-"] == "RGB":
+                ax = Image_hist(src, ax, ticks, ret)
+            elif values["-Calc_Hist_Type-"] == "Gray":
+                ax = Image_hist(img_dict["gray"], ax, ticks, ret)
 
             # グラフ右と上の軸を消す
             plt.gca().spines["right"].set_visible(False)
@@ -515,14 +541,18 @@ while True:  # The PSG "Event Loop"
         # <<< 画像保存 <<<
         if values["-save_path-"]:
             # <<< ディレクトリ作成 <<<
-            filename = (
-                values["-Binary_Type-"]
-                + "_"
-                + str(values["-LowerThresh-"])
-                + "_"
-                + str(values["-UpperThresh-"])
-                + "_"
-            )
+            # 閾値による filepath の条件分岐
+            if ret == None:
+                filename = (
+                    values["-Binary_Type-"]
+                    + "_"
+                    + str(values["-LowerThresh-"])
+                    + "_"
+                    + str(values["-UpperThresh-"])
+                    + "_"
+                )
+            else:
+                filename = values["-Binary_Type-"] + "_" + str(ret) + "_"
             # 現在時刻を取得
             dt_now = dt.datetime.now()
             # フォルダ名用にyyyymmddの文字列を取得する

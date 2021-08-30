@@ -51,8 +51,22 @@ class make_bin_img(object):
             raise ValueError("Input value is invalid.")
 
     def binarize(self, binary_type: str):
+        """様々な二値化処理を行う関数
+
+        Args:
+            binary_type (str): 二値化処理タイプ．
+            "Global": 大域的二値化処理
+            "Otsu": 大津の二値化
+            "Adaptive": 適応的二値化
+
+        Returns:
+            img_elem (dict): オリジナル画像，グレー画像，RGB要素ごとのグレー画像の要素が入った辞書．
+            bin_elem (dict): img_elem のデータを二値化した画像の辞書．
+            ret (int): 二値化に使用した閾値．エラーの場合は，'-1' を返す
+        """
         # 2つの閾値を用いる場合とそうでない処理で条件分岐
         # なぜなら、2つの閾値を用いる場合は最大2個、そうでない処理の場合は最大3個の独立した閾値を持つため。
+        ret = -1
         if binary_type == "Two_Thresh":
             self._two_thresh_binalize(
                 LowerThreshold=self.lower_thred,
@@ -78,7 +92,7 @@ class make_bin_img(object):
 
             self._w_and_bk_binarize()
 
-        return self.img_elem, self.bin_elem
+        return self.img_elem, self.bin_elem, ret
 
     def _w_and_bk_binarize(self) -> None:
         # White color pickup
