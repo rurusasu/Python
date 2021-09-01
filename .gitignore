@@ -1,7 +1,9 @@
+*.csv
 *.mat
 *.pyc
-*.csv
 *.mypy_cache
+Robot/Demo_20210830/magiciandll-master/
+Robot/Demo_20210830/dobot/
 AI/Analysis/node_modules/
 <<<<<<< HEAD
 AI/Analysis/data/blender_poses/
@@ -42,4 +44,6 @@ AI/Analysis/src/utils/spconv/
 AI/Analysis/src/utils/temp/
 AI/Analysis/temp
 Dobot/node_modules
-AI/Analysis/Blender/blender-2.92.0-linux64.tar.xz
+DobotDllOutput/libDobotDll.so
+DobotDllOutput/libDobotDll.so.1
+DobotDllOutput/libDobotDll.so.1.0

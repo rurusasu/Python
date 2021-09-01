@@ -28,9 +28,10 @@ from timeout_decorator import timeout, TimeoutError
 
 class Dobot_APP:
     def __init__(self):
-        dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
+        #dll_path = cfg.DOBOT_DLL_DIR + os.sep + "DobotDll.dll"
         #self.api = cdll.LoadLibrary(dll_path)
-        self.api = dType.load(dll_path)
+        self.api = dType.load(cfg.DOBOT_DLL_DIR)
+       #self.api = dType.load()
         self.connection = False #Dobotの接続状態
         self.CurrentPose = {
             "x": 0.0,
