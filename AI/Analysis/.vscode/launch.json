@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Python for dobot", // デバッグ構成として表示する名前
       "type": "python", // デバッカの種別
       "request": "launch", // デバッグ時にプログラムを起動する(launch), 既に起動しているプログラムにデバッカをアタッチする(attach)
@@ -26,9 +33,7 @@
         "runtimeExecutable": "${workspaceFolder}\\node_modules\\.bin\\electron.cmd"
       },
       "attachSimplePort": 0,
-      "args": [
-        "src"
-      ]
+      "args": ["src"]
     },
     {
       "name": "Electron for windows Desctop PC",
@@ -41,9 +46,7 @@
       "windows": {
         "runtimeExecutable": "${env:APPDATA}\\npm\\electron.cmd"
       },
-      "args": [
-        "src"
-      ]
-    },
+      "args": ["src"]
+    }
   ]
 }

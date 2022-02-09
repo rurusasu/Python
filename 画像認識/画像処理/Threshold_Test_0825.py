@@ -14,8 +14,8 @@ Cammera_num = 1
 src = np.array([])
 ret = None
 fig_agg = None  # 画像のヒストグラムを表示する用の変数
-Image_height = 488  # 画面上に表示する画像の高さ
-Image_width = 706  # 画面上に表示する画像の幅
+Image_height = 200  # 画面上に表示する画像の高さ
+Image_width = 200  # 画面上に表示する画像の幅
 ticks = [0, 40, 80, 120, 160, 200, 240]
 binary_color_num = {"r": 0, "g": 1, "b": 2, "w": 3, "bk": 4}
 
