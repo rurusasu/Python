@@ -1,5 +1,5 @@
-tensorflow==2.4.0
-opencv-python==4.1.1.26
+tensorflow==2.12.1
+opencv-python==4.8.1.78
 lxml
 tqdm
 
